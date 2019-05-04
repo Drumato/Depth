@@ -50,44 +50,29 @@ func init() {
 		}
 		return nil
 	}
-	app.Commands = []cli.Command{
-		{
-			Name:    "file",
-			Aliases: []string{"f", "file"},
-			Usage:   "compile with specifying file",
-			Action: func(c *cli.Context) error {
-				if len(os.Args) < 3 {
-					return fmt.Errorf("%v\n", aurora.Bold(aurora.Red("Please specify an Depth file")))
-				}
-				if filepath.Ext(os.Args[2]) != ".dep" {
-					return fmt.Errorf("%v\n", aurora.Bold(aurora.Red("Depth only supporting .dep file at the moment!")))
-				}
-				f, err := os.Open(os.Args[2])
-				if err != nil {
-					return err
-				}
-				b, err := ioutil.ReadAll(f)
-				if err != nil {
-					return err
-				}
-				input := string(b)
-				fmt.Println(aurora.Bold(aurora.Blue("now compiling...")))
-				lexer := lex.New(input, os.Args[2])
-				tok := lexer.NextToken()
-				for tok.Type != token.EOF {
-					fmt.Printf("%+v\n", tok)
-					tok = lexer.NextToken()
-				}
-				return nil
-			},
-		},
-	}
 }
 
 func Start(c *cli.Context) error {
-	input := string([]rune(os.Args[1]))
+	var input string
+	if _, err := os.Open(os.Args[1]); err != nil {
+		input = string([]rune(os.Args[1]))
+	} else {
+		if filepath.Ext(os.Args[1]) != ".dep" {
+			return fmt.Errorf("%v\n", aurora.Bold(aurora.Red("Depth only supporting .dep file at the moment!")))
+		}
+		f, err := os.Open(os.Args[1])
+		if err != nil {
+			return err
+		}
+		b, err := ioutil.ReadAll(f)
+		if err != nil {
+			return err
+		}
+		input = string(b)
+	}
 	lexer := lex.New(input, "")
 	tok := lexer.NextToken()
+	fmt.Println(aurora.Bold(aurora.Blue("now compiling...")))
 	for tok.Type != token.EOF {
 		fmt.Printf("%+v\n", tok)
 		tok = lexer.NextToken()
