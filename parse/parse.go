@@ -19,11 +19,10 @@ type Parser struct { //recursive-descent parser
 func New(l *lex.Lexer) *Parser {
 	p := &Parser{l: l}
 	p.nextToken()
-	p.nextToken()
 	return p
 }
 
-func Parse() {
+func (p *Parser) nextToken() {
 	p.curToken = p.l.NextToken()
 }
 
@@ -42,4 +41,33 @@ func (p *Parser) consume(ty token.TokenType) bool {
 	}
 	p.nextToken()
 	return true
+}
+
+func (p *Parser) number() *Node {
+	if p.curToken.Type == token.INTLIT {
+		defer p.nextToken()
+		return NewNodeNum(p.curToken.IntVal)
+	}
+	logrus.Errorf("number expected, but got %s", p.curToken.Literal)
+	return nil
+}
+
+func (p *Parser) expr() *Node {
+	lhs := p.number()
+	for {
+		t := p.curToken
+		if t.Type != token.PLUS && t.Type != token.MINUS {
+			break
+		}
+		p.nextToken()
+		lhs = NewNode(NodeType(t.Type), lhs, p.number())
+	}
+	if p.curToken.Type != token.EOF {
+		logrus.Errorf("stray token: %s", p.curToken.Literal)
+	}
+	return lhs
+}
+
+func (p *Parser) Parse() *Node {
+	return p.expr()
 }
