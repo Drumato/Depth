@@ -14,11 +14,11 @@ import (
 
 const (
 	ErrFormat = "Error found: %s\n"
-	VERSION   = `1.0.0`
-	NAME      = `Gocc`
-	USAGE     = `A Compiler refered to rui314/9cc-Language`
+	VERSION   = `0.1.0`
+	NAME      = `Depth`
+	USAGE     = `./depth [options] [-flags] <sourcefile>or<source>`
 	AUTHOR    = `Drumato`
-	LINK      = `https://github.com/Drumato/gocc`
+	LINK      = `https://github.com/Drumato/Depth`
 )
 
 var (
@@ -37,10 +37,9 @@ func init() {
 	app.Usage = USAGE
 	app.Author = AUTHOR
 	app.Email = LINK
-	/*app.Flags = []cli.Flag{
-		cli.BoolFlag{Name: "dump,d", Usage: "debugging ir"},
+	app.Flags = []cli.Flag{
+		cli.BoolFlag{Name: "tokens,t", Usage: "dump tokens by lexer"},
 	}
-	*/
 	app.Action = func(c *cli.Context) error {
 		if len(os.Args) < 2 {
 			return fmt.Errorf("%v\n", aurora.Bold(aurora.Red("not given code")))
@@ -54,13 +53,13 @@ func init() {
 
 func Start(c *cli.Context) error {
 	var input string
-	if _, err := os.Open(os.Args[1]); err != nil {
-		input = string([]rune(os.Args[1]))
+	if _, err := os.Open(os.Args[len(os.Args)-1]); err != nil {
+		input = string([]rune(os.Args[len(os.Args)-1]))
 	} else {
-		if filepath.Ext(os.Args[1]) != ".dep" {
+		if filepath.Ext(os.Args[len(os.Args)-1]) != ".dep" {
 			return fmt.Errorf("%v\n", aurora.Bold(aurora.Red("Depth only supporting .dep file at the moment!")))
 		}
-		f, err := os.Open(os.Args[1])
+		f, err := os.Open(os.Args[len(os.Args)-1])
 		if err != nil {
 			return err
 		}
@@ -71,11 +70,13 @@ func Start(c *cli.Context) error {
 		input = string(b)
 	}
 	lexer := lex.New(input, "")
-	tok := lexer.NextToken()
-	fmt.Println(aurora.Bold(aurora.Blue("now compiling...")))
-	for tok.Type != token.EOF {
-		fmt.Printf("%+v\n", tok)
-		tok = lexer.NextToken()
+	if c.Bool("tokens") {
+		tok := lexer.NextToken()
+		for tok.Type != token.EOF {
+			fmt.Printf("%+v\n", tok)
+			tok = lexer.NextToken()
+		}
 	}
+	fmt.Println(aurora.Bold(aurora.Blue("now compiling...")))
 	return nil
 }
