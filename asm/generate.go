@@ -25,6 +25,14 @@ const (
 	ADCRM16     = 0x11
 	ADCR8       = 0x12
 	ADCR16      = 0x13
+	ADDRM8      = 0x00
+	ADDRM       = 0x01
+	ADDR8       = 0x02
+	ADDR16      = 0x03
+	ADDAL       = 0x04
+	ADDAX       = 0x05
+	ADDRMImm8   = 0x80
+	ADDRMImm    = 0x81
 
 	Leave      = 0xc9
 	MovRM32    = 0x89
@@ -37,7 +45,14 @@ const (
 	PushR32    = 0x50
 	PopR32     = 0x58
 
-	RetNear = 0xc3
+	SubRM8     = 0x28
+	SubRM      = 0x29
+	SUBAL      = 0x2c
+	SUBAX      = 0x2d
+	SubRMImm8  = 0x80
+	SubRMImm   = 0x81
+	SubRMImm82 = 0x83
+	RetNear    = 0xc3
 )
 
 type Immediate uint
@@ -80,6 +95,9 @@ func Semantic(f *os.File, cds []*Mnemonic) /*[]*Mnemonic*/ {
 		case adc_x86:
 			/*Add with Carry*/
 			c = semanticAdc(c)
+		case add_x86:
+			/*Accumulate*/
+			c = semanticAdd(c)
 		case leave_x86:
 			c.Op.Code = Leave
 			continue
@@ -108,6 +126,8 @@ func Semantic(f *os.File, cds []*Mnemonic) /*[]*Mnemonic*/ {
 		case ret_x86:
 			c.Op.Code = RetNear
 			continue
+		case sub_x86:
+			c = semanticSub(c)
 		}
 	}
 }

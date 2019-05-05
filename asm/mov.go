@@ -26,6 +26,7 @@ func semanticMov(c *Mnemonic) *Mnemonic {
 			rex, e := strconv.ParseInt(rexpre.String(), 2, 0)
 			errOut(e)
 			c.Op.Code, e = strconv.ParseUint(fmt.Sprintf("%x%x%x", rex, MovRM32, modrm2), 16, 64)
+			return c
 		}
 		/* load immediate to 64-bit register*/
 		rex, e := strconv.ParseInt(rexpre.String(), 2, 0)
@@ -64,16 +65,19 @@ func semanticMov(c *Mnemonic) *Mnemonic {
 			errOut(err)
 			c.Op.Code, err = strconv.ParseUint(fmt.Sprintf("%x%x000000", MovRImm32+i2, buf.Bytes()), 16, 64)
 			errOut(err)
+			return c
 		case Imm16:
 			err := binary.Write(buf, binary.LittleEndian, uint16(c.ROperand.Val))
 			errOut(err)
 			c.Op.Code, err = strconv.ParseUint(fmt.Sprintf("%x%x0000", MovRImm32+i2, buf.Bytes()), 16, 64)
 			errOut(err)
+			return c
 		case Imm32:
 			err := binary.Write(buf, binary.LittleEndian, uint32(c.ROperand.Val))
 			errOut(err)
 			c.Op.Code, err = strconv.ParseUint(fmt.Sprintf("%x%x", MovRImm32+i2, buf.Bytes()), 16, 32)
 			errOut(err)
+			return c
 		}
 	}
 	return c

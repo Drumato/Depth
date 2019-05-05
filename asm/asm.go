@@ -8,11 +8,13 @@ const (
 	aam_x86   = "aam"
 	aas_x86   = "aas"
 	adc_x86   = "adc"
+	add_x86   = "add"
 	leave_x86 = "leave"
 	mov_x86   = "mov"
 	push_x86  = "push"
 	pop_x86   = "pop"
 	ret_x86   = "ret"
+	sub_x86   = "sub"
 )
 
 type Mnemonic struct {
