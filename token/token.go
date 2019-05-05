@@ -96,6 +96,7 @@ const (
 
 var keywords = map[string]TokenType{
 	"mut":    MUTABLE,
+	"f":      FUNCTION,
 	"true":   TRUE,
 	"false":  FALSE,
 	"bool":   BOOL,

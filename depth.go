@@ -83,8 +83,7 @@ func Start(c *cli.Context) error {
 		}
 	}
 	parser := parse.New(lexer)
-	node := parser.Parse()
-	rootNode := &parse.RootNode{Functions: map[string]*parse.Function{"main": &parse.Function{Nodes: []*parse.Node{node}}}}
+	rootNode := parser.Parse()
 	if c.Bool("dump-ast") {
 		fmt.Printf("%+v\n", rootNode)
 	}
