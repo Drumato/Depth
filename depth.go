@@ -17,7 +17,7 @@ import (
 
 const (
 	ErrFormat = "Error found: %s\n"
-	VERSION   = `0.1.0`
+	VERSION   = `0.1.1`
 	NAME      = `Depth`
 	USAGE     = `./depth [options] [-flags] <sourcefile>or<source>`
 	AUTHOR    = `Drumato`
