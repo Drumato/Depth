@@ -83,19 +83,20 @@ func Start(c *cli.Context) error {
 		}
 	}
 	parser := parse.New(lexer)
-	rootnode := parser.Parse()
+	node := parser.Parse()
+	rootNode := &parse.RootNode{Functions: map[string]*parse.Function{"main": &parse.Function{Nodes: []*parse.Node{node}}}}
 	if c.Bool("dump-ast") {
-		fmt.Printf("%+v\n", rootnode)
+		fmt.Printf("%+v\n", rootNode)
 	}
 	//fmt.Println(aurora.Bold(aurora.Blue("now compiling...")))
 	if lexer.Filename == "" {
-		codegen.Gen(rootnode, os.Stdout, "sample.dep")
+		codegen.Gen(rootNode, os.Stdout, "sample.dep")
 	} else {
 		f, err := os.Create("tmp.s")
 		if err != nil {
 			return err
 		}
-		codegen.Gen(rootnode, f, lexer.Filename)
+		codegen.Gen(rootNode, f, lexer.Filename)
 	}
 	return nil
 }

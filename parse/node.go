@@ -16,6 +16,16 @@ type Node struct {
 	Type     NodeType
 }
 
+type RootNode struct {
+	Functions map[string]*Function
+}
+
+type Function struct {
+	Name string
+	//IRs []*IR
+	Nodes []*Node //remove in future
+}
+
 func NewNode(ntype NodeType, lhs, rhs *Node) *Node {
 	return &Node{Type: ntype, Lhs: lhs, Rhs: rhs}
 }
