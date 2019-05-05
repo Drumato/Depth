@@ -42,6 +42,8 @@ func init() {
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{Name: "dump-tokens", Usage: "dump tokens by lexer"},
 		cli.BoolFlag{Name: "dump-ast", Usage: "dump ast by recursive-descent parser"},
+		cli.BoolFlag{Name: "dump-ir", Usage: "dump ir"},
+		cli.BoolFlag{Name: "print-stdout", Usage: "print stdout the result of the compiling"},
 	}
 	app.Action = func(c *cli.Context) error {
 		if len(os.Args) < 2 {
@@ -91,6 +93,14 @@ func Start(c *cli.Context) error {
 	manager := parse.GenerateIR(rootNode)
 	parse.AllocateRegisters(manager)
 	//fmt.Println(aurora.Bold(aurora.Blue("now compiling...")))
+	if c.Bool("dump-ir") {
+		for fn, irs := range manager.FuncTable {
+			fmt.Printf("%s IR:\n", aurora.Bold(aurora.Blue(fn.Name)))
+			for _, ir := range irs {
+				fmt.Printf("%+v\n", ir)
+			}
+		}
+	}
 	if lexer.Filename == "" {
 		codegen.Gen(manager, os.Stdout, "sample.dep")
 	} else {
@@ -99,7 +109,11 @@ func Start(c *cli.Context) error {
 			return err
 		}
 
-		codegen.Gen(manager, f, lexer.Filename)
+		if c.Bool("print-stdout") {
+			codegen.Gen(manager, os.Stdout, lexer.Filename)
+		} else {
+			codegen.Gen(manager, f, lexer.Filename)
+		}
 	}
 	return nil
 }
