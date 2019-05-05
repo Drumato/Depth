@@ -1,6 +1,7 @@
 package main
 
 import (
+	"depth/asm"
 	"depth/codegen"
 	"depth/lex"
 	"depth/parse"
@@ -43,7 +44,9 @@ func init() {
 		cli.BoolFlag{Name: "dump-tokens", Usage: "dump tokens by lexer"},
 		cli.BoolFlag{Name: "dump-ast", Usage: "dump ast by recursive-descent parser"},
 		cli.BoolFlag{Name: "dump-ir", Usage: "dump ir"},
-		cli.BoolFlag{Name: "print-stdout", Usage: "print stdout the result of the compiling"},
+		cli.BoolFlag{Name: "print-stdout", Usage: "print stdout the result of the processing"},
+		cli.BoolFlag{Name: "-until-compile", Usage: "stop processing when succeed compile"},
+		cli.BoolFlag{Name: "-until-assemble", Usage: "stop processing when succeed assemble"},
 	}
 	app.Action = func(c *cli.Context) error {
 		if len(os.Args) < 2 {
@@ -59,23 +62,20 @@ func init() {
 func Start(c *cli.Context) error {
 	var input string
 	var lexer *lex.Lexer
-	if _, err := os.Open(os.Args[len(os.Args)-1]); err != nil {
-		input = string([]rune(os.Args[len(os.Args)-1]))
+	sourcecode := os.Args[len(os.Args)-1]
+	if f, err := os.Open(sourcecode); err != nil {
+		input = string([]rune(sourcecode))
 		lexer = lex.New(input, "")
 	} else {
-		if filepath.Ext(os.Args[len(os.Args)-1]) != ".dep" {
+		if filepath.Ext(sourcecode) != ".dep" {
 			return fmt.Errorf("%v\n", aurora.Bold(aurora.Red("Depth only supporting .dep file at the moment!")))
-		}
-		f, err := os.Open(os.Args[len(os.Args)-1])
-		if err != nil {
-			return err
 		}
 		b, err := ioutil.ReadAll(f)
 		if err != nil {
 			return err
 		}
 		input = string(b)
-		lexer = lex.New(input, os.Args[len(os.Args)-1])
+		lexer = lex.New(input, sourcecode)
 	}
 	if c.Bool("dump-tokens") {
 		tok := lexer.NextToken()
@@ -83,7 +83,7 @@ func Start(c *cli.Context) error {
 			fmt.Printf("%+v\n", tok)
 			tok = lexer.NextToken()
 		}
-		lexer = lex.New(input, os.Args[len(os.Args)-1])
+		lexer = lex.New(input, sourcecode)
 	}
 	parser := parse.New(lexer)
 	rootNode := parser.Parse()
@@ -114,6 +114,29 @@ func Start(c *cli.Context) error {
 		} else {
 			codegen.Gen(manager, f, lexer.Filename)
 		}
+	}
+	if c.Bool("until-compile") {
+		return nil
+	}
+	asmf, err := os.Open("tmp.s")
+	if err != nil {
+		return err
+	}
+	binaries, err := ioutil.ReadAll(asmf)
+	if err != nil {
+		return err
+	}
+	asms := asm.Parse(string(binaries))
+	asm.Semantic(os.Stdout, asms)
+	for _, as := range asms {
+		if as.Op.Code == 0 {
+			fmt.Printf("%s: % x\n", as.Op.Name, as.Op.Code)
+			continue
+		}
+		fmt.Printf("% x\n", as.Op.Code)
+	}
+	if c.Bool("until-assemble") {
+		return nil
 	}
 	return nil
 }
