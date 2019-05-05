@@ -8,8 +8,8 @@ const (
 
 type NodeType string
 type Node struct {
-	Lhs      *Node
-	Rhs      *Node
+	Loperand *Node
+	Roperand *Node
 	IntVal   int64
 	FloatVal float64
 	Name     string
@@ -26,8 +26,8 @@ type Function struct {
 	Nodes []*Node //may be remove in future
 }
 
-func NewNode(ntype NodeType, lhs, rhs *Node) *Node {
-	return &Node{Type: ntype, Lhs: lhs, Rhs: rhs}
+func NewNode(ntype NodeType, lop, rop *Node) *Node {
+	return &Node{Type: ntype, Loperand: lop, Roperand: rop}
 }
 
 func NewNodeNum(val int64) *Node {

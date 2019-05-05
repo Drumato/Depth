@@ -81,21 +81,25 @@ func Start(c *cli.Context) error {
 			fmt.Printf("%+v\n", tok)
 			tok = lexer.NextToken()
 		}
+		lexer = lex.New(input, os.Args[len(os.Args)-1])
 	}
 	parser := parse.New(lexer)
 	rootNode := parser.Parse()
 	if c.Bool("dump-ast") {
 		fmt.Printf("%+v\n", rootNode)
 	}
+	manager := parse.GenerateIR(rootNode)
+	parse.AllocateRegisters(manager)
 	//fmt.Println(aurora.Bold(aurora.Blue("now compiling...")))
 	if lexer.Filename == "" {
-		codegen.Gen(rootNode, os.Stdout, "sample.dep")
+		codegen.Gen(manager, os.Stdout, "sample.dep")
 	} else {
 		f, err := os.Create("tmp.s")
 		if err != nil {
 			return err
 		}
-		codegen.Gen(rootNode, f, lexer.Filename)
+
+		codegen.Gen(manager, f, lexer.Filename)
 	}
 	return nil
 }
