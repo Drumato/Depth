@@ -17,7 +17,7 @@ try() {
   fi
 }
 
-try 100 '30-20+40+50'
+try 100 'f main(){30-20+40+50}'
 
 echo -e "\e[32mOK\e[0m"
 make clean

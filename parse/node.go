@@ -23,7 +23,7 @@ type RootNode struct {
 type Function struct {
 	Name string
 	//IRs []*IR
-	Nodes []*Node //remove in future
+	Nodes []*Node //may be remove in future
 }
 
 func NewNode(ntype NodeType, lhs, rhs *Node) *Node {

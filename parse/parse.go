@@ -14,21 +14,23 @@ type Parser struct { //recursive-descent parser
 	warnings []Warning
 
 	curToken token.Token
+	nexToken token.Token
 }
 
 func New(l *lex.Lexer) *Parser {
-	p := &Parser{l: l}
+	p := &Parser{l: l, nexToken: l.NextToken()}
 	p.nextToken()
 	return p
 }
 
 func (p *Parser) nextToken() {
-	p.curToken = p.l.NextToken()
+	p.curToken = p.nexToken
+	p.nexToken = p.l.NextToken()
 }
 
 func (p *Parser) expect(t token.TokenType) {
-	if p.curToken.Type != t {
-		logrus.Errorf("%s expected, but got %s", t, p.curToken.Literal)
+	if p.nexToken.Type != t {
+		logrus.Errorf("%s expected, but got %s", t, p.nexToken.Literal)
 		os.Exit(1)
 	}
 	p.nextToken()
@@ -62,12 +64,33 @@ func (p *Parser) expr() *Node {
 		p.nextToken()
 		lhs = NewNode(NodeType(t.Type), lhs, p.number())
 	}
-	if p.curToken.Type != token.EOF {
+	if p.curToken.Type != token.RBRACE {
 		logrus.Errorf("stray token: %s", p.curToken.Literal)
 	}
 	return lhs
 }
 
-func (p *Parser) Parse() *Node {
-	return p.expr()
+func (p *Parser) function() *Function {
+	fn := &Function{}
+	if p.consume(token.FUNCTION) {
+		if p.curToken.Type != token.IDENT {
+			logrus.Errorf("identifer expected,but got %s", p.curToken.Literal)
+		}
+		fn.Name = p.curToken.Literal
+		p.expect(token.LPAREN) //yet ignored arguments
+		p.expect(token.RPAREN)
+		p.expect(token.LBRACE)
+		p.nextToken()
+		fn.Nodes = append(fn.Nodes, p.expr())
+	}
+	p.expect(token.EOF)
+	return fn
+}
+
+func (p *Parser) Parse() *RootNode {
+	functions := make(map[string]*Function)
+	rn := &RootNode{Functions: functions}
+	fn := p.function()
+	rn.Functions[fn.Name] = fn
+	return rn
 }
