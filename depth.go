@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/logrusorgru/aurora"
@@ -73,6 +74,7 @@ func Start(c *cli.Context) error {
 	if c.Bool("until-compile") {
 		return nil
 	}
+	generateBinary(c)
 	if c.Bool("until-assemble") {
 		return nil
 	}
@@ -167,4 +169,18 @@ func generateCode(c *cli.Context, manager *parse.Manager, filename string) {
 			codegen.Gen(manager, f, filename, c.Int("optlevel"))
 		}
 	}
+}
+
+func generateBinary(c *cli.Context) {
+	if c.Bool("verbosity") {
+		fmt.Println(util.ColorString("Assemble mnemonics...", "blue"))
+	}
+	cmd := exec.Command("asm/target/debug/asm")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		logrus.Errorf(ErrFormat, err)
+	}
+
 }
