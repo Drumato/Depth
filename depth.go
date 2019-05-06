@@ -31,6 +31,19 @@ var (
 )
 
 func main() {
+	cmd := exec.Command("make", "clean")
+	err := cmd.Run()
+	if err != nil {
+		logrus.Errorf(ErrFormat, err)
+	}
+	if _, err := os.Open("asm/target/debug/asm"); err != nil {
+		fmt.Printf(util.ColorString("Builds assembler...", "blue"))
+		cmd := exec.Command("make", "-c", "asm/")
+		err := cmd.Run()
+		if err != nil {
+			logrus.Errorf(ErrFormat, err)
+		}
+	}
 	if err := app.Run(os.Args); err != nil {
 		fmt.Printf(ErrFormat, util.ColorString(fmt.Sprintf("%+v", err), "red"))
 	}
@@ -70,6 +83,9 @@ func Start(c *cli.Context) error {
 	lexer := lexing(c, sourcecode)
 	rootNode := builtAST(c, lexer)
 	manager := translateIRs(c, rootNode)
+	semantic(c, manager)
+	analysis(c, manager)
+	optimize(c, manager)
 	generateCode(c, manager, lexer.Filename)
 	if c.Bool("until-compile") {
 		return nil
@@ -169,6 +185,17 @@ func generateCode(c *cli.Context, manager *parse.Manager, filename string) {
 			codegen.Gen(manager, f, filename, c.Int("optlevel"))
 		}
 	}
+}
+func semantic(c *cli.Context, manager *parse.Manager) {
+	parse.Semantic(manager)
+}
+
+func analysis(c *cli.Context, manager *parse.Manager) {
+	codegen.Analysis(manager)
+}
+
+func optimize(c *cli.Context, manager *parse.Manager) {
+	codegen.Optimize(manager, c.Int("optlevel"))
 }
 
 func generateBinary(c *cli.Context) {
