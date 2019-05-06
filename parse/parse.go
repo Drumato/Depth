@@ -54,20 +54,33 @@ func (p *Parser) number() *Node {
 	return nil
 }
 
+func (p *Parser) mul() *Node {
+	lop := p.number()
+	for {
+		t := p.curToken
+		if t.Type != token.ASTERISK && t.Type != token.SLASH {
+			break
+		}
+		p.nextToken()
+		lop = NewNode(NodeType(t.Type), lop, p.number())
+	}
+	return lop
+}
+
 func (p *Parser) expr() *Node {
-	lhs := p.number()
+	lop := p.mul()
 	for {
 		t := p.curToken
 		if t.Type != token.PLUS && t.Type != token.MINUS {
 			break
 		}
 		p.nextToken()
-		lhs = NewNode(NodeType(t.Type), lhs, p.number())
+		lop = NewNode(NodeType(t.Type), lop, p.mul())
 	}
 	if p.curToken.Type != token.RBRACE {
 		logrus.Errorf("stray token: %s", p.curToken.Literal)
 	}
-	return lhs
+	return lop
 }
 
 func (p *Parser) function() *Function {

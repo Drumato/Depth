@@ -4,6 +4,8 @@ const (
 	IR_IMM      = "Immediate"
 	IR_ADD      = "+"
 	IR_SUB      = "-"
+	IR_MUL      = "*"
+	IR_DIV      = "/"
 	IR_MOV      = "Move"
 	IR_RETURN   = "Return"
 	IR_FREE     = "Free"
@@ -43,7 +45,7 @@ func expr(n *Node) int64 {
 		nReg++
 		newIR(IR_IMM, reg, n.IntVal)
 		return reg
-	case ND_PLUS, ND_MINUS:
+	case ND_PLUS, ND_MINUS, ND_MUL, ND_DIV:
 		lop := expr(n.Loperand)
 		rop := expr(n.Roperand)
 		newIR(IRType(n.Type), lop, rop)

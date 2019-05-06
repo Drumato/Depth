@@ -16,7 +16,14 @@ func Parse(code string) []*Mnemonic {
 		if strings.Contains(as, "main:") || strings.Contains(as, ".") || as == "" {
 			continue
 		}
-		tmp := strings.Fields(as)
+		t := strings.Fields(as)
+		var tmp []string
+		for _, tt := range t {
+			if strings.Contains(tt, "#") {
+				continue
+			}
+			tmp = append(tmp, tt)
+		}
 		switch len(tmp) {
 		case 1:
 			codes = append(codes, &Mnemonic{Op: &Opecode{Name: Opetype(tmp[0])}})

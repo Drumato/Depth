@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 
 	"github.com/logrusorgru/aurora"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
 
@@ -47,8 +48,8 @@ func init() {
 		cli.BoolFlag{Name: "dump-hex", Usage: "dump binary by hex"},
 		cli.BoolFlag{Name: "dump-ir", Usage: "dump ir"},
 		cli.BoolFlag{Name: "print-stdout", Usage: "print stdout the result of the processing"},
-		cli.BoolFlag{Name: "-until-compile", Usage: "stop processing when succeed compile"},
-		cli.BoolFlag{Name: "-until-assemble", Usage: "stop processing when succeed assemble"},
+		cli.BoolFlag{Name: "until-compile", Usage: "stop processing when succeed compile"},
+		cli.BoolFlag{Name: "until-assemble", Usage: "stop processing when succeed assemble"},
 	}
 	app.Action = func(c *cli.Context) error {
 		if len(os.Args) < 2 {
@@ -62,19 +63,36 @@ func init() {
 }
 
 func Start(c *cli.Context) error {
+	sourcecode := os.Args[len(os.Args)-1]
+	lexer := lexing(c, sourcecode)
+	rootNode := builtAST(c, lexer)
+	manager := translateIRs(c, rootNode)
+	generateCode(c, manager, lexer.Filename)
+	if c.Bool("until-compile") {
+		return nil
+	}
+	generateBinary(c)
+	if c.Bool("until-assemble") {
+		return nil
+	}
+	return nil
+}
+
+func lexing(c *cli.Context, sourcecode string) *lex.Lexer {
 	var input string
 	var lexer *lex.Lexer
-	sourcecode := os.Args[len(os.Args)-1]
 	if f, err := os.Open(sourcecode); err != nil {
 		input = string([]rune(sourcecode))
 		lexer = lex.New(input, "")
 	} else {
 		if filepath.Ext(sourcecode) != ".dep" {
-			return fmt.Errorf("%v\n", aurora.Bold(aurora.Red("Depth only supporting .dep file at the moment!")))
+			logrus.Errorf("%v\n", aurora.Bold(aurora.Red("Depth only supporting .dep file at the moment!")))
+			os.Exit(1)
 		}
 		b, err := ioutil.ReadAll(f)
 		if err != nil {
-			return err
+			logrus.Errorf("%+v\n", err)
+			os.Exit(1)
 		}
 		if c.Bool("dump-source") {
 			fmt.Printf("%s\n", aurora.Bold(aurora.Blue("----------------input source----------------")))
@@ -92,11 +110,19 @@ func Start(c *cli.Context) error {
 		}
 		lexer = lex.New(input, sourcecode)
 	}
+	return lexer
+}
+
+func builtAST(c *cli.Context, lexer *lex.Lexer) *parse.RootNode {
 	parser := parse.New(lexer)
 	rootNode := parser.Parse()
 	if c.Bool("dump-ast") {
 		fmt.Printf("%+v\n", rootNode)
 	}
+	return rootNode
+}
+
+func translateIRs(c *cli.Context, rootNode *parse.RootNode) *parse.Manager {
 	manager := parse.GenerateIR(rootNode)
 	parse.AllocateRegisters(manager)
 	//fmt.Println(aurora.Bold(aurora.Blue("now compiling...")))
@@ -109,31 +135,38 @@ func Start(c *cli.Context) error {
 			}
 		}
 	}
-	if lexer.Filename == "" {
+	return manager
+}
+
+func generateCode(c *cli.Context, manager *parse.Manager, filename string) {
+	if filename == "" {
 		codegen.Gen(manager, os.Stdout, "sample.dep")
 	} else {
 		f, err := os.Create("tmp.s")
 		if err != nil {
-			return err
+			logrus.Errorf("%+v\n", err)
+			os.Exit(1)
 		}
 
 		if c.Bool("print-stdout") {
 			fmt.Printf("%s\n", aurora.Bold(aurora.Blue("----------------assembly----------------")))
-			codegen.Gen(manager, os.Stdout, lexer.Filename)
+			codegen.Gen(manager, os.Stdout, filename)
 		} else {
-			codegen.Gen(manager, f, lexer.Filename)
+			codegen.Gen(manager, f, filename)
 		}
 	}
-	if c.Bool("until-compile") {
-		return nil
-	}
+}
+
+func generateBinary(c *cli.Context) {
 	asmf, err := os.Open("tmp.s")
 	if err != nil {
-		return err
+		logrus.Errorf("%+v\n", err)
+		os.Exit(1)
 	}
 	binaries, err := ioutil.ReadAll(asmf)
 	if err != nil {
-		return err
+		logrus.Errorf("%+v\n", err)
+		os.Exit(1)
 	}
 	asms := asm.Parse(string(binaries))
 	asm.Semantic(os.Stdout, asms)
@@ -147,8 +180,4 @@ func Start(c *cli.Context) error {
 			fmt.Printf("% x\n", as.Op.Code)
 		}
 	}
-	if c.Bool("until-assemble") {
-		return nil
-	}
-	return nil
 }

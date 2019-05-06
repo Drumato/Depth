@@ -4,6 +4,8 @@ const (
 	ND_INTEGER = "INTEGER"
 	ND_PLUS    = "+"
 	ND_MINUS   = "-"
+	ND_MUL     = "*"
+	ND_DIV     = "/"
 )
 
 type NodeType string
