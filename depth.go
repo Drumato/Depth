@@ -50,6 +50,7 @@ func init() {
 		cli.BoolFlag{Name: "print-stdout", Usage: "print stdout the result of the processing"},
 		cli.BoolFlag{Name: "until-compile", Usage: "stop processing when succeed compile"},
 		cli.BoolFlag{Name: "until-assemble", Usage: "stop processing when succeed assemble"},
+		cli.IntFlag{Name: "optlevel", Usage: "specify optimization levels", Value: 0},
 	}
 	app.Action = func(c *cli.Context) error {
 		if len(os.Args) < 2 {
@@ -123,7 +124,7 @@ func builtAST(c *cli.Context, lexer *lex.Lexer) *parse.RootNode {
 }
 
 func translateIRs(c *cli.Context, rootNode *parse.RootNode) *parse.Manager {
-	manager := parse.GenerateIR(rootNode)
+	manager := parse.GenerateIR(rootNode, c.Int("optlevel"))
 	parse.AllocateRegisters(manager)
 	//fmt.Println(aurora.Bold(aurora.Blue("now compiling...")))
 	if c.Bool("dump-ir") {
@@ -140,7 +141,7 @@ func translateIRs(c *cli.Context, rootNode *parse.RootNode) *parse.Manager {
 
 func generateCode(c *cli.Context, manager *parse.Manager, filename string) {
 	if filename == "" {
-		codegen.Gen(manager, os.Stdout, "sample.dep")
+		codegen.Gen(manager, os.Stdout, "sample.dep", c.Int("optlevel"))
 	} else {
 		f, err := os.Create("tmp.s")
 		if err != nil {
@@ -150,9 +151,9 @@ func generateCode(c *cli.Context, manager *parse.Manager, filename string) {
 
 		if c.Bool("print-stdout") {
 			fmt.Printf("%s\n", aurora.Bold(aurora.Blue("----------------assembly----------------")))
-			codegen.Gen(manager, os.Stdout, filename)
+			codegen.Gen(manager, os.Stdout, filename, c.Int("optlevel"))
 		} else {
-			codegen.Gen(manager, f, filename)
+			codegen.Gen(manager, f, filename, c.Int("optlevel"))
 		}
 	}
 }

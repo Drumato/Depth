@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	cur int
+	optLevel int = 0
 )
 
 func genx86(irs []*parse.IR, f *os.File) {
@@ -26,18 +26,36 @@ func genx86(irs []*parse.IR, f *os.File) {
 			fmt.Fprintf(f, "    mov rax, %s #return\n", Registers64[ir.Loperand])
 			fmt.Fprintf(f, "    ret\n")
 		case parse.IR_ADD:
-			fmt.Fprintf(f, "    add %s, %s #add\n", Registers64[ir.Loperand], Registers64[ir.Roperand])
+			if optLevel == 2 {
+				fmt.Fprintf(f, "    add %s, %d #add\n", Registers64[ir.Loperand], ir.Roperand)
+			} else {
+				fmt.Fprintf(f, "    add %s, %s #add\n", Registers64[ir.Loperand], Registers64[ir.Roperand])
+			}
 		case parse.IR_SUB:
-			fmt.Fprintf(f, "    sub %s, %s #sub\n", Registers64[ir.Loperand], Registers64[ir.Roperand])
+			if optLevel == 2 {
+				fmt.Fprintf(f, "    sub %s, %d #sub\n", Registers64[ir.Loperand], ir.Roperand)
+			} else {
+				fmt.Fprintf(f, "    sub %s, %s #sub\n", Registers64[ir.Loperand], Registers64[ir.Roperand])
+			}
 		case parse.IR_MUL:
-			fmt.Fprintf(f, "    mov rax, %s #mul\n", Registers64[ir.Roperand])
-			fmt.Fprintf(f, "    mul %s\n", Registers64[ir.Loperand])
-			fmt.Fprintf(f, "    mov %s, rax\n", Registers64[ir.Loperand])
+			if optLevel == 2 {
+				fmt.Fprintf(f, "    mov rax, %d #mul\n", ir.Roperand)
+				fmt.Fprintf(f, "    mul %s\n", Registers64[ir.Loperand])
+				fmt.Fprintf(f, "    mov %s, rax\n", Registers64[ir.Loperand])
+			} else {
+				fmt.Fprintf(f, "    mov rax, %s #mul\n", Registers64[ir.Roperand])
+				fmt.Fprintf(f, "    mul %s\n", Registers64[ir.Loperand])
+				fmt.Fprintf(f, "    mov %s, rax\n", Registers64[ir.Loperand])
+			}
+
 		case parse.IR_DIV:
-			fmt.Fprintf(f, "    mov rax, %s #div\n", Registers64[ir.Loperand])
-			fmt.Fprintf(f, "    cqo\n")
-			fmt.Fprintf(f, "    div %s\n", Registers64[ir.Roperand])
-			fmt.Fprintf(f, "    mov %s, rax\n", Registers64[ir.Loperand])
+			if optLevel == 2 {
+			} else {
+				fmt.Fprintf(f, "    mov rax, %s #div\n", Registers64[ir.Loperand])
+				fmt.Fprintf(f, "    cqo\n")
+				fmt.Fprintf(f, "    div %s\n", Registers64[ir.Roperand])
+				fmt.Fprintf(f, "    mov %s, rax\n", Registers64[ir.Loperand])
+			}
 		case parse.IR_FREE:
 		case parse.IR_EPILOGUE:
 			break
@@ -48,7 +66,8 @@ func genx86(irs []*parse.IR, f *os.File) {
 	}
 }
 
-func Gen(manager *parse.Manager, f *os.File, filename string) {
+func Gen(manager *parse.Manager, f *os.File, filename string, opt int) {
+	optLevel = opt
 	fmt.Fprintf(f, "    .file \"%s\"\n", filename)
 	fmt.Fprintf(f, "    .intel_syntax noprefix\n")
 	fmt.Fprintf(f, "    .text\n")

@@ -18,8 +18,9 @@ const (
 )
 
 var (
-	irs  []*IR
-	nReg int64 = 1
+	irs      []*IR
+	nReg     int64 = 1
+	optLevel       = 0
 )
 
 type IRType string
@@ -57,11 +58,27 @@ func stmt(n *Node) {
 func expr(n *Node) int64 {
 	switch n.Type {
 	case ND_INTEGER:
-		reg := nReg
+		if optLevel != 2 || nReg == 1 {
+			reg := nReg
+			nReg++
+			newIR(IR_IMM, reg, n.IntVal)
+			return reg
+		}
 		nReg++
-		newIR(IR_IMM, reg, n.IntVal)
-		return reg
-	case ND_PLUS, ND_MINUS, ND_MUL, ND_DIV:
+		return n.IntVal
+	case ND_PLUS, ND_MINUS:
+		lop := expr(n.Loperand)
+		rop := expr(n.Roperand)
+		switch optLevel {
+		case 2:
+			newIR(IRType(n.Type), lop, rop)
+			return lop
+		default:
+			newIR(IRType(n.Type), lop, rop)
+			kill(rop)
+			return lop
+		}
+	case ND_MUL, ND_DIV:
 		lop := expr(n.Loperand)
 		rop := expr(n.Roperand)
 		newIR(IRType(n.Type), lop, rop)
@@ -71,7 +88,8 @@ func expr(n *Node) int64 {
 	return -42
 }
 
-func GenerateIR(rootNode *RootNode) *Manager {
+func GenerateIR(rootNode *RootNode, opt int) *Manager {
+	optLevel = opt
 	ft := make(map[*Function][]*IR)
 	manager := &Manager{FuncTable: ft}
 	for _, fn := range rootNode.Functions {

@@ -49,7 +49,13 @@ func checkRegister(irs []*IR) {
 		case IR_IMM:
 			ir.Loperand = allocate(ir.Loperand)
 		case IR_ADD, IR_SUB, IR_MUL, IR_DIV:
+			if optLevel == 2 && nReg != 1 {
+				continue
+			}
 			ir.Loperand = allocate(ir.Loperand)
+			if optLevel == 2 {
+				continue
+			}
 			ir.Roperand = allocate(ir.Roperand)
 		case IR_RETURN:
 			break
@@ -73,4 +79,5 @@ func initialize(irs []*IR) {
 	for i := range irs {
 		registerMap[int64(i)] = -1
 	}
+
 }
