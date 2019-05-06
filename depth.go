@@ -1,7 +1,6 @@
 package main
 
 import (
-	"depth/asm"
 	"depth/codegen"
 	"depth/lex"
 	"depth/parse"
@@ -32,7 +31,7 @@ var (
 
 func main() {
 	if err := app.Run(os.Args); err != nil {
-		fmt.Printf(ErrFormat, util.ColorString(fmt.Sprintf("%+v\n", err), "red"))
+		fmt.Printf(ErrFormat, util.ColorString(fmt.Sprintf("%+v", err), "red"))
 	}
 }
 
@@ -74,7 +73,6 @@ func Start(c *cli.Context) error {
 	if c.Bool("until-compile") {
 		return nil
 	}
-	generateBinary(c)
 	if c.Bool("until-assemble") {
 		return nil
 	}
@@ -155,7 +153,7 @@ func generateCode(c *cli.Context, manager *parse.Manager, filename string) {
 	}
 	f, err := os.Create("tmp.s")
 	if err != nil {
-		logrus.Errorf("%+v\n", err)
+		logrus.Errorf("%+v", err)
 		os.Exit(1)
 	}
 	if filename == "" {
@@ -167,34 +165,6 @@ func generateCode(c *cli.Context, manager *parse.Manager, filename string) {
 			codegen.Gen(manager, os.Stdout, filename, c.Int("optlevel"))
 		} else {
 			codegen.Gen(manager, f, filename, c.Int("optlevel"))
-		}
-	}
-}
-
-func generateBinary(c *cli.Context) {
-	if c.Bool("verbosity") {
-		fmt.Println(util.ColorString("Assemble mnemonics...", "blue"))
-	}
-	asmf, err := os.Open("tmp.s")
-	if err != nil {
-		logrus.Errorf("%+v\n", err)
-		os.Exit(1)
-	}
-	binaries, err := ioutil.ReadAll(asmf)
-	if err != nil {
-		logrus.Errorf("%+v\n", err)
-		os.Exit(1)
-	}
-	asms := asm.Parse(string(binaries))
-	asm.Semantic(os.Stdout, asms)
-	if c.Bool("dump-hex") {
-		fmt.Println(util.ColorString("----------------hexdump----------------", "blue"))
-		for _, as := range asms {
-			if as.Op.Code == 0 {
-				fmt.Printf("%s: % x\n", as.Op.Name, as.Op.Code)
-				continue
-			}
-			fmt.Printf("% x\n", as.Op.Code)
 		}
 	}
 }
