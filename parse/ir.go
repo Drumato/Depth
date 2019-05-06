@@ -1,5 +1,9 @@
 package parse
 
+import (
+	"github.com/sirupsen/logrus"
+)
+
 const (
 	IR_IMM      = "Immediate"
 	IR_ADD      = "+"
@@ -38,6 +42,17 @@ func kill(reg int64) {
 	newIR(IR_FREE, reg, 0)
 }
 
+func stmt(n *Node) {
+	switch n.Type {
+	case ND_RETURN:
+		retReg := expr(n.Expression)
+		newIR(IR_RETURN, retReg, 0)
+	default:
+		logrus.Errorf("unexpected node:%+v", n)
+	}
+
+}
+
 func expr(n *Node) int64 {
 	switch n.Type {
 	case ND_INTEGER:
@@ -58,15 +73,13 @@ func expr(n *Node) int64 {
 func GenerateIR(rootNode *RootNode) *Manager {
 	ft := make(map[*Function][]*IR)
 	manager := &Manager{FuncTable: ft}
-	var retReg int64
 	for _, fn := range rootNode.Functions {
 		irs = []*IR{}
 		//newIR(IR_PROLOGUE, 0, 0)
 		for _, node := range fn.Nodes {
-			retReg = expr(node)
+			stmt(node)
 		}
 		//newIR(IR_EPILOGUE, 0, 0)
-		newIR(IR_RETURN, retReg, 0)
 		manager.FuncTable[fn] = irs
 	}
 	return manager

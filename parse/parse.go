@@ -67,6 +67,20 @@ func (p *Parser) mul() *Node {
 	return lop
 }
 
+func (p *Parser) stmt() *Node {
+	n := &Node{}
+	switch p.curToken.Type {
+	case token.RETURN:
+		n.Type = ND_RETURN
+		p.nextToken()
+		n.Expression = p.expr()
+
+	default:
+		logrus.Errorf("Invalid statement startswith %s", p.curToken.Literal)
+	}
+	return n
+}
+
 func (p *Parser) expr() *Node {
 	lop := p.mul()
 	for {
@@ -94,7 +108,7 @@ func (p *Parser) function() *Function {
 		p.expect(token.RPAREN)
 		p.expect(token.LBRACE)
 		p.nextToken()
-		fn.Nodes = append(fn.Nodes, p.expr())
+		fn.Nodes = append(fn.Nodes, p.stmt())
 	}
 	p.expect(token.EOF)
 	return fn

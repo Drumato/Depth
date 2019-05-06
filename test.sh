@@ -17,8 +17,8 @@ try() {
   fi
 }
 
-try 100 'f main(){30-20+40+50}'
-try 25 'f main(){6*2+30/2-2}'
+try 100 'f main(){ return 30-20+40+50}'
+try 25 'f main(){ return 6*2+30/2-2}'
 
 echo -e "\e[32mOK\e[0m"
 make clean

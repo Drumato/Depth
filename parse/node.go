@@ -6,16 +6,18 @@ const (
 	ND_MINUS   = "-"
 	ND_MUL     = "*"
 	ND_DIV     = "/"
+	ND_RETURN  = "RETURN"
 )
 
 type NodeType string
 type Node struct {
-	Loperand *Node
-	Roperand *Node
-	IntVal   int64
-	FloatVal float64
-	Name     string
-	Type     NodeType
+	Loperand   *Node
+	Roperand   *Node
+	Expression *Node
+	IntVal     int64
+	FloatVal   float64
+	Name       string
+	Type       NodeType
 }
 
 type RootNode struct {

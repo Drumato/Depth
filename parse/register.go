@@ -51,6 +51,8 @@ func checkRegister(irs []*IR) {
 		case IR_ADD, IR_SUB, IR_MUL, IR_DIV:
 			ir.Loperand = allocate(ir.Loperand)
 			ir.Roperand = allocate(ir.Roperand)
+		case IR_RETURN:
+			break
 			/*
 				if ir.Type == IR_FREE {
 					free(ir.Loperand)
