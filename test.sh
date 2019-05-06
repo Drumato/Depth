@@ -3,7 +3,7 @@ try() {
   expected="$1"
   input="$2"
 
-  ./depth --until-compile "$input" > tmp.s
+  ./depth --until-compile "$input"
   gcc -o tmp tmp.s
   ./tmp
   actual="$?"

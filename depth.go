@@ -5,6 +5,7 @@ import (
 	"depth/codegen"
 	"depth/lex"
 	"depth/parse"
+	util "depth/pkg"
 	"depth/token"
 	"fmt"
 	"io/ioutil"
@@ -17,7 +18,7 @@ import (
 )
 
 const (
-	ErrFormat = "Error found: %s\n"
+	ErrFormat = "Error found: %+v\n"
 	VERSION   = `0.1.1`
 	NAME      = `Depth`
 	USAGE     = `./depth [options] [-flags] <sourcefile>or<source>`
@@ -31,7 +32,7 @@ var (
 
 func main() {
 	if err := app.Run(os.Args); err != nil {
-		fmt.Printf(ErrFormat, aurora.Bold(aurora.Red(fmt.Sprintf("%+v", err))))
+		fmt.Printf(ErrFormat, util.ColorString(fmt.Sprintf("%+v\n", err), "red"))
 	}
 }
 
@@ -50,14 +51,15 @@ func init() {
 		cli.BoolFlag{Name: "print-stdout", Usage: "print stdout the result of the processing"},
 		cli.BoolFlag{Name: "until-compile", Usage: "stop processing when succeed compile"},
 		cli.BoolFlag{Name: "until-assemble", Usage: "stop processing when succeed assemble"},
+		cli.BoolFlag{Name: "verbosity", Usage: "output verbosity flag"},
 		cli.IntFlag{Name: "optlevel", Usage: "specify optimization levels", Value: 0},
 	}
 	app.Action = func(c *cli.Context) error {
 		if len(os.Args) < 2 {
-			return fmt.Errorf("%v\n", aurora.Bold(aurora.Red("not given code")))
+			return fmt.Errorf(ErrFormat, util.ColorString("not given code", "red"))
 		}
 		if err := Start(c); err != nil {
-			fmt.Printf(ErrFormat, aurora.Bold(aurora.Red(fmt.Sprintf("%+v", err))))
+			return fmt.Errorf(ErrFormat, util.ColorString(fmt.Sprintf("%+v", err), "red"))
 		}
 		return nil
 	}
@@ -82,28 +84,31 @@ func Start(c *cli.Context) error {
 func lexing(c *cli.Context, sourcecode string) *lex.Lexer {
 	var input string
 	var lexer *lex.Lexer
+	if c.Bool("verbosity") {
+		fmt.Println(util.ColorString("Tokenize...", "blue"))
+	}
 	if f, err := os.Open(sourcecode); err != nil {
 		input = string([]rune(sourcecode))
 		lexer = lex.New(input, "")
 	} else {
 		if filepath.Ext(sourcecode) != ".dep" {
-			logrus.Errorf("%v\n", aurora.Bold(aurora.Red("Depth only supporting .dep file at the moment!")))
+			logrus.Errorf(ErrFormat, util.ColorString("Depth only supporting .dep ext at the moment!", "red"))
 			os.Exit(1)
 		}
 		b, err := ioutil.ReadAll(f)
 		if err != nil {
-			logrus.Errorf("%+v\n", err)
+			logrus.Errorf(ErrFormat, err)
 			os.Exit(1)
 		}
 		if c.Bool("dump-source") {
-			fmt.Printf("%s\n", aurora.Bold(aurora.Blue("----------------input source----------------")))
+			fmt.Println(util.ColorString("----------------input source----------------", "blue"))
 			fmt.Println(string(b))
 		}
 		input = string(b)
 		lexer = lex.New(input, sourcecode)
 	}
 	if c.Bool("dump-tokens") {
-		fmt.Printf("%s\n", aurora.Bold(aurora.Blue("----------------dump tokens----------------")))
+		fmt.Println(util.ColorString("----------------dump tokens----------------", "blue"))
 		tok := lexer.NextToken()
 		for tok.Type != token.EOF {
 			fmt.Printf("%+v\n", tok)
@@ -115,6 +120,9 @@ func lexing(c *cli.Context, sourcecode string) *lex.Lexer {
 }
 
 func builtAST(c *cli.Context, lexer *lex.Lexer) *parse.RootNode {
+	if c.Bool("verbosity") {
+		fmt.Println(util.ColorString("Builds ast...", "blue"))
+	}
 	parser := parse.New(lexer)
 	rootNode := parser.Parse()
 	if c.Bool("dump-ast") {
@@ -126,11 +134,13 @@ func builtAST(c *cli.Context, lexer *lex.Lexer) *parse.RootNode {
 func translateIRs(c *cli.Context, rootNode *parse.RootNode) *parse.Manager {
 	manager := parse.GenerateIR(rootNode, c.Int("optlevel"))
 	parse.AllocateRegisters(manager)
-	//fmt.Println(aurora.Bold(aurora.Blue("now compiling...")))
+	if c.Bool("verbosity") {
+		fmt.Println(util.ColorString("Tramslates intermediate representation...", "blue"))
+	}
 	if c.Bool("dump-ir") {
-		fmt.Printf("%s\n", aurora.Bold(aurora.Blue("----------------dump IRs----------------")))
+		fmt.Println(util.ColorString("----------------dump IRs----------------", "blue"))
 		for fn, irs := range manager.FuncTable {
-			fmt.Printf("%s IR:\n", aurora.Bold(aurora.Blue(fn.Name)))
+			fmt.Printf("%s IR:\n", util.ColorString(fn.Name, "green"))
 			for _, ir := range irs {
 				fmt.Printf("%+v\n", ir)
 			}
@@ -140,14 +150,17 @@ func translateIRs(c *cli.Context, rootNode *parse.RootNode) *parse.Manager {
 }
 
 func generateCode(c *cli.Context, manager *parse.Manager, filename string) {
+	if c.Bool("verbosity") {
+		fmt.Println(util.ColorString("Compile source...", "blue"))
+	}
+	f, err := os.Create("tmp.s")
+	if err != nil {
+		logrus.Errorf("%+v\n", err)
+		os.Exit(1)
+	}
 	if filename == "" {
-		codegen.Gen(manager, os.Stdout, "sample.dep", c.Int("optlevel"))
+		codegen.Gen(manager, f, "sample.dep", c.Int("optlevel"))
 	} else {
-		f, err := os.Create("tmp.s")
-		if err != nil {
-			logrus.Errorf("%+v\n", err)
-			os.Exit(1)
-		}
 
 		if c.Bool("print-stdout") {
 			fmt.Printf("%s\n", aurora.Bold(aurora.Blue("----------------assembly----------------")))
@@ -159,6 +172,9 @@ func generateCode(c *cli.Context, manager *parse.Manager, filename string) {
 }
 
 func generateBinary(c *cli.Context) {
+	if c.Bool("verbosity") {
+		fmt.Println(util.ColorString("Assemble mnemonics...", "blue"))
+	}
 	asmf, err := os.Open("tmp.s")
 	if err != nil {
 		logrus.Errorf("%+v\n", err)
@@ -172,7 +188,7 @@ func generateBinary(c *cli.Context) {
 	asms := asm.Parse(string(binaries))
 	asm.Semantic(os.Stdout, asms)
 	if c.Bool("dump-hex") {
-		fmt.Printf("%s\n", aurora.Bold(aurora.Blue("----------------hexdump----------------")))
+		fmt.Println(util.ColorString("----------------hexdump----------------", "blue"))
 		for _, as := range asms {
 			if as.Op.Code == 0 {
 				fmt.Printf("%s: % x\n", as.Op.Name, as.Op.Code)
