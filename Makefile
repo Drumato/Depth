@@ -1,4 +1,5 @@
 depth:
+	make clean
 	go build depth.go && ./test.sh
 
 clean:

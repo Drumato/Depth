@@ -40,6 +40,7 @@ func newIR(ty IRType, lop, rop int64) *IR {
 
 func kill(reg int64) {
 	newIR(IR_FREE, reg, 0)
+	nReg--
 }
 
 func stmt(n *Node) {

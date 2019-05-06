@@ -53,13 +53,10 @@ func checkRegister(irs []*IR) {
 			ir.Roperand = allocate(ir.Roperand)
 		case IR_RETURN:
 			break
-			/*
-				if ir.Type == IR_FREE {
-					free(ir.Loperand)
-					ir.Type = IR_NOP
-				}
-			*/
 		default:
+			if ir.Type == IR_FREE {
+				free(ir.Loperand)
+			}
 		}
 	}
 }
