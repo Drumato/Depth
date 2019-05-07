@@ -60,6 +60,7 @@ func init() {
 		cli.BoolFlag{Name: "until-compile", Usage: "stop processing when succeed compile"},
 		cli.BoolFlag{Name: "until-assemble", Usage: "stop processing when succeed assemble"},
 		cli.BoolFlag{Name: "verbosity", Usage: "output verbosity flag"},
+		cli.StringFlag{Name: "arch", Usage: "specify architecture", Value: "x86-64"},
 		cli.IntFlag{Name: "optlevel", Usage: "specify optimization levels", Value: 0},
 	}
 	app.Action = func(c *cli.Context) error {
