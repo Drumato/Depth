@@ -52,9 +52,9 @@ func genx86(irs []*parse.IR, f *os.File) {
 		case parse.IR_ALLOCATE:
 			fmt.Fprintf(f, "    sub rsp, %#x #allocate\n", ir.Roperand)
 		case parse.IR_STORE:
-			fmt.Fprintf(f, "    mov [rbp-%#x], %#s #store\n", ir.Loperand, Registers64[ir.Roperand])
+			fmt.Fprintf(f, "    mov QWORD PTR -%d[rbp], %#x #store\n", ir.Loperand, ir.Roperand)
 		case parse.IR_LOAD:
-			fmt.Fprintf(f, "    mov %s, [rbp-%#x] #load\n", Registers64[ir.Loperand], ir.Roperand)
+			fmt.Fprintf(f, "    mov %s, QWORD PTR -%d[rbp] #load\n", Registers64[ir.Loperand], ir.Roperand)
 		case parse.IR_EPILOGUE:
 			fmt.Fprintf(f, "    mov rsp, rbp\n")
 			fmt.Fprintf(f, "    pop rbp#load\n")

@@ -25,6 +25,17 @@ func optimize(irs []*parse.IR) {
 					foundidx--
 				}
 			}
+		case parse.IR_STORE:
+			reg := irs[i].Roperand
+			foundidx := i - 1
+			for {
+				if irs[foundidx].Type == parse.IR_IMM && irs[foundidx].Loperand == reg {
+					irs[i].Roperand = irs[foundidx].Roperand
+					irs[foundidx].Type = parse.IR_NOP
+					break
+				}
+				foundidx--
+			}
 		case parse.IR_FREE:
 			if irs[i].Loperand != 1 {
 				irs[i].Type = parse.IR_NOP

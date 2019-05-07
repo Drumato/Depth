@@ -171,14 +171,23 @@ func generateCode(c *cli.Context, manager *parse.Manager, filename string) {
 		os.Exit(1)
 	}
 	if filename == "" {
-		codegen.Gen(manager, f, "sample.dep")
+		if c.Bool("print-stdout") {
+			fmt.Printf("%s\n", aurora.Bold(aurora.Blue("----------------assembly----------------")))
+			codegen.Gen(manager, os.Stdout, filename)
+			return
+		} else {
+			codegen.Gen(manager, f, "sample.dep")
+			return
+		}
 	} else {
 
 		if c.Bool("print-stdout") {
 			fmt.Printf("%s\n", aurora.Bold(aurora.Blue("----------------assembly----------------")))
 			codegen.Gen(manager, os.Stdout, filename)
+			return
 		} else {
 			codegen.Gen(manager, f, filename)
+			return
 		}
 	}
 }
