@@ -43,7 +43,7 @@ impl Lexer {
         self.position = self.readposition;
         self.readposition += 1;
     }
-    fn read_number(&self) -> String {
+    fn read_number(&mut self) -> String {
         let position: usize = self.position;
         let mut return_str: Vec<u8> = vec![];
         loop {
@@ -56,7 +56,7 @@ impl Lexer {
         }
         return from_utf8(return_str.as_slice()).unwrap().into();
     }
-    fn read_keyword(&self) -> String {
+    fn read_keyword(&mut self) -> String {
         let position: usize = self.position;
         let mut return_str: Vec<u8> = vec![];
         loop {
@@ -69,7 +69,7 @@ impl Lexer {
         }
         return from_utf8(return_str.as_slice()).unwrap().into();
     }
-    fn skip_whitespace(&self) {
+    fn skip_whitespace(&mut self) {
         loop {
             if !self.ch.is_ascii_whitespace() {
                 break;
@@ -77,10 +77,10 @@ impl Lexer {
             self.read_char();
         }
     }
-    fn next_token(&self) -> Token {
+    fn next_token(&mut self) -> Token {
         self.skip_whitespace();
         match self.ch {
-            '\0' => Token::new((TK_EOF, -42, String::new())),
+            _ => Token::new((TokenType::EOF, -42, String::new())),
         }
     }
 }
@@ -99,13 +99,13 @@ struct Operand {
     val: u64,
 }
 struct Token {
-    ty: String,
+    ty: TokenType,
     intval: i64,
     literal: String,
 }
 
 impl Token {
-    fn new(param: (u64, i64, String)) -> Token {
+    fn new(param: (TokenType, i64, String)) -> Token {
         Token {
             ty: param.0,
             intval: param.1,
@@ -114,32 +114,32 @@ impl Token {
     }
 }
 
-enum u64 {
+enum TokenType {
     /*elements*/
-    TK_MNEMONIC,
-    TK_IMMEDIATE,
-    TK_REGISTER,
-    TK_WORD,
-    TK_DWORD,
-    TK_QWORD,
-    TK_PTR,
+    MNEMONIC,
+    IMMEDIATE,
+    REGISTER,
+    WORD,
+    DWORD,
+    QWORD,
+    TKPTR,
 
     /* symbols */
-    TK_PLUS,
-    TK_MINUS,
-    TK_ASTERISK,
-    TK_SLASH,
-    TK_DOT,
-    TK_COLON,
-    TK_COMMA,
-    TK_LBRACKET,
-    TK_RBRACKET,
-    TK_QUOTE,
-    TK_DOUBLEQUOTE,
-    TK_ATSIGN,
+    PLUS,
+    MINUS,
+    ASTERISK,
+    SLASH,
+    DOT,
+    COLON,
+    COMMA,
+    LBRACKET,
+    RBRACKET,
+    QUOTE,
+    DOUBLEQUOTE,
+    ATSIGN,
 
     /* etc */
-    TK_EOF,
+    EOF,
 }
 
 fn lex(input: &String) /*-> Assembly*/
@@ -152,4 +152,6 @@ fn tokenize(input: &Vec<char>) /*-> Vec<Token>*/
 {
     let mut tokens: Vec<Token> = vec![];
     let mut lexer = Lexer::new((0, 0, input.to_vec()[0], input.to_vec()));
+    lexer.read_char();
+    lexer.read_char();
 }

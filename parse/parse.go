@@ -75,9 +75,39 @@ func (p *Parser) stmt() *Node {
 		p.nextToken()
 		n.Expression = p.expr()
 
+	case token.LET:
+		n.Type = ND_DEFINE
+		p.nextToken()
+		n.Identifier = p.define()
+		n.Expression = p.expr()
 	default:
-		logrus.Errorf("Invalid statement startswith %s", p.curToken.Literal)
+		logrus.Errorf("invalid statement startswith %s", p.curToken.Literal)
 	}
+	return n
+}
+
+func isTypename(t token.Token) bool {
+	switch t.Type {
+	case token.I8, token.I16, token.I32, token.I64, token, U8, token, U16, token, U32, token, U64, token.F32, token.F64, token.CHAR, token.BOOL:
+		return true
+	}
+	return false
+}
+func (p *Parser) define() *Node {
+	n := &Node{}
+	if p.curToken.Type != token.IDENT {
+		logrus.Errorf("identifer expected,but got %s", p.curToken.Literal)
+	}
+	n.Name = p.curToken.Literal
+	n.Type = ND_IDENT
+	p.expect(token.COLON)
+	p.nextToken()
+	if !isTypename(p.curToken) {
+		logrus.Errorf("expected type declaration,but got %s", p.curToken.Literal)
+	}
+	n.ElementType = &Element{Type: p.curToken.Type, Stacksize: stackTable[p.curToken.Literal]}
+	p.expect(token.ASSIGN)
+	p.nextToken()
 	return n
 }
 

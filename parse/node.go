@@ -1,5 +1,7 @@
 package parse
 
+import "depth/token"
+
 const (
 	ND_INTEGER = "INTEGER"
 	ND_PLUS    = "+"
@@ -7,17 +9,33 @@ const (
 	ND_MUL     = "*"
 	ND_DIV     = "/"
 	ND_RETURN  = "RETURN"
+	ND_DEFINE  = "DEFINE"
+	ND_IDENT   = "IDENTIFIER"
+)
+
+var (
+	stackTable = map[token.Token]int64{
+		"i8": 8,
+	}
 )
 
 type NodeType string
 type Node struct {
-	Loperand   *Node
-	Roperand   *Node
-	Expression *Node
-	IntVal     int64
-	FloatVal   float64
-	Name       string
-	Type       NodeType
+	Loperand    *Node
+	Roperand    *Node
+	Expression  *Node
+	IntVal      int64
+	FloatVal    float64
+	Name        string
+	Type        NodeType
+	Identifier  *Node
+	ElementType *Element
+	Init        *Node
+}
+
+type Element struct {
+	Type      token.TokenType
+	Stacksize int64
 }
 
 type RootNode struct {
