@@ -262,7 +262,7 @@ func newToken(tokenType token.TokenType, ch rune) token.Token {
 
 func (l *Lexer) readIdentifier() string {
 	position := l.position
-	for isLetter(l.ch) {
+	for isValid(l.ch) {
 		l.readChar()
 	}
 	return string([]rune(l.input[position:l.position]))
@@ -281,6 +281,9 @@ func (l *Lexer) readString() string {
 
 func isLetter(ch rune) bool {
 	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
+}
+func isValid(ch rune) bool {
+	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_' || '0' <= ch && ch <= '9'
 }
 
 func isDigit(ch rune) bool {

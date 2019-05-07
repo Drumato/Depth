@@ -14,8 +14,11 @@ const (
 	IR_MOV      = "Move"
 	IR_RETURN   = "Return"
 	IR_FREE     = "Free"
+	IR_ALLOCATE = "Allocate"
 	IR_PROLOGUE = "Prologue"
 	IR_EPILOGUE = "Epilogue"
+	IR_STORE    = "STORE"
+	IR_LOAD     = "LOAD"
 	IR_NOP      = "Do nothing"
 )
 
@@ -50,10 +53,13 @@ func stmt(n *Node) {
 	case ND_RETURN:
 		retReg := expr(n.Expression)
 		newIR(IR_RETURN, retReg, 0)
+	case ND_DEFINE:
+		newIR(IR_ALLOCATE, 0, n.Identifier.ElementType.Stacksize)
+		retReg := expr(n.Expression)
+		newIR(IR_STORE, n.Identifier.ElementType.Stacksize, retReg)
 	default:
 		logrus.Errorf("unexpected node:%+v", n)
 	}
-
 }
 
 func expr(n *Node) int64 {
@@ -75,6 +81,9 @@ func expr(n *Node) int64 {
 		newIR(IRType(n.Type), lop, rop)
 		kill(rop)
 		return lop
+	case ND_IDENT:
+		newIR(IR_LOAD, nReg, variables[n.Name].ElementType.Stacksize)
+		return nReg
 	}
 	return -42
 }
@@ -84,11 +93,11 @@ func GenerateIR(rootNode *RootNode, c *cli.Context) *Manager {
 	manager := &Manager{FuncTable: ft}
 	for _, fn := range rootNode.Functions {
 		irs = []*IR{}
-		//newIR(IR_PROLOGUE, 0, 0)
+		newIR(IR_PROLOGUE, 0, 0)
 		for _, node := range fn.Nodes {
 			stmt(node)
 		}
-		//newIR(IR_EPILOGUE, 0, 0)
+		newIR(IR_EPILOGUE, 0, 0)
 		manager.FuncTable[fn] = irs
 	}
 	return manager

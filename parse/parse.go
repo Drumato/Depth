@@ -8,6 +8,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var (
+	variables map[string]*Node = make(map[string]*Node)
+)
+
 type Parser struct { //recursive-descent parser
 	l        *lex.Lexer
 	errors   []Error
@@ -45,24 +49,29 @@ func (p *Parser) consume(ty token.TokenType) bool {
 	return true
 }
 
-func (p *Parser) number() *Node {
-	if p.curToken.Type == token.INTLIT {
+func (p *Parser) term() *Node {
+	switch p.curToken.Type {
+	case token.INTLIT:
 		defer p.nextToken()
 		return NewNodeNum(p.curToken.IntVal)
+	case token.IDENT:
+		defer p.nextToken()
+		return &Node{Name: p.curToken.Literal, Type: ND_IDENT, IntVal: variables[p.curToken.Literal].IntVal}
+	default:
+		logrus.Errorf("number expected, but got %s", p.curToken.Literal)
 	}
-	logrus.Errorf("number expected, but got %s", p.curToken.Literal)
 	return nil
 }
 
 func (p *Parser) mul() *Node {
-	lop := p.number()
+	lop := p.term()
 	for {
 		t := p.curToken
 		if t.Type != token.ASTERISK && t.Type != token.SLASH {
 			break
 		}
 		p.nextToken()
-		lop = NewNode(NodeType(t.Type), lop, p.number())
+		lop = NewNode(NodeType(t.Type), lop, p.term())
 	}
 	return lop
 }
@@ -74,25 +83,27 @@ func (p *Parser) stmt() *Node {
 		n.Type = ND_RETURN
 		p.nextToken()
 		n.Expression = p.expr()
-
 	case token.LET:
 		n.Type = ND_DEFINE
 		p.nextToken()
 		n.Identifier = p.define()
 		n.Expression = p.expr()
+		variables[n.Identifier.Name].IntVal = n.Expression.IntVal
 	default:
 		logrus.Errorf("invalid statement startswith %s", p.curToken.Literal)
+		p.nextToken()
 	}
 	return n
 }
 
 func isTypename(t token.Token) bool {
 	switch t.Type {
-	case token.I8, token.I16, token.I32, token.I64, token, U8, token, U16, token, U32, token, U64, token.F32, token.F64, token.CHAR, token.BOOL:
+	case token.I8, token.I16, token.I32, token.I64, token.U8, token.U16, token.U32, token.U64, token.F32, token.F64, token.CHAR, token.BOOL:
 		return true
 	}
 	return false
 }
+
 func (p *Parser) define() *Node {
 	n := &Node{}
 	if p.curToken.Type != token.IDENT {
@@ -106,6 +117,7 @@ func (p *Parser) define() *Node {
 		logrus.Errorf("expected type declaration,but got %s", p.curToken.Literal)
 	}
 	n.ElementType = &Element{Type: p.curToken.Type, Stacksize: stackTable[p.curToken.Literal]}
+	variables[n.Name] = n
 	p.expect(token.ASSIGN)
 	p.nextToken()
 	return n
@@ -121,9 +133,6 @@ func (p *Parser) expr() *Node {
 		p.nextToken()
 		lop = NewNode(NodeType(t.Type), lop, p.mul())
 	}
-	if p.curToken.Type != token.RBRACE {
-		logrus.Errorf("stray token: %s", p.curToken.Literal)
-	}
 	return lop
 }
 
@@ -138,7 +147,12 @@ func (p *Parser) function() *Function {
 		p.expect(token.RPAREN)
 		p.expect(token.LBRACE)
 		p.nextToken()
-		fn.Nodes = append(fn.Nodes, p.stmt())
+		for {
+			if p.curToken.Type == token.RBRACE {
+				break
+			}
+			fn.Nodes = append(fn.Nodes, p.stmt())
+		}
 	}
 	p.expect(token.EOF)
 	return fn

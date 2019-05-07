@@ -14,7 +14,7 @@ const (
 )
 
 var (
-	stackTable = map[token.Token]int64{
+	stackTable = map[string]int64{
 		"i8": 8,
 	}
 )
