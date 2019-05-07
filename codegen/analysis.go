@@ -1,5 +1,13 @@
 package codegen
 
-import "depth/parse"
+import (
+	"depth/parse"
 
-func Analysis(manager *parse.Manager) {}
+	"github.com/urfave/cli"
+)
+
+var optLevel int
+
+func Analysis(manager *parse.Manager, c *cli.Context) {
+	optLevel = c.Int("optLevel")
+}

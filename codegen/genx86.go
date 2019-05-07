@@ -8,9 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	optLevel int = 0
-)
+var ()
 
 func genx86(irs []*parse.IR, f *os.File) {
 	for _, ir := range irs {
@@ -49,15 +47,12 @@ func genx86(irs []*parse.IR, f *os.File) {
 			}
 
 		case parse.IR_DIV:
-			if optLevel == 2 {
-			} else {
-				fmt.Fprintf(f, "    mov rax, %s #div\n", Registers64[ir.Loperand])
-				fmt.Fprintf(f, "    cqo\n")
-				fmt.Fprintf(f, "    div %s\n", Registers64[ir.Roperand])
-				fmt.Fprintf(f, "    mov %s, rax\n", Registers64[ir.Loperand])
-			}
-		case parse.IR_FREE:
+			fmt.Fprintf(f, "    mov rax, %s #div\n", Registers64[ir.Loperand])
+			fmt.Fprintf(f, "    cqo\n")
+			fmt.Fprintf(f, "    div %s\n", Registers64[ir.Roperand])
+			fmt.Fprintf(f, "    mov %s, rax\n", Registers64[ir.Loperand])
 		case parse.IR_EPILOGUE:
+		case parse.IR_NOP:
 			break
 
 		default:
@@ -66,8 +61,7 @@ func genx86(irs []*parse.IR, f *os.File) {
 	}
 }
 
-func Gen(manager *parse.Manager, f *os.File, filename string, opt int) {
-	optLevel = opt
+func Gen(manager *parse.Manager, f *os.File, filename string) {
 	fmt.Fprintf(f, "    .file \"%s\"\n", filename)
 	fmt.Fprintf(f, "    .intel_syntax noprefix\n")
 	fmt.Fprintf(f, "    .text\n")

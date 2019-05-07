@@ -31,11 +31,6 @@ var (
 )
 
 func main() {
-	cmd := exec.Command("make", "clean")
-	err := cmd.Run()
-	if err != nil {
-		logrus.Errorf(ErrFormat, err)
-	}
 	if _, err := os.Open("asm/target/debug/asm"); err != nil {
 		fmt.Printf(util.ColorString("Builds assembler...", "blue"))
 		cmd := exec.Command("make", "-c", "asm/")
@@ -60,7 +55,7 @@ func init() {
 		cli.BoolFlag{Name: "dump-tokens", Usage: "dump tokens by lexer"},
 		cli.BoolFlag{Name: "dump-ast", Usage: "dump ast by recursive-descent parser"},
 		cli.BoolFlag{Name: "dump-hex", Usage: "dump binary by hex"},
-		cli.BoolFlag{Name: "dump-ir", Usage: "dump ir"},
+		cli.IntFlag{Name: "dump-ir", Usage: "dump ir", Value: 0},
 		cli.BoolFlag{Name: "print-stdout", Usage: "print stdout the result of the processing"},
 		cli.BoolFlag{Name: "until-compile", Usage: "stop processing when succeed compile"},
 		cli.BoolFlag{Name: "until-assemble", Usage: "stop processing when succeed assemble"},
@@ -148,13 +143,13 @@ func builtAST(c *cli.Context, lexer *lex.Lexer) *parse.RootNode {
 }
 
 func translateIRs(c *cli.Context, rootNode *parse.RootNode) *parse.Manager {
-	manager := parse.GenerateIR(rootNode, c.Int("optlevel"))
+	manager := parse.GenerateIR(rootNode, c)
 	parse.AllocateRegisters(manager)
 	if c.Bool("verbosity") {
 		fmt.Println(util.ColorString("Tramslates intermediate representation...", "blue"))
 	}
-	if c.Bool("dump-ir") {
-		fmt.Println(util.ColorString("----------------dump IRs----------------", "blue"))
+	if c.Int("dump-ir") == 1 {
+		fmt.Println(util.ColorString("----------------dump IRs Stage1----------------", "blue"))
 		for fn, irs := range manager.FuncTable {
 			fmt.Printf("%s IR:\n", util.ColorString(fn.Name, "green"))
 			for _, ir := range irs {
@@ -175,27 +170,36 @@ func generateCode(c *cli.Context, manager *parse.Manager, filename string) {
 		os.Exit(1)
 	}
 	if filename == "" {
-		codegen.Gen(manager, f, "sample.dep", c.Int("optlevel"))
+		codegen.Gen(manager, f, "sample.dep")
 	} else {
 
 		if c.Bool("print-stdout") {
 			fmt.Printf("%s\n", aurora.Bold(aurora.Blue("----------------assembly----------------")))
-			codegen.Gen(manager, os.Stdout, filename, c.Int("optlevel"))
+			codegen.Gen(manager, os.Stdout, filename)
 		} else {
-			codegen.Gen(manager, f, filename, c.Int("optlevel"))
+			codegen.Gen(manager, f, filename)
 		}
 	}
 }
 func semantic(c *cli.Context, manager *parse.Manager) {
-	parse.Semantic(manager)
+	parse.Semantic(manager, c)
 }
 
 func analysis(c *cli.Context, manager *parse.Manager) {
-	codegen.Analysis(manager)
+	codegen.Analysis(manager, c)
 }
 
 func optimize(c *cli.Context, manager *parse.Manager) {
-	codegen.Optimize(manager, c.Int("optlevel"))
+	codegen.Optimize(manager, c)
+	if c.Int("dump-ir") == 2 {
+		fmt.Println(util.ColorString("----------------dump IRs Stage 2----------------", "blue"))
+		for fn, irs := range manager.FuncTable {
+			fmt.Printf("%s IR:\n", util.ColorString(fn.Name, "green"))
+			for _, ir := range irs {
+				fmt.Printf("%+v\n", ir)
+			}
+		}
+	}
 }
 
 func generateBinary(c *cli.Context) {
