@@ -66,8 +66,8 @@ func genx86(irs []*parse.IR, f *os.File) {
 		case parse.IR_LOAD:
 			fmt.Fprintf(f, "    mov %s, QWORD PTR -%d[rbp] #load\n", Registers64[ir.Loperand], ir.Roperand)
 		case parse.IR_EPILOGUE:
-			fmt.Fprintf(f, "    mov rsp, rbp\n")
-			fmt.Fprintf(f, "    pop rbp#load\n")
+			fmt.Fprintf(f, "    mov rsp, rbp #epilogue\n")
+			fmt.Fprintf(f, "    pop rbp\n")
 			fmt.Fprintf(f, "    ret\n")
 		case parse.IR_NOP:
 			break

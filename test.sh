@@ -25,6 +25,10 @@ try 1 "f main(){ return 20 > 0}"
 try 0 "f main(){ return 0 > 20}"
 try 1 "f main(){ return 0 < 20}"
 try 0 "f main(){ return 20 < 0}"
+try 1 "f main(){ let x:i8 = 10 return x > 0}"
+try 0 "f main(){ let x:i8 = 10 return 0 > x}"
+try 0 "f main(){ let x:i8 = 10 return x < 0}"
+try 1 "f main(){ let x:i8 = 10 return 0 < x}"
 
 echo -e "\e[32mOK\e[0m"
 make clean

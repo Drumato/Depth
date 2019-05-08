@@ -70,6 +70,7 @@ func stmt(n *Node) {
 	case ND_DEFINE:
 		newIR(IR_ALLOCATE, 0, n.Identifier.ElementType.Stacksize)
 		retReg := expr(n.Expression)
+		nReg--
 		newIR(IR_STORE, n.Identifier.ElementType.Stacksize, retReg)
 	default:
 		logrus.Errorf("unexpected node:%+v", n)
@@ -92,13 +93,11 @@ func expr(n *Node) int64 {
 		lop := expr(n.Loperand)
 		rop := expr(n.Roperand)
 		newIR(IRType(n.Type), lop, rop)
-		kill(rop)
 		return lop
 	case ND_MUL, ND_DIV:
 		lop := expr(n.Loperand)
 		rop := expr(n.Roperand)
 		newIR(IRType(n.Type), lop, rop)
-		kill(rop)
 		return lop
 	case ND_LT, ND_GT:
 		lop := expr(n.Loperand)
@@ -108,12 +107,14 @@ func expr(n *Node) int64 {
 		newIR(IR_IMM, lop, 0)
 		jump()
 		label()
-		irs = append(irs, &IR{Type: IR_IMM, Loperand: lop, Roperand: 1})
+		newIR(IR_IMM, lop, 1)
 		label()
 		return lop
 	case ND_IDENT:
-		newIR(IR_LOAD, nReg, variables[n.Name].ElementType.Stacksize)
-		return nReg
+		reg := nReg
+		nReg++
+		newIR(IR_LOAD, reg, variables[n.Name].ElementType.Stacksize)
+		return reg
 	}
 	return -42
 }
