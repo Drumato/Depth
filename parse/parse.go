@@ -56,7 +56,7 @@ func (p *Parser) term() *Node {
 		return NewNodeNum(p.curToken.IntVal)
 	case token.IDENT:
 		defer p.nextToken()
-		return &Node{Name: p.curToken.Literal, Type: ND_IDENT, IntVal: variables[p.curToken.Literal].IntVal}
+		return &Node{Name: p.curToken.Literal, Type: ND_IDENT}
 	default:
 		logrus.Errorf("number expected, but got %s", p.curToken.Literal)
 	}
@@ -88,7 +88,6 @@ func (p *Parser) stmt() *Node {
 		p.nextToken()
 		n.Identifier = p.define()
 		n.Expression = p.expr()
-		variables[n.Identifier.Name].IntVal = n.Expression.IntVal
 	default:
 		logrus.Errorf("invalid statement startswith %s", p.curToken.Literal)
 		p.nextToken()
@@ -117,7 +116,6 @@ func (p *Parser) define() *Node {
 		logrus.Errorf("expected type declaration,but got %s", p.curToken.Literal)
 	}
 	n.ElementType = &Element{Type: p.curToken.Type, Stacksize: stackTable[p.curToken.Literal]}
-	variables[n.Name] = n
 	p.expect(token.ASSIGN)
 	p.nextToken()
 	return n

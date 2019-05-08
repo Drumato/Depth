@@ -78,6 +78,7 @@ func Start(c *cli.Context) error {
 	sourcecode := os.Args[len(os.Args)-1]
 	lexer := lexing(c, sourcecode)
 	rootNode := builtAST(c, lexer)
+	walkAST(rootNode, c)
 	manager := translateIRs(c, rootNode)
 	semantic(c, manager)
 	analysis(c, manager)
@@ -141,6 +142,13 @@ func builtAST(c *cli.Context, lexer *lex.Lexer) *parse.RootNode {
 		fmt.Printf("%+v\n", rootNode)
 	}
 	return rootNode
+}
+
+func walkAST(rootNode *parse.RootNode, c *cli.Context) {
+	if c.Bool("verbosity") {
+		fmt.Println(util.ColorString("Walking ast...", "blue"))
+	}
+	parse.Walk(rootNode, c)
 }
 
 func translateIRs(c *cli.Context, rootNode *parse.RootNode) *parse.Manager {

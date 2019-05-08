@@ -1,1 +1,0 @@
-f main(){ let x:i8 = 10 return x}
