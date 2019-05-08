@@ -11,6 +11,11 @@ const (
 	IR_SUB      = "-"
 	IR_MUL      = "*"
 	IR_DIV      = "/"
+	IR_LT       = "<"
+	IR_GT       = ">"
+	IR_CMP      = "COMPARE"
+	IR_LABEL    = "LABEL"
+	IR_JMP      = "JUMP"
 	IR_MOV      = "Move"
 	IR_RETURN   = "Return"
 	IR_FREE     = "Free"
@@ -23,8 +28,9 @@ const (
 )
 
 var (
-	irs  []*IR
-	nReg int64 = 1
+	irs      []*IR
+	nReg     int64 = 1
+	labelNum int64 = 2
 )
 
 type IRType string
@@ -46,6 +52,14 @@ func newIR(ty IRType, lop, rop int64) *IR {
 func kill(reg int64) {
 	newIR(IR_FREE, reg, 0)
 	nReg--
+}
+func label() {
+	newIR(IR_LABEL, labelNum, 0)
+	labelNum++
+}
+
+func jump() {
+	newIR(IR_JMP, labelNum+1, 0)
 }
 
 func stmt(n *Node) {
@@ -69,6 +83,11 @@ func expr(n *Node) int64 {
 		nReg++
 		newIR(IR_IMM, reg, n.IntVal)
 		return reg
+	case ND_CHAR:
+		reg := nReg
+		nReg++
+		newIR(IR_IMM, reg, int64(n.CharVal))
+		return reg
 	case ND_PLUS, ND_MINUS:
 		lop := expr(n.Loperand)
 		rop := expr(n.Roperand)
@@ -80,6 +99,17 @@ func expr(n *Node) int64 {
 		rop := expr(n.Roperand)
 		newIR(IRType(n.Type), lop, rop)
 		kill(rop)
+		return lop
+	case ND_LT, ND_GT:
+		lop := expr(n.Loperand)
+		rop := expr(n.Roperand)
+		newIR(IR_CMP, lop, rop)
+		newIR(IRType(n.Type), labelNum, 0)
+		newIR(IR_IMM, lop, 0)
+		jump()
+		label()
+		irs = append(irs, &IR{Type: IR_IMM, Loperand: lop, Roperand: 1})
+		label()
 		return lop
 	case ND_IDENT:
 		newIR(IR_LOAD, nReg, variables[n.Name].ElementType.Stacksize)

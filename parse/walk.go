@@ -4,19 +4,14 @@ import (
 	"github.com/urfave/cli"
 )
 
+var (
+	variables map[string]*Node = make(map[string]*Node)
+)
+
 func doWalk(n *Node) {
 	switch n.Type {
-	case ND_DEFINE:
-		doWalk(n.Identifier)
-		if _, ok := variables[n.Identifier.Name]; ok {
-			variables[n.Identifier.Name].IntVal = n.Expression.IntVal
-		}
-	case ND_IDENT:
-		if _, ok := variables[n.Name]; !ok {
-			variables[n.Name] = n
-		}
-
 	}
+
 }
 
 func Walk(rootNode *RootNode, c *cli.Context) {
