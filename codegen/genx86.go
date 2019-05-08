@@ -49,8 +49,18 @@ func genx86(irs []*parse.IR, f *os.File) {
 			fmt.Fprintf(f, "    cqo\n")
 			fmt.Fprintf(f, "    div %s\n", Registers64[ir.Roperand])
 			fmt.Fprintf(f, "    mov %s, rax\n", Registers64[ir.Loperand])
+		case parse.IR_GT:
+			fmt.Fprintf(f, "    jg .L%d #gt\n", ir.Loperand)
+		case parse.IR_LT:
+			fmt.Fprintf(f, "    jl .L%d #lt\n", ir.Loperand)
+		case parse.IR_LABEL:
+			fmt.Fprintf(f, ".L%d: #label\n", ir.Loperand)
+		case parse.IR_CMP:
+			fmt.Fprintf(f, "    cmp %s, %s\n", Registers64[ir.Loperand], Registers64[ir.Roperand])
 		case parse.IR_ALLOCATE:
 			fmt.Fprintf(f, "    sub rsp, %#x #allocate\n", ir.Roperand)
+		case parse.IR_JMP:
+			fmt.Fprintf(f, "    jmp .L%d #jump\n", ir.Loperand)
 		case parse.IR_STORE:
 			fmt.Fprintf(f, "    mov QWORD PTR -%d[rbp], %#x #store\n", ir.Loperand, ir.Roperand)
 		case parse.IR_LOAD:

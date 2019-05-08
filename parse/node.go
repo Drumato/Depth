@@ -15,6 +15,8 @@ const (
 	ND_MINUS   = "-"
 	ND_MUL     = "*"
 	ND_DIV     = "/"
+	ND_GT      = ">"
+	ND_LT      = "<"
 	ND_RETURN  = "RETURN"
 	ND_DEFINE  = "DEFINE"
 	ND_IDENT   = "IDENTIFIER"

@@ -1,1 +1,5 @@
+<<<<<<< HEAD
+f main(){ return 1 < 0}
+=======
 f main(){ let c:ch = 'A' return c}
+>>>>>>> 4936fc66c69832524798f3aae48be72fa7e62c77
