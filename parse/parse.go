@@ -8,10 +8,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	variables map[string]*Node = make(map[string]*Node)
-)
-
 type Parser struct { //recursive-descent parser
 	l        *lex.Lexer
 	errors   []Error
@@ -54,6 +50,9 @@ func (p *Parser) term() *Node {
 	case token.INTLIT:
 		defer p.nextToken()
 		return NewNodeNum(p.curToken.IntVal)
+	case token.CHARLIT:
+		defer p.nextToken()
+		return NewNodeChar(p.curToken.Literal)
 	case token.IDENT:
 		defer p.nextToken()
 		return &Node{Name: p.curToken.Literal, Type: ND_IDENT}
