@@ -1,7 +1,13 @@
 package parse
 
 import (
+	"depth/token"
+
 	"github.com/urfave/cli"
+)
+
+var (
+	variables map[string]*Node = make(map[string]*Node)
 )
 
 func doWalk(n *Node) {
@@ -9,7 +15,12 @@ func doWalk(n *Node) {
 	case ND_DEFINE:
 		doWalk(n.Identifier)
 		if _, ok := variables[n.Identifier.Name]; ok {
-			variables[n.Identifier.Name].IntVal = n.Expression.IntVal
+			switch variables[n.Identifier.Name].ElementType.Type {
+			case token.I8:
+				variables[n.Identifier.Name].IntVal = n.Expression.IntVal
+			case token.CHAR:
+				variables[n.Identifier.Name].CharVal = n.Expression.CharVal
+			}
 		}
 	case ND_IDENT:
 		if _, ok := variables[n.Name]; !ok {
