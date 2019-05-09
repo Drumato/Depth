@@ -39,6 +39,7 @@ type Node struct {
 	FloatVal    float64
 	CharVal     uint32
 	Name        string
+	Level       uint8
 	Type        NodeType
 	Identifier  *Node
 	ElementType *Element

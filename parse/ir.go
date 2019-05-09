@@ -38,6 +38,7 @@ type IRType string
 type IR struct {
 	Type               IRType
 	Loperand, Roperand int64
+	Level              uint8
 }
 
 type Manager struct {
@@ -122,6 +123,7 @@ func expr(n *Node) int64 {
 		reg := nReg
 		nReg++
 		newIR(IR_LOAD, reg, variables[n.Name].ElementType.Stacksize)
+		irs[len(irs)-1].Level = n.Level
 		return reg
 	}
 	return -42

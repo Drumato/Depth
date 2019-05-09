@@ -55,9 +55,10 @@ func (p *Parser) term() *Node {
 		return NewNodeChar(p.curToken.Literal)
 	case token.IDENT:
 		defer p.nextToken()
-		return &Node{Name: p.curToken.Literal, Type: ND_IDENT, IntVal: variables[p.curToken.Literal].IntVal}
+		return &Node{Name: p.curToken.Literal, Type: ND_IDENT, IntVal: variables[p.curToken.Literal].IntVal, Level: scopeLevel}
 	default:
-		logrus.Errorf("number expected, but got %s", p.curToken.Literal)
+		p.foundError(newError(ParseError, util.ColorString(fmt.Sprintf("number expected, but got %s", p.curToken.Literal), "reg")))
+		os.Exit(1)
 	}
 	return nil
 }
@@ -79,30 +80,36 @@ func (p *Parser) stmt() *Node {
 	n := &Node{}
 	switch p.curToken.Type {
 	case token.IF:
+		n.Level = scopeLevel
 		n.Type = ND_IF
 		p.nextToken()
 		n.Condition = p.expr()
 		p.consume(token.LBRACE)
+		scopeLevel++
 		for {
 			if p.curToken.Type == token.RBRACE {
+				scopeLevel--
 				break
 			}
 			n.Body = append(n.Body, p.stmt())
 		}
 		p.nextToken()
 	case token.RETURN:
+		n.Level = scopeLevel
 		n.Type = ND_RETURN
 		p.nextToken()
 		n.Expression = p.expr()
 	case token.LET:
+		n.Level = scopeLevel
 		n.Type = ND_DEFINE
 		p.nextToken()
 		n.Identifier = p.define()
 		n.Expression = p.expr()
 		variables[n.Identifier.Name].IntVal = n.Expression.IntVal
 	default:
-		logrus.Errorf("invalid statement startswith %s", p.curToken.Literal)
+		p.foundError(newError(ParseError, util.ColorString(fmt.Sprintf("invalid statement stawrtswith %s", p.curToken.Literal), "reg")))
 		p.nextToken()
+		os.Exit(1)
 	}
 	return n
 }
@@ -118,14 +125,17 @@ func isTypename(t token.Token) bool {
 func (p *Parser) define() *Node {
 	n := &Node{}
 	if p.curToken.Type != token.IDENT {
-		logrus.Errorf("identifer expected,but got %s", p.curToken.Literal)
+		p.foundError(newError(ParseError, util.ColorString(fmt.Sprintf("identifer expected,but got %s", p.curToken.Literal), "reg")))
+		os.Exit(1)
 	}
 	n.Name = p.curToken.Literal
 	n.Type = ND_IDENT
+	n.Level = scopeLevel
 	p.expect(token.COLON)
 	p.nextToken()
 	if !isTypename(p.curToken) {
-		logrus.Errorf("expected type declaration,but got %s", p.curToken.Literal)
+		p.foundError(newError(ParseError, util.ColorString(fmt.Sprintf("expected type declaration, but got %s", p.curToken.Literal), "reg")))
+		os.Exit(1)
 	}
 	n.ElementType = &Element{Type: p.curToken.Type, Stacksize: stackTable[p.curToken.Literal]}
 	variables[n.Name] = n
@@ -161,10 +171,12 @@ func (p *Parser) expr() *Node {
 }
 
 func (p *Parser) function() *Function {
+	scopeLevel = 1
 	fn := &Function{}
 	if p.consume(token.FUNCTION) {
 		if p.curToken.Type != token.IDENT {
-			logrus.Errorf("identifer expected,but got %s", p.curToken.Literal)
+			p.foundError(newError(ParseError, util.ColorString(fmt.Sprintf("identifier expected, but got %s", p.curToken.Literal), "reg")))
+			os.Exit(1)
 		}
 		fn.Name = p.curToken.Literal
 		p.expect(token.LPAREN) //yet ignored arguments
