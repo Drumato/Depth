@@ -40,6 +40,14 @@ func optimize(irs []*parse.IR) {
 			if irs[i].Loperand != 1 {
 				irs[i].Type = parse.IR_NOP
 			}
+		case parse.IR_ALLOCATE:
+			for foundidx := i - 1; foundidx > 0; foundidx-- {
+				if irs[foundidx].Type == parse.IR_ALLOCATE {
+					irs[foundidx].Roperand += irs[i].Roperand
+					irs[i].Type = parse.IR_NOP
+					break
+				}
+			}
 		default:
 			continue
 		}
