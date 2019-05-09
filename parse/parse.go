@@ -3,9 +3,16 @@ package parse
 import (
 	"depth/lex"
 	"depth/token"
+	"fmt"
 	"os"
 
+	util "depth/pkg"
+
 	"github.com/sirupsen/logrus"
+)
+
+var (
+	scopeLevel uint8 = 0
 )
 
 type Parser struct { //recursive-descent parser
@@ -57,7 +64,7 @@ func (p *Parser) term() *Node {
 		defer p.nextToken()
 		return &Node{Name: p.curToken.Literal, Type: ND_IDENT, IntVal: variables[p.curToken.Literal].IntVal, Level: scopeLevel}
 	default:
-		p.foundError(newError(ParseError, util.ColorString(fmt.Sprintf("number expected, but got %s", p.curToken.Literal), "reg")))
+		fmt.Println(util.ColorString(fmt.Sprintf("number expected, but got %s", p.curToken.Literal), "reg"))
 		os.Exit(1)
 	}
 	return nil
@@ -80,12 +87,12 @@ func (p *Parser) stmt() *Node {
 	n := &Node{}
 	switch p.curToken.Type {
 	case token.IF:
-		n.Level = scopeLevel
 		n.Type = ND_IF
 		p.nextToken()
 		n.Condition = p.expr()
 		p.consume(token.LBRACE)
 		scopeLevel++
+		n.Level = scopeLevel
 		for {
 			if p.curToken.Type == token.RBRACE {
 				scopeLevel--
@@ -105,9 +112,10 @@ func (p *Parser) stmt() *Node {
 		p.nextToken()
 		n.Identifier = p.define()
 		n.Expression = p.expr()
+		n.Expression.Level = scopeLevel
 		variables[n.Identifier.Name].IntVal = n.Expression.IntVal
 	default:
-		p.foundError(newError(ParseError, util.ColorString(fmt.Sprintf("invalid statement stawrtswith %s", p.curToken.Literal), "reg")))
+		fmt.Println(util.ColorString(fmt.Sprintf("invalid statement stawrtswith %s", p.curToken.Literal), "reg"))
 		p.nextToken()
 		os.Exit(1)
 	}
@@ -125,7 +133,7 @@ func isTypename(t token.Token) bool {
 func (p *Parser) define() *Node {
 	n := &Node{}
 	if p.curToken.Type != token.IDENT {
-		p.foundError(newError(ParseError, util.ColorString(fmt.Sprintf("identifer expected,but got %s", p.curToken.Literal), "reg")))
+		fmt.Println(util.ColorString(fmt.Sprintf("identifer expected,but got %s", p.curToken.Literal), "reg"))
 		os.Exit(1)
 	}
 	n.Name = p.curToken.Literal
@@ -134,7 +142,7 @@ func (p *Parser) define() *Node {
 	p.expect(token.COLON)
 	p.nextToken()
 	if !isTypename(p.curToken) {
-		p.foundError(newError(ParseError, util.ColorString(fmt.Sprintf("expected type declaration, but got %s", p.curToken.Literal), "reg")))
+		fmt.Println(util.ColorString(fmt.Sprintf("expected type declaration, but got %s", p.curToken.Literal), "reg"))
 		os.Exit(1)
 	}
 	n.ElementType = &Element{Type: p.curToken.Type, Stacksize: stackTable[p.curToken.Literal]}
@@ -175,7 +183,7 @@ func (p *Parser) function() *Function {
 	fn := &Function{}
 	if p.consume(token.FUNCTION) {
 		if p.curToken.Type != token.IDENT {
-			p.foundError(newError(ParseError, util.ColorString(fmt.Sprintf("identifier expected, but got %s", p.curToken.Literal), "reg")))
+			fmt.Println(util.ColorString(fmt.Sprintf("identifier expected, but got %s", p.curToken.Literal), "reg"))
 			os.Exit(1)
 		}
 		fn.Name = p.curToken.Literal

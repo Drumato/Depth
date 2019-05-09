@@ -1,7 +1,10 @@
 package parse
 
 import (
+	util "depth/pkg"
 	"depth/token"
+	"fmt"
+	"os"
 
 	"github.com/urfave/cli"
 )
@@ -14,9 +17,11 @@ func doWalk(n *Node) {
 	switch n.Type {
 	case ND_IF:
 		doWalk(n.Condition)
+		scopeLevel++
 		for _, st := range n.Body {
 			doWalk(st)
 		}
+		scopeLevel--
 	case ND_PLUS, ND_MINUS, ND_MUL, ND_DIV, ND_GT, ND_LT:
 		doWalk(n.Loperand)
 		doWalk(n.Roperand)
@@ -35,8 +40,9 @@ func doWalk(n *Node) {
 			variables[n.Name] = n
 			return
 		}
+		fmt.Printf("%s:%d-%d", n.Name, scopeLevel, n.Level)
 		if scopeLevel < n.Level {
-			fmt.Printf(util.ColorString(fmt.Sprintf("%s: %s", InvalidReferenceError, n.Name), "reg"))
+			fmt.Printf(util.ColorString(fmt.Sprintf("%s: %s\n", InvalidReferenceError, n.Name), "red"))
 			os.Exit(1)
 		}
 	}
@@ -45,7 +51,6 @@ func doWalk(n *Node) {
 
 func Walk(rootNode *RootNode, c *cli.Context) {
 	for _, fn := range rootNode.Functions {
-		scopeLevel = 1
 		for _, n := range fn.Nodes {
 			doWalk(n)
 		}

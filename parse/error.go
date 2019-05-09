@@ -1,14 +1,15 @@
 package parse
 
 const (
-	ParseError ErrorType = iota
+	ParseError            = "ParseError"
+	InvalidReferenceError = "InvalidReferenceError"
 )
 
 const (
 	W_Security WarningType = iota
 )
 
-type ErrorType uint16
+type ErrorType string
 type WarningType uint16
 
 type Error struct {

@@ -1,6 +1,7 @@
 f main(){ 
   let x : i8 = 10
   if x > 0{
-    return x
+    let y : i8 = 100
+    return y
   }
   }
