@@ -28,9 +28,10 @@ const (
 )
 
 var (
-	irs      []*IR
-	nReg     int64 = 1
-	labelNum int64 = 2
+	irs       []*IR
+	nReg      int64 = 1
+	stackSize int64 = 0
+	labelNum  int64 = 2
 )
 
 type IRType string
@@ -70,6 +71,8 @@ func stmt(n *Node) {
 	case ND_DEFINE:
 		newIR(IR_ALLOCATE, 0, n.Identifier.ElementType.Stacksize)
 		retReg := expr(n.Expression)
+		n.Identifier.ElementType.Stacksize += stackSize
+		stackSize += 8
 		nReg--
 		newIR(IR_STORE, n.Identifier.ElementType.Stacksize, retReg)
 	default:
