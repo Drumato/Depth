@@ -18,6 +18,7 @@ const (
 	ND_GT      = ">"
 	ND_LT      = "<"
 	ND_RETURN  = "RETURN"
+	ND_IF      = "IF"
 	ND_DEFINE  = "DEFINE"
 	ND_IDENT   = "IDENTIFIER"
 )
@@ -42,6 +43,8 @@ type Node struct {
 	Identifier  *Node
 	ElementType *Element
 	Init        *Node
+	Condition   *Node
+	Body        []*Node
 }
 
 type Element struct {

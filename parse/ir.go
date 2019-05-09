@@ -68,6 +68,11 @@ func stmt(n *Node) {
 	case ND_RETURN:
 		retReg := expr(n.Expression)
 		newIR(IR_RETURN, retReg, 0)
+	case ND_IF:
+		expr(n.Condition)
+		for _, st := range n.Body {
+			stmt(st)
+		}
 	case ND_DEFINE:
 		newIR(IR_ALLOCATE, 0, n.Identifier.ElementType.Stacksize)
 		retReg := expr(n.Expression)

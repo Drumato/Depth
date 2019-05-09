@@ -78,6 +78,18 @@ func (p *Parser) mul() *Node {
 func (p *Parser) stmt() *Node {
 	n := &Node{}
 	switch p.curToken.Type {
+	case token.IF:
+		n.Type = ND_IF
+		p.nextToken()
+		n.Condition = p.expr()
+		p.consume(token.LBRACE)
+		for {
+			if p.curToken.Type == token.RBRACE {
+				break
+			}
+			n.Body = append(n.Body, p.stmt())
+		}
+		p.nextToken()
 	case token.RETURN:
 		n.Type = ND_RETURN
 		p.nextToken()
