@@ -15,6 +15,8 @@ var (
 
 func doWalk(n *Node) {
 	switch n.Type {
+	case ND_RETURN:
+		doWalk(n.Expression)
 	case ND_IF:
 		doWalk(n.Condition)
 		scopeLevel++
@@ -26,6 +28,7 @@ func doWalk(n *Node) {
 		doWalk(n.Loperand)
 		doWalk(n.Roperand)
 	case ND_DEFINE:
+		variables[n.Identifier.Name].Level = n.Level
 		doWalk(n.Identifier)
 		if _, ok := variables[n.Identifier.Name]; ok {
 			switch variables[n.Identifier.Name].ElementType.Type {
@@ -36,17 +39,17 @@ func doWalk(n *Node) {
 			}
 		}
 	case ND_IDENT:
+		if scopeLevel < variables[n.Name].Level {
+			fmt.Printf(util.ColorString(fmt.Sprintf("%s: can not access '%s' by outer\n", InvalidReferenceError, n.Name), "red"))
+			os.Exit(1)
+		}
 		if _, ok := variables[n.Name]; !ok {
 			variables[n.Name] = n
 			return
 		}
-		fmt.Printf("%s:%d-%d", n.Name, scopeLevel, n.Level)
-		if scopeLevel < n.Level {
-			fmt.Printf(util.ColorString(fmt.Sprintf("%s: %s\n", InvalidReferenceError, n.Name), "red"))
-			os.Exit(1)
-		}
+	default:
+		return
 	}
-
 }
 
 func Walk(rootNode *RootNode, c *cli.Context) {

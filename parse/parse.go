@@ -61,8 +61,10 @@ func (p *Parser) term() *Node {
 		defer p.nextToken()
 		return NewNodeChar(p.curToken.Literal)
 	case token.IDENT:
+		n := &Node{Name: p.curToken.Literal, Type: ND_IDENT, IntVal: variables[p.curToken.Literal].IntVal}
+		n.ElementType = &Element{Type: p.curToken.Type, Stacksize: stackTable[p.curToken.Literal]}
 		defer p.nextToken()
-		return &Node{Name: p.curToken.Literal, Type: ND_IDENT, IntVal: variables[p.curToken.Literal].IntVal, Level: scopeLevel}
+		return n
 	default:
 		fmt.Println(util.ColorString(fmt.Sprintf("number expected, but got %s", p.curToken.Literal), "reg"))
 		os.Exit(1)
@@ -112,7 +114,6 @@ func (p *Parser) stmt() *Node {
 		p.nextToken()
 		n.Identifier = p.define()
 		n.Expression = p.expr()
-		n.Expression.Level = scopeLevel
 		variables[n.Identifier.Name].IntVal = n.Expression.IntVal
 	default:
 		fmt.Println(util.ColorString(fmt.Sprintf("invalid statement stawrtswith %s", p.curToken.Literal), "reg"))
@@ -138,7 +139,6 @@ func (p *Parser) define() *Node {
 	}
 	n.Name = p.curToken.Literal
 	n.Type = ND_IDENT
-	n.Level = scopeLevel
 	p.expect(token.COLON)
 	p.nextToken()
 	if !isTypename(p.curToken) {
