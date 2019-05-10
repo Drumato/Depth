@@ -1,7 +1,6 @@
 package parse
 
 import (
-	util "depth/pkg"
 	"depth/token"
 	"fmt"
 	"os"
@@ -40,7 +39,7 @@ func doWalk(n *Node) {
 		}
 	case ND_IDENT:
 		if scopeLevel < variables[n.Name].Level {
-			fmt.Printf(util.ColorString(fmt.Sprintf("%s: can not access '%s' by outer\n", InvalidReferenceError, n.Name), "red"))
+			FoundError(NewError(InvalidReferenceError, fmt.Sprintf("can not access '%s' by outer", n.Name)))
 			os.Exit(1)
 		}
 		if _, ok := variables[n.Name]; !ok {

@@ -1,4 +1,4 @@
-depth:
+all:
 	make clean
 	go build depth.go && ./test.sh #for compile
 clean:

@@ -5,10 +5,6 @@ import (
 	"depth/token"
 	"fmt"
 	"os"
-
-	util "depth/pkg"
-
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -16,9 +12,7 @@ var (
 )
 
 type Parser struct { //recursive-descent parser
-	l        *lex.Lexer
-	errors   []Error
-	warnings []Warning
+	l *lex.Lexer
 
 	curToken token.Token
 	nexToken token.Token
@@ -37,7 +31,7 @@ func (p *Parser) nextToken() {
 
 func (p *Parser) expect(t token.TokenType) {
 	if p.nexToken.Type != t {
-		logrus.Errorf("%s expected, but got %s", t, p.nexToken.Literal)
+		FoundError(NewError(ParseError, fmt.Sprintf("%s expected, but got %s", t, p.nexToken.Type)))
 		os.Exit(1)
 	}
 	p.nextToken()
@@ -45,7 +39,7 @@ func (p *Parser) expect(t token.TokenType) {
 
 func (p *Parser) consume(ty token.TokenType) bool {
 	if p.curToken.Type != ty {
-		logrus.Errorf("expected %s but got %s", ty, p.curToken.Type)
+		FoundError(NewError(ParseError, fmt.Sprintf("%s expected, but got %s", ty, p.curToken.Type)))
 		return false
 	}
 	p.nextToken()
@@ -66,7 +60,7 @@ func (p *Parser) term() *Node {
 		defer p.nextToken()
 		return n
 	default:
-		fmt.Println(util.ColorString(fmt.Sprintf("number expected, but got %s", p.curToken.Literal), "reg"))
+		FoundError(NewError(ParseError, fmt.Sprintf("number expected, but got %s", p.curToken.Literal)))
 		os.Exit(1)
 	}
 	return nil
@@ -116,7 +110,7 @@ func (p *Parser) stmt() *Node {
 		n.Expression = p.expr()
 		variables[n.Identifier.Name].IntVal = n.Expression.IntVal
 	default:
-		fmt.Println(util.ColorString(fmt.Sprintf("invalid statement stawrtswith %s", p.curToken.Literal), "reg"))
+		FoundError(NewError(ParseError, fmt.Sprintf("invalid statement startswith %s", p.curToken.Literal)))
 		p.nextToken()
 		os.Exit(1)
 	}
@@ -134,7 +128,7 @@ func isTypename(t token.Token) bool {
 func (p *Parser) define() *Node {
 	n := &Node{}
 	if p.curToken.Type != token.IDENT {
-		fmt.Println(util.ColorString(fmt.Sprintf("identifer expected,but got %s", p.curToken.Literal), "reg"))
+		FoundError(NewError(ParseError, fmt.Sprintf("identifier expected, but got %s", p.curToken.Literal)))
 		os.Exit(1)
 	}
 	n.Name = p.curToken.Literal
@@ -142,7 +136,7 @@ func (p *Parser) define() *Node {
 	p.expect(token.COLON)
 	p.nextToken()
 	if !isTypename(p.curToken) {
-		fmt.Println(util.ColorString(fmt.Sprintf("expected type declaration, but got %s", p.curToken.Literal), "reg"))
+		FoundError(NewError(ParseError, fmt.Sprintf("expected type declaration, but got %s", p.curToken.Literal)))
 		os.Exit(1)
 	}
 	n.ElementType = &Element{Type: p.curToken.Type, Stacksize: stackTable[p.curToken.Literal]}
@@ -183,7 +177,7 @@ func (p *Parser) function() *Function {
 	fn := &Function{}
 	if p.consume(token.FUNCTION) {
 		if p.curToken.Type != token.IDENT {
-			fmt.Println(util.ColorString(fmt.Sprintf("identifier expected, but got %s", p.curToken.Literal), "reg"))
+			FoundError(NewError(ParseError, fmt.Sprintf("identifier expected, but got %s", p.curToken.Type)))
 			os.Exit(1)
 		}
 		fn.Name = p.curToken.Literal
