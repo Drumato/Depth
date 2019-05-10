@@ -1,10 +1,5 @@
 f main(){ 
-  if 0 >= 0{
-    return 100
-    return 28
-    return 28
-    return 28
-    return 28
-    return 28
-  }
+  let x : i8 = 10  
+  let y : i8 = 10  
+  return x+2+3+y
 }
