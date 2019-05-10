@@ -94,7 +94,16 @@ func (p *Parser) stmt() *Node {
 				scopeLevel--
 				break
 			}
-			n.Body = append(n.Body, p.stmt())
+			st := p.stmt()
+			n.Body = append(n.Body, st)
+			if st.Type == ND_RETURN {
+				for {
+					if p.curToken.Type == token.RBRACE {
+						break
+					}
+					p.nextToken()
+				}
+			}
 		}
 		p.nextToken()
 	case token.RETURN:

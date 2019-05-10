@@ -1,5 +1,10 @@
 f main(){ 
   if 0 >= 0{
     return 100
+    return 28
+    return 28
+    return 28
+    return 28
+    return 28
   }
 }

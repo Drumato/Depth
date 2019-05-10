@@ -37,6 +37,6 @@ try 30 'f main(){ let x:i8 = 10 let y:i8 = 20 return x+y }'
 try 10 'f main(){ let x:i8 = 10 if x > 0 { return x} }'
 try 0 'f main(){ let x:i8 = 10 if x < 0 { } return 0 }'
 try 100 'f main(){ let x:i8 = 10 if x > 0 { let y : i8 = 100 return y} }'
-
+try 100 'f main(){ if 0 >= 0{ return 100 return 28 return 28 } }'
 echo -e "\e[32mOK\e[0m"
 make clean
