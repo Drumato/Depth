@@ -53,6 +53,7 @@ func doWalk(n *Node) {
 
 func Walk(rootNode *RootNode, c *cli.Context) {
 	for _, fn := range rootNode.Functions {
+		scopeLevel = 1
 		for _, n := range fn.Nodes {
 			doWalk(n)
 		}

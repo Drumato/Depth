@@ -119,7 +119,7 @@ func (p *Parser) stmt() *Node {
 		n.Expression = p.expr()
 		variables[n.Identifier.Name].IntVal = n.Expression.IntVal
 	default:
-		FoundError(NewError(ParseError, fmt.Sprintf("invalid statement startswith %s", p.curToken.Literal)))
+		FoundError(NewError(ParseError, fmt.Sprintf("invalid statement startswith %s", p.curToken.Type)))
 		p.nextToken()
 		os.Exit(1)
 	}

@@ -76,6 +76,9 @@ func stmt(n *Node) {
 		for _, st := range n.Body {
 			stmt(st)
 		}
+		for _, st := range n.Alternative {
+			stmt(st)
+		}
 	case ND_DEFINE:
 		newIR(IR_ALLOCATE, 0, n.Identifier.ElementType.Stacksize)
 		retReg := expr(n.Expression)

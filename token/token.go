@@ -86,6 +86,7 @@ const (
 	TRUE    = "TRUE"
 	FALSE   = "FALSE"
 	IF      = "IF"
+	ELSE    = "ELSE"
 	FOR     = "FOR"
 	MUTABLE = "MUTABLE"
 	LET     = "LET"
@@ -109,6 +110,7 @@ var keywords = map[string]TokenType{
 	"for":    FOR,
 	"loop":   LOOP,
 	"if":     IF,
+	"else":   ELSE,
 	"i8":     I8,
 	"i16":    I16,
 	"i32":    I32,

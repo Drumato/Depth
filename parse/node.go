@@ -48,6 +48,7 @@ type Node struct {
 	Init        *Node
 	Condition   *Node
 	Body        []*Node
+	Alternative []*Node
 }
 
 type Element struct {
