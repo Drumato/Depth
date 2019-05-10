@@ -17,6 +17,8 @@ const (
 	ND_DIV     = "/"
 	ND_GT      = ">"
 	ND_LT      = "<"
+	ND_GTEQ    = ">="
+	ND_LTEQ    = "<="
 	ND_RETURN  = "RETURN"
 	ND_IF      = "IF"
 	ND_DEFINE  = "DEFINE"

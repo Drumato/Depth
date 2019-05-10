@@ -23,7 +23,7 @@ func doWalk(n *Node) {
 			doWalk(st)
 		}
 		scopeLevel--
-	case ND_PLUS, ND_MINUS, ND_MUL, ND_DIV, ND_GT, ND_LT:
+	case ND_PLUS, ND_MINUS, ND_MUL, ND_DIV, ND_GT, ND_LT, ND_LTEQ, ND_GTEQ:
 		doWalk(n.Loperand)
 		doWalk(n.Roperand)
 	case ND_DEFINE:

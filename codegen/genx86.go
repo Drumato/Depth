@@ -53,6 +53,10 @@ func genx86(irs []*parse.IR, f *os.File) {
 			fmt.Fprintf(f, "    jg .L%d #gt\n", ir.Loperand)
 		case parse.IR_LT:
 			fmt.Fprintf(f, "    jl .L%d #lt\n", ir.Loperand)
+		case parse.IR_GTEQ:
+			fmt.Fprintf(f, "    jge .L%d #gt\n", ir.Loperand)
+		case parse.IR_LTEQ:
+			fmt.Fprintf(f, "    jle .L%d #lt\n", ir.Loperand)
 		case parse.IR_LABEL:
 			fmt.Fprintf(f, ".L%d: #label\n", ir.Loperand)
 		case parse.IR_CMP:

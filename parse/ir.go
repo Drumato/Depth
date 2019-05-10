@@ -13,6 +13,8 @@ const (
 	IR_DIV      = "/"
 	IR_LT       = "<"
 	IR_GT       = ">"
+	IR_LTEQ     = "<="
+	IR_GTEQ     = ">="
 	IR_CMP      = "COMPARE"
 	IR_LABEL    = "LABEL"
 	IR_JMP      = "JUMP"
@@ -108,7 +110,7 @@ func expr(n *Node) int64 {
 		rop := expr(n.Roperand)
 		newIR(IRType(n.Type), lop, rop)
 		return lop
-	case ND_LT, ND_GT:
+	case ND_LT, ND_GT, ND_LTEQ, ND_GTEQ:
 		lop := expr(n.Loperand)
 		rop := expr(n.Roperand)
 		newIR(IR_CMP, lop, rop)

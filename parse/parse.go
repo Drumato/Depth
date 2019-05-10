@@ -163,7 +163,7 @@ func (p *Parser) expr() *Node {
 	lop := p.add()
 	for {
 		t := p.curToken
-		if t.Type != token.LT && t.Type != token.GT {
+		if t.Type != token.LT && t.Type != token.GT && t.Type != token.LTEQ && t.Type != token.GTEQ {
 			break
 		}
 		p.nextToken()
