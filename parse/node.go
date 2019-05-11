@@ -49,6 +49,7 @@ type Node struct {
 	Condition   *Node
 	Body        []*Node
 	Alternative []*Node
+	Mutable     bool
 }
 
 type Element struct {

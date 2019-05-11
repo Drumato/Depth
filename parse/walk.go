@@ -22,6 +22,9 @@ func doWalk(n *Node) {
 		for _, st := range n.Body {
 			doWalk(st)
 		}
+		for _, st := range n.Alternative {
+			doWalk(st)
+		}
 		scopeLevel--
 	case ND_PLUS, ND_MINUS, ND_MUL, ND_DIV, ND_GT, ND_LT, ND_LTEQ, ND_GTEQ:
 		doWalk(n.Loperand)

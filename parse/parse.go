@@ -25,6 +25,9 @@ func New(l *lex.Lexer) *Parser {
 }
 
 func (p *Parser) nextToken() {
+	if p.curToken.Type == token.RBRACE {
+		scopeLevel--
+	}
 	p.curToken = p.nexToken
 	p.nexToken = p.l.NextToken()
 }
@@ -91,7 +94,6 @@ func (p *Parser) stmt() *Node {
 		n.Level = scopeLevel
 		for {
 			if p.curToken.Type == token.RBRACE {
-				scopeLevel--
 				break
 			}
 			st := p.stmt()
@@ -102,6 +104,26 @@ func (p *Parser) stmt() *Node {
 						break
 					}
 					p.nextToken()
+				}
+			}
+		}
+		if p.nexToken.Type == token.ELSE {
+			p.nextToken()
+			p.nextToken()
+			p.nextToken()
+			for {
+				if p.curToken.Type == token.RBRACE {
+					break
+				}
+				st := p.stmt()
+				n.Alternative = append(n.Alternative, st)
+				if st.Type == ND_RETURN {
+					for {
+						if p.curToken.Type == token.RBRACE {
+							break
+						}
+						p.nextToken()
+					}
 				}
 			}
 		}

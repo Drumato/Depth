@@ -41,32 +41,33 @@ type IR struct {
 	Type               IRType
 	Loperand, Roperand int64
 	Level              uint8
+	Registerable       bool
 }
 
 type Manager struct {
 	FuncTable map[*Function][]*IR
 }
 
-func newIR(ty IRType, lop, rop int64) *IR {
-	ir := &IR{Type: ty, Loperand: lop, Roperand: rop}
+func newIR(ty IRType, lop, rop int64, registerable bool) *IR {
+	ir := &IR{Type: ty, Loperand: lop, Roperand: rop, Registerable: registerable}
 	irs = append(irs, ir)
 	return ir
 }
 
 func label() {
-	newIR(IR_LABEL, labelNum, 0)
+	newIR(IR_LABEL, labelNum, 0, false)
 	labelNum++
 }
 
 func jump() {
-	newIR(IR_JMP, labelNum+1, 0)
+	newIR(IR_JMP, labelNum+1, 0, false)
 }
 
 func stmt(n *Node) {
 	switch n.Type {
 	case ND_RETURN:
 		retReg := expr(n.Expression)
-		newIR(IR_RETURN, retReg, 0)
+		newIR(IR_RETURN, retReg, 0, false)
 	case ND_IF:
 		expr(n.Condition)
 		for _, st := range n.Body {
@@ -76,12 +77,12 @@ func stmt(n *Node) {
 			stmt(st)
 		}
 	case ND_DEFINE:
-		newIR(IR_ALLOCATE, 0, n.Identifier.ElementType.Stacksize)
+		newIR(IR_ALLOCATE, 0, n.Identifier.ElementType.Stacksize, false)
 		retReg := expr(n.Expression)
 		n.Identifier.ElementType.Stacksize += stackSize
 		stackSize += 8
 		nReg--
-		newIR(IR_STORE, n.Identifier.ElementType.Stacksize, retReg)
+		newIR(IR_STORE, n.Identifier.ElementType.Stacksize, retReg, true)
 	default:
 		logrus.Errorf("unexpected node:%+v", n)
 	}
@@ -92,41 +93,41 @@ func expr(n *Node) int64 {
 	case ND_INTEGER:
 		reg := nReg
 		nReg++
-		newIR(IR_IMM, reg, n.IntVal)
+		newIR(IR_IMM, reg, n.IntVal, true)
 		return reg
 	case ND_CHAR:
 		reg := nReg
 		nReg++
-		newIR(IR_IMM, reg, int64(n.CharVal))
+		newIR(IR_IMM, reg, int64(n.CharVal), true)
 		return reg
 	case ND_PLUS, ND_MINUS:
 		lop := expr(n.Loperand)
 		rop := expr(n.Roperand)
-		newIR(IRType(n.Type), lop, rop)
+		newIR(IRType(n.Type), lop, rop, true)
 		nReg--
 		return lop
 	case ND_MUL, ND_DIV:
 		lop := expr(n.Loperand)
 		rop := expr(n.Roperand)
-		newIR(IRType(n.Type), lop, rop)
+		newIR(IRType(n.Type), lop, rop, true)
 		nReg--
 		return lop
 	case ND_LT, ND_GT, ND_LTEQ, ND_GTEQ:
 		lop := expr(n.Loperand)
 		rop := expr(n.Roperand)
-		newIR(IR_CMP, lop, rop)
-		newIR(IRType(n.Type), labelNum, 0)
-		newIR(IR_IMM, lop, 0)
+		newIR(IR_CMP, lop, rop, true)
+		newIR(IRType(n.Type), labelNum, 0, false)
+		newIR(IR_IMM, lop, 0, true)
 		jump()
 		label()
-		newIR(IR_IMM, lop, 1)
+		newIR(IR_IMM, lop, 1, true)
 		label()
 		nReg--
 		return lop
 	case ND_IDENT:
 		reg := nReg
 		nReg++
-		newIR(IR_LOAD, reg, variables[n.Name].ElementType.Stacksize)
+		newIR(IR_LOAD, reg, variables[n.Name].ElementType.Stacksize, true)
 		irs[len(irs)-1].Level = n.Level
 		return reg
 	}
@@ -138,11 +139,11 @@ func GenerateIR(rootNode *RootNode, c *cli.Context) *Manager {
 	manager := &Manager{FuncTable: ft}
 	for _, fn := range rootNode.Functions {
 		irs = []*IR{}
-		newIR(IR_PROLOGUE, 0, 0)
+		newIR(IR_PROLOGUE, 0, 0, false)
 		for _, node := range fn.Nodes {
 			stmt(node)
 		}
-		newIR(IR_EPILOGUE, 0, 0)
+		newIR(IR_EPILOGUE, 0, 0, false)
 		manager.FuncTable[fn] = irs
 	}
 	return manager

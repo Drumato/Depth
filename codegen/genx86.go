@@ -23,31 +23,35 @@ func genx86(irs []*parse.IR, f *os.File) {
 		case parse.IR_RETURN:
 			fmt.Fprintf(f, "    mov rax, %s #return\n", Registers64[ir.Loperand])
 		case parse.IR_ADD:
-			if optLevel == 2 {
-				fmt.Fprintf(f, "    add %s, %#x #add\n", Registers64[ir.Loperand], ir.Roperand)
-			} else {
+			if ir.Registerable {
 				fmt.Fprintf(f, "    add %s, %s #add\n", Registers64[ir.Loperand], Registers64[ir.Roperand])
+			} else {
+				fmt.Fprintf(f, "    add %s, %#x #add\n", Registers64[ir.Loperand], ir.Roperand)
 			}
 		case parse.IR_SUB:
-			if optLevel == 2 {
-				fmt.Fprintf(f, "    sub %s, %#x #sub\n", Registers64[ir.Loperand], ir.Roperand)
-			} else {
+			if ir.Registerable {
 				fmt.Fprintf(f, "    sub %s, %s #sub\n", Registers64[ir.Loperand], Registers64[ir.Roperand])
+			} else {
+				fmt.Fprintf(f, "    sub %s, %#x #sub\n", Registers64[ir.Loperand], ir.Roperand)
 			}
 		case parse.IR_MUL:
-			if optLevel == 2 {
-				fmt.Fprintf(f, "    mov rax, %#x #mul\n", ir.Roperand)
+			if ir.Registerable {
+				fmt.Fprintf(f, "    mov rax, %s #mul\n", Registers64[ir.Roperand])
 				fmt.Fprintf(f, "    mul %s\n", Registers64[ir.Loperand])
 				fmt.Fprintf(f, "    mov %s, rax\n", Registers64[ir.Loperand])
 			} else {
-				fmt.Fprintf(f, "    mov rax, %s #mul\n", Registers64[ir.Roperand])
+				fmt.Fprintf(f, "    mov rax, %#x #mul\n", ir.Roperand)
 				fmt.Fprintf(f, "    mul %s\n", Registers64[ir.Loperand])
 				fmt.Fprintf(f, "    mov %s, rax\n", Registers64[ir.Loperand])
 			}
 		case parse.IR_DIV:
 			fmt.Fprintf(f, "    mov rax, %s #div\n", Registers64[ir.Loperand])
 			fmt.Fprintf(f, "    cqo\n")
-			fmt.Fprintf(f, "    div %s\n", Registers64[ir.Roperand])
+			if ir.Registerable {
+				fmt.Fprintf(f, "    div %s\n", Registers64[ir.Roperand])
+			} else {
+				fmt.Fprintf(f, "    div %#x\n", ir.Roperand)
+			}
 			fmt.Fprintf(f, "    mov %s, rax\n", Registers64[ir.Loperand])
 		case parse.IR_GT:
 			fmt.Fprintf(f, "    jg .L%d #gt\n", ir.Loperand)
@@ -60,7 +64,11 @@ func genx86(irs []*parse.IR, f *os.File) {
 		case parse.IR_LABEL:
 			fmt.Fprintf(f, ".L%d: #label\n", ir.Loperand)
 		case parse.IR_CMP:
-			fmt.Fprintf(f, "    cmp %s, %s\n", Registers64[ir.Loperand], Registers64[ir.Roperand])
+			if ir.Registerable {
+				fmt.Fprintf(f, "    cmp %s, %s\n", Registers64[ir.Loperand], Registers64[ir.Roperand])
+			} else {
+				fmt.Fprintf(f, "    cmp %s, %#x\n", Registers64[ir.Loperand], ir.Roperand)
+			}
 		case parse.IR_ALLOCATE:
 			fmt.Fprintf(f, "    sub rsp, %#x #allocate\n", ir.Roperand)
 		case parse.IR_JMP:
