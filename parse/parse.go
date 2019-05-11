@@ -8,7 +8,8 @@ import (
 )
 
 var (
-	scopeLevel uint8 = 0
+	scopeLevel uint8                = 0
+	envTable   map[int]*Environment = make(map[int]*Environment)
 )
 
 type Parser struct { //recursive-descent parser
@@ -58,8 +59,20 @@ func (p *Parser) term() *Node {
 		defer p.nextToken()
 		return NewNodeChar(p.curToken.Literal)
 	case token.IDENT:
-		n := &Node{Name: p.curToken.Literal, Type: ND_IDENT, IntVal: variables[p.curToken.Literal].IntVal}
-		n.ElementType = &Element{Type: p.curToken.Type, Stacksize: stackTable[p.curToken.Literal]}
+		var ident *Node
+		var ok bool
+		i := int(scopeLevel)
+		for {
+			if i < 1 {
+				FoundError(NewError(InvalidReferenceError, fmt.Sprintf("cannot find '%s' in this scope", p.curToken.Literal)))
+				os.Exit(1)
+			}
+			if ident, ok = envTable[i].Variables[p.curToken.Literal]; ok {
+				break
+			}
+			i--
+		}
+		n := &Node{Name: p.curToken.Literal, Type: ND_IDENT, Level: scopeLevel, IntVal: ident.IntVal, ElementType: envTable[i].Variables[p.curToken.Literal].ElementType}
 		defer p.nextToken()
 		return n
 	default:
@@ -92,6 +105,7 @@ func (p *Parser) stmt() *Node {
 		p.consume(token.LBRACE)
 		scopeLevel++
 		n.Level = scopeLevel
+		envTable[int(n.Level)] = newEnv(int(n.Level))
 		for {
 			if p.curToken.Type == token.RBRACE {
 				break
@@ -139,7 +153,7 @@ func (p *Parser) stmt() *Node {
 		p.nextToken()
 		n.Identifier = p.define()
 		n.Expression = p.expr()
-		variables[n.Identifier.Name].IntVal = n.Expression.IntVal
+		envTable[int(n.Level)].Variables[n.Identifier.Name].IntVal = n.Expression.IntVal
 	default:
 		FoundError(NewError(ParseError, fmt.Sprintf("invalid statement startswith %s", p.curToken.Type)))
 		p.nextToken()
@@ -164,6 +178,7 @@ func (p *Parser) define() *Node {
 	}
 	n.Name = p.curToken.Literal
 	n.Type = ND_IDENT
+	n.Level = scopeLevel
 	p.expect(token.COLON)
 	p.nextToken()
 	if !isTypename(p.curToken) {
@@ -171,7 +186,7 @@ func (p *Parser) define() *Node {
 		os.Exit(1)
 	}
 	n.ElementType = &Element{Type: p.curToken.Type, Stacksize: stackTable[p.curToken.Literal]}
-	variables[n.Name] = n
+	envTable[int(n.Level)].Variables[n.Name] = n
 	p.expect(token.ASSIGN)
 	p.nextToken()
 	return n
@@ -228,6 +243,7 @@ func (p *Parser) function() *Function {
 }
 
 func (p *Parser) Parse() *RootNode {
+	envTable[1] = newEnv(1)
 	functions := make(map[string]*Function)
 	rn := &RootNode{Functions: functions}
 	fn := p.function()

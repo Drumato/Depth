@@ -70,6 +70,7 @@ func stmt(n *Node) {
 		newIR(IR_RETURN, retReg, 0, false)
 	case ND_IF:
 		expr(n.Condition)
+		nReg--
 		for _, st := range n.Body {
 			stmt(st)
 		}
@@ -127,7 +128,7 @@ func expr(n *Node) int64 {
 	case ND_IDENT:
 		reg := nReg
 		nReg++
-		newIR(IR_LOAD, reg, variables[n.Name].ElementType.Stacksize, true)
+		newIR(IR_LOAD, reg, envTable[int(n.Level)].Variables[n.Name].ElementType.Stacksize, true)
 		irs[len(irs)-1].Level = n.Level
 		return reg
 	}

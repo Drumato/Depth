@@ -2,5 +2,7 @@ f main(){
   let x : i8 = 10  
   if x>0{
     return x*2
+  } else {
+    return 0
   }
 }
