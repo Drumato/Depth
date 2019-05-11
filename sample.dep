@@ -1,5 +1,6 @@
 f main(){ 
   let x : i8 = 10  
-  let y : i8 = 10  
-  return x+2+3+y
+  if x>0{
+    return x*2
+  }
 }

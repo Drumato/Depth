@@ -53,10 +53,6 @@ func newIR(ty IRType, lop, rop int64) *IR {
 	return ir
 }
 
-func kill(reg int64) {
-	newIR(IR_FREE, reg, 0)
-	nReg--
-}
 func label() {
 	newIR(IR_LABEL, labelNum, 0)
 	labelNum++
@@ -107,13 +103,13 @@ func expr(n *Node) int64 {
 		lop := expr(n.Loperand)
 		rop := expr(n.Roperand)
 		newIR(IRType(n.Type), lop, rop)
-		kill(rop)
+		nReg--
 		return lop
 	case ND_MUL, ND_DIV:
 		lop := expr(n.Loperand)
 		rop := expr(n.Roperand)
 		newIR(IRType(n.Type), lop, rop)
-		kill(rop)
+		nReg--
 		return lop
 	case ND_LT, ND_GT, ND_LTEQ, ND_GTEQ:
 		lop := expr(n.Loperand)
@@ -125,7 +121,7 @@ func expr(n *Node) int64 {
 		label()
 		newIR(IR_IMM, lop, 1)
 		label()
-		kill(rop)
+		nReg--
 		return lop
 	case ND_IDENT:
 		reg := nReg
