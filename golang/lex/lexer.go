@@ -41,7 +41,7 @@ func (l *Lexer) readNumber() string {
 	for isDigit(l.ch) {
 		l.readChar()
 	}
-	if l.ch == '.' {
+	if l.ch == '.' || l.ch == 'x' {
 		l.readChar()
 		for isDigit(l.ch) {
 			l.readChar()
@@ -237,6 +237,7 @@ func (l *Lexer) NextToken() token.Token {
 				tok.Type = token.INTLIT
 				switch judgeBase(tok.Literal) {
 				case HEX:
+					tok.Literal = string(tok.Literal[2:])
 					base = 16
 				case OCTAL:
 					base = 8

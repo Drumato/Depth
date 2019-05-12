@@ -66,6 +66,7 @@ const (
 	I16  = "I16"
 	I32  = "I32"
 	I64  = "I64"
+	I128 = "I128"
 	U8   = "U8"
 	U16  = "U16"
 	U32  = "U32"
@@ -115,6 +116,7 @@ var keywords = map[string]TokenType{
 	"i16":    I16,
 	"i32":    I32,
 	"i64":    I64,
+	"i128":   I128,
 	"u8":     U8,
 	"u16":    U16,
 	"u32":    U32,

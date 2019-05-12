@@ -38,6 +38,8 @@ func doWalk(n *Node) {
 				envTable[int(n.Level)].Variables[n.Identifier.Name].IntVal = n.Expression.IntVal
 			case token.CHAR:
 				envTable[int(n.Level)].Variables[n.Identifier.Name].CharVal = n.Expression.CharVal
+			case token.F32:
+				envTable[int(n.Level)].Variables[n.Identifier.Name].FloatVal = n.Expression.FloatVal
 			}
 		}
 	case ND_IDENT:

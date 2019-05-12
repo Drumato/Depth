@@ -69,6 +69,14 @@ func (p *Parser) term() *Node {
 			i--
 		}
 		n := &Node{Name: p.curToken.Literal, Type: ND_IDENT, Level: scopeLevel, IntVal: ident.IntVal, ElementType: envTable[i].Variables[p.curToken.Literal].ElementType}
+		switch n.ElementType.Type {
+		case token.I8, token.I16, token.I32, token.I64, token.I128:
+			n.IntVal = ident.IntVal
+		case token.F32, token.F64:
+			n.FloatVal = ident.FloatVal
+		case token.CHAR:
+			n.CharVal = ident.CharVal
+		}
 		defer p.nextToken()
 		return n
 	default:
@@ -149,7 +157,14 @@ func (p *Parser) stmt() *Node {
 		p.nextToken()
 		n.Identifier = p.define()
 		n.Expression = p.expr()
-		envTable[int(n.Level)].Variables[n.Identifier.Name].IntVal = n.Expression.IntVal
+		switch n.Identifier.ElementType.Type {
+		case token.I8, token.I16, token.I32, token.I64, token.I128:
+			envTable[int(n.Level)].Variables[n.Identifier.Name].IntVal = n.Expression.IntVal
+		case token.F32, token.F64:
+			envTable[int(n.Level)].Variables[n.Identifier.Name].FloatVal = n.Expression.FloatVal
+		case token.CHAR:
+			envTable[int(n.Level)].Variables[n.Identifier.Name].CharVal = n.Expression.CharVal
+		}
 	default:
 		FoundError(NewError(ParseError, fmt.Sprintf("invalid statement startswith %s", p.curToken.Type)))
 		p.nextToken()

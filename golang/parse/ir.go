@@ -89,6 +89,11 @@ func expr(n *Node) int64 {
 		nReg++
 		newIR(IR_IMM, reg, int64(n.CharVal), true)
 		return reg
+	case ND_FLOAT:
+		reg := nReg
+		nReg++
+		newIR(IR_IMM, reg, int64(n.FloatVal), true)
+		return reg
 	case ND_PLUS, ND_MINUS:
 		lop := expr(n.Loperand)
 		rop := expr(n.Roperand)

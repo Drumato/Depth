@@ -27,8 +27,12 @@ const (
 
 var (
 	stackTable = map[string]int64{
-		"i8": 8,
-		"ch": 32,
+		"i8":   8,
+		"i16":  16,
+		"i32":  32,
+		"i64":  64,
+		"i128": 128,
+		"ch":   32,
 	}
 )
 
