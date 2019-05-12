@@ -12,13 +12,6 @@ var (
 	envTable   map[int]*Environment = make(map[int]*Environment)
 )
 
-type Parser struct { //recursive-descent parser
-	l *lex.Lexer
-
-	curToken token.Token
-	nexToken token.Token
-}
-
 func New(l *lex.Lexer) *Parser {
 	p := &Parser{l: l, nexToken: l.NextToken()}
 	p.nextToken()

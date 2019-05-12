@@ -36,18 +36,6 @@ var (
 	labelNum  int64 = 2
 )
 
-type IRType string
-type IR struct {
-	Type               IRType
-	Loperand, Roperand int64
-	Level              uint8
-	Registerable       bool
-}
-
-type Manager struct {
-	FuncTable map[*Function][]*IR
-}
-
 func newIR(ty IRType, lop, rop int64, registerable bool) *IR {
 	ir := &IR{Type: ty, Loperand: lop, Roperand: rop, Registerable: registerable}
 	irs = append(irs, ir)

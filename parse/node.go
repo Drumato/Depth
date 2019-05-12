@@ -1,7 +1,6 @@
 package parse
 
 import (
-	"depth/token"
 	"fmt"
 	"strconv"
 
@@ -31,41 +30,6 @@ var (
 		"ch": 32,
 	}
 )
-
-type NodeType string
-type Node struct {
-	Loperand    *Node
-	Roperand    *Node
-	Expression  *Node
-	IntVal      int64
-	FloatVal    float64
-	CharVal     uint32
-	Name        string
-	Level       uint8
-	Type        NodeType
-	Identifier  *Node
-	ElementType *Element
-	Init        *Node
-	Condition   *Node
-	Body        []*Node
-	Alternative []*Node
-	Mutable     bool
-}
-
-type Element struct {
-	Type      token.TokenType
-	Stacksize int64
-}
-
-type RootNode struct {
-	Functions map[string]*Function
-}
-
-type Function struct {
-	Name string
-	//IRs []*IR
-	Nodes []*Node //may be remove in future
-}
 
 func NewNode(ntype NodeType, lop, rop *Node) *Node {
 	return &Node{Type: ntype, Loperand: lop, Roperand: rop}

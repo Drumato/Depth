@@ -8,12 +8,6 @@ import (
 	"github.com/urfave/cli"
 )
 
-type Environment struct {
-	Level     int
-	RegMaps   map[int]*Node
-	Variables map[string]*Node
-}
-
 func newEnv(lev int) *Environment {
 	return &Environment{Level: lev, RegMaps: make(map[int]*Node), Variables: make(map[string]*Node)}
 }

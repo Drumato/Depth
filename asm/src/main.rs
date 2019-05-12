@@ -1,10 +1,20 @@
+extern crate yaml_rust;
 use std::fs::File;
+use std::io::prelude::*;
 use std::io::{BufReader, Write};
+use yaml_rust::{YamlEmitter, YamlLoader};
 
 extern crate asm;
 
 fn main() -> Result<(), Box<std::error::Error>> {
-    let magicnumber: u128 = 0x7f454c46020101000000000000000000; //0~15 byte
+    let cfg = &get_yaml()?[0];
+    let mut out_str = String::new();
+    {
+        let mut emitter = YamlEmitter::new(&mut out_str);
+        emitter.dump(cfg).unwrap(); // dump the YAML object to a String
+    }
+    println!("{}", out_str);
+    /*let magicnumber: u128 = 0x7f454c46020101000000000000000000; //0~15 byte
     let fty: u16 = 0x1; //16~17
     let march: u16 = 0x3e; //18~19
     let fver: u32 = 0x1; //20~23
@@ -37,7 +47,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
     let ehdr = asm::elf::Elf64Header::new(param);
     let mut file = File::create("sample.o")?;
     write!(file, "{}", ehdr.binary_dump(false))?;
-    file.flush()?;
+    file.flush()?;*/
     Ok(())
     //lexing();
 }
@@ -52,4 +62,12 @@ fn lexing() {
         Err(e) => println!("Error found in tmp.s: {}", e),
     }
     println!("{}", content);
+}
+
+fn get_yaml() -> Result<Vec<yaml_rust::Yaml>, yaml_rust::ScanError> {
+    let mut f = File::open("elf.yaml").expect("file not found");
+    let mut fstr = String::new();
+    f.read_to_string(&mut fstr)
+        .expect("something went wront reading the file");
+    YamlLoader::load_from_str(&fstr)
 }

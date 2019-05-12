@@ -15,15 +15,6 @@ const (
 	W_Security WarningType = iota
 )
 
-type ErrorType string
-
-type WarningType uint16
-
-type Error struct {
-	Type    ErrorType
-	Message string
-}
-
 func NewError(ety ErrorType, msg string) *Error {
 	return &Error{Type: ety, Message: msg}
 }
