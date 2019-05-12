@@ -1,7 +1,7 @@
 package lex
 
 import (
-	"depth/token"
+	"depth/golang/token"
 	"strconv"
 	"strings"
 

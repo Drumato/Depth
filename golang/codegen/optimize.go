@@ -1,8 +1,8 @@
 package codegen
 
 import (
-	"depth/parse"
-	util "depth/pkg"
+	"depth/golang/parse"
+	util "depth/golang/pkg"
 	"fmt"
 
 	"github.com/urfave/cli"

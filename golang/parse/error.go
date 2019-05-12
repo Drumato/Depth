@@ -1,7 +1,7 @@
 package parse
 
 import (
-	util "depth/pkg"
+	util "depth/golang/pkg"
 	"fmt"
 	"os"
 )

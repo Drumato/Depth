@@ -1,14 +1,12 @@
 package codegen
 
 import (
-	"depth/parse"
+	"depth/golang/parse"
 	"fmt"
 	"os"
 
 	"github.com/sirupsen/logrus"
 )
-
-var ()
 
 func genx86(irs []*parse.IR, f *os.File) {
 	for _, ir := range irs {

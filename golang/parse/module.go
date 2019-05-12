@@ -1,8 +1,8 @@
 package parse
 
 import (
-	"depth/lex"
-	"depth/token"
+	"depth/golang/lex"
+	"depth/golang/token"
 )
 
 type Parser struct { //recursive-descent parser

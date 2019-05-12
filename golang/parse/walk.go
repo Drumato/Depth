@@ -1,7 +1,7 @@
 package parse
 
 import (
-	"depth/token"
+	"depth/golang/token"
 	"fmt"
 	"os"
 

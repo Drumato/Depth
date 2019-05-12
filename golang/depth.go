@@ -1,15 +1,14 @@
 package main
 
 import (
-	"depth/codegen"
-	"depth/lex"
-	"depth/parse"
-	util "depth/pkg"
-	"depth/token"
+	"depth/golang/codegen"
+	"depth/golang/lex"
+	"depth/golang/parse"
+	util "depth/golang/pkg"
+	"depth/golang/token"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	"github.com/logrusorgru/aurora"
@@ -31,14 +30,6 @@ var (
 )
 
 func main() {
-	if _, err := os.Open("asm/target/debug/asm"); err != nil {
-		fmt.Printf(util.ColorString("Builds assembler...", "blue"))
-		cmd := exec.Command("make", "-c", "asm/")
-		err := cmd.Run()
-		if err != nil {
-			logrus.Errorf(ErrFormat, err)
-		}
-	}
 	if err := app.Run(os.Args); err != nil {
 		fmt.Printf(ErrFormat, util.ColorString(fmt.Sprintf("%+v", err), "red"))
 	}
@@ -87,7 +78,6 @@ func Start(c *cli.Context) error {
 	if c.Bool("until-compile") {
 		return nil
 	}
-	generateBinary(c)
 	if c.Bool("until-assemble") {
 		return nil
 	}
@@ -218,18 +208,4 @@ func optimize(c *cli.Context, manager *parse.Manager) {
 			}
 		}
 	}
-}
-
-func generateBinary(c *cli.Context) {
-	if c.Bool("verbosity") {
-		fmt.Println(util.ColorString("Assemble mnemonics...", "blue"))
-	}
-	cmd := exec.Command("asm/target/debug/asm")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		logrus.Errorf(ErrFormat, err)
-	}
-
 }
