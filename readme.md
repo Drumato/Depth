@@ -12,6 +12,8 @@ This is the main source code repository for Depth.
 - **システムプログラミング言語**
   - **厳密な型チェック**と､ **省メモリ**をコンセプトに開発中｡
 - 開発言語→ **Golang**
+  - **パフォーマンスチューニングのために後々Rustで再実装予定**
+  - まずはプロトタイピングとして実装している｡
 - 言語組み込みのライブラリ開発も視野に入れている｡  
   - ネットワーク通信を実現するライブラリ
   - ハッシュ化関数等
@@ -20,7 +22,6 @@ This is the main source code repository for Depth.
 
 - **x86-64** assemblyをマシン語に変換するアセンブラ｡
   - 後々他アーキテクチャにも対応予定
-- 開発言語→ **Rust**
 
 
 ## Author's Profile
