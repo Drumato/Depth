@@ -9,6 +9,7 @@ import (
 
 const (
 	ND_INTEGER = "INTEGER"
+	ND_FLOAT   = "FLOAT"
 	ND_CHAR    = "CHAR"
 	ND_PLUS    = "+"
 	ND_MINUS   = "-"
@@ -37,6 +38,9 @@ func NewNode(ntype NodeType, lop, rop *Node) *Node {
 
 func NewNodeNum(val int64) *Node {
 	return &Node{IntVal: val, Type: ND_INTEGER}
+}
+func NewNodeFloat(val float64) *Node {
+	return &Node{FloatVal: val, Type: ND_FLOAT}
 }
 
 func NewNodeChar(ch string) *Node {

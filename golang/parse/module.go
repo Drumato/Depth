@@ -59,6 +59,27 @@ type Node struct {
 	Mutable     bool
 }
 
+func (n *Node) Val() interface{} {
+	switch n.Type {
+	case ND_INTEGER:
+		return n.IntVal
+	case ND_CHAR:
+		return n.CharVal
+	case ND_FLOAT:
+		return n.FloatVal
+	case ND_IDENT:
+		switch n.ElementType.Type {
+		case token.I8, token.I16, token.I32, token.I64:
+			return n.IntVal
+		case token.F32, token.F64:
+			return n.FloatVal
+		case token.CHAR:
+			return n.CharVal
+		}
+	}
+	return n.IntVal
+}
+
 type Element struct {
 	Type      token.TokenType
 	Stacksize int64

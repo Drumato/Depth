@@ -48,6 +48,9 @@ func (p *Parser) term() *Node {
 	case token.INTLIT:
 		defer p.nextToken()
 		return NewNodeNum(p.curToken.IntVal)
+	case token.FLOATLIT:
+		defer p.nextToken()
+		return NewNodeFloat(p.curToken.FloatVal)
 	case token.CHARLIT:
 		defer p.nextToken()
 		return NewNodeChar(p.curToken.Literal)
