@@ -14,7 +14,7 @@ type Parser struct { //recursive-descent parser
 
 type Environment struct {
 	Level     int
-	RegMaps   map[int]*Node
+	RegMaps   map[int]interface{}
 	Variables map[string]*Node
 }
 
@@ -24,6 +24,7 @@ type IR struct {
 	Loperand, Roperand int64
 	Level              uint8
 	Registerable       bool
+	True               int8
 }
 
 type Manager struct {
