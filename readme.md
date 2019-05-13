@@ -1,3 +1,5 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/Drumato/Depth)](https://goreportcard.com/report/github.com/Drumato/Depth)
+
 # The Depth Programming Language
 
 This is the main source code repository for Depth.  

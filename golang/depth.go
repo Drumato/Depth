@@ -103,12 +103,12 @@ func lexing(c *cli.Context, sourcecode string) *lex.Lexer {
 			logrus.Errorf(ErrFormat, err)
 			os.Exit(1)
 		}
-		if c.Bool("dump-source") {
-			fmt.Println(util.ColorString("----------------input source----------------", "blue"))
-			fmt.Println(string(b))
-		}
 		input = string(b)
 		lexer = lex.New(input, sourcecode)
+	}
+	if c.Bool("dump-source") {
+		fmt.Println(util.ColorString("----------------input source----------------", "blue"))
+		fmt.Println(input)
 	}
 	if c.Bool("dump-tokens") {
 		fmt.Println(util.ColorString("----------------dump tokens----------------", "blue"))
@@ -169,24 +169,15 @@ func generateCode(c *cli.Context, manager *parse.Manager, filename string) {
 		os.Exit(1)
 	}
 	if filename == "" {
-		if c.Bool("print-stdout") {
-			fmt.Printf("%s\n", aurora.Bold(aurora.Blue("----------------assembly----------------")))
-			codegen.Gen(manager, os.Stdout, filename)
-			return
-		} else {
-			codegen.Gen(manager, f, "sample.dep")
-			return
-		}
+		filename = "sample.dep"
+	}
+	if c.Bool("print-stdout") {
+		fmt.Printf("%s\n", aurora.Bold(aurora.Blue("----------------assembly----------------")))
+		codegen.Gen(manager, os.Stdout, filename)
+		return
 	} else {
-
-		if c.Bool("print-stdout") {
-			fmt.Printf("%s\n", aurora.Bold(aurora.Blue("----------------assembly----------------")))
-			codegen.Gen(manager, os.Stdout, filename)
-			return
-		} else {
-			codegen.Gen(manager, f, filename)
-			return
-		}
+		codegen.Gen(manager, f, filename)
+		return
 	}
 }
 func semantic(c *cli.Context, manager *parse.Manager) {
