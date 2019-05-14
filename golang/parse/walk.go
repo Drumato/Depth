@@ -9,7 +9,7 @@ import (
 )
 
 func newEnv(lev int) *Environment {
-	return &Environment{Level: lev, RegMaps: make(map[int]*Node), Variables: make(map[string]*Node)}
+	return &Environment{Level: lev, RegMaps: make(map[int]interface{}), Variables: make(map[string]*Node)}
 }
 
 func doWalk(n *Node) {

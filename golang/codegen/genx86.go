@@ -19,7 +19,12 @@ func genx86(irs []*parse.IR, f *os.File) {
 		case parse.IR_MOV:
 			fmt.Fprintf(f, "    mov %s, %s #loadreg\n", Registers64[ir.Loperand], Registers64[ir.Roperand])
 		case parse.IR_RETURN:
-			fmt.Fprintf(f, "    mov rax, %s #return\n", Registers64[ir.Loperand])
+			if ir.True > 0 {
+				fmt.Fprintf(f, "    mov rax, %d #return\n", ir.True-1)
+				continue
+			} else {
+				fmt.Fprintf(f, "    mov rax, %s #return\n", Registers64[ir.Loperand])
+			}
 		case parse.IR_ADD:
 			if ir.Registerable {
 				fmt.Fprintf(f, "    add %s, %s #add\n", Registers64[ir.Loperand], Registers64[ir.Roperand])
@@ -80,6 +85,7 @@ func genx86(irs []*parse.IR, f *os.File) {
 			fmt.Fprintf(f, "    pop rbp\n")
 			fmt.Fprintf(f, "    ret\n")
 		case parse.IR_NOP:
+		case parse.IR_IF:
 			break
 
 		default:

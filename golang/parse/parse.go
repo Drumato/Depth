@@ -47,13 +47,13 @@ func (p *Parser) term() *Node {
 	switch p.curToken.Type {
 	case token.INTLIT:
 		defer p.nextToken()
-		return NewNodeNum(p.curToken.IntVal)
+		return NewNodeNum(p.curToken.IntVal, scopeLevel)
 	case token.FLOATLIT:
 		defer p.nextToken()
-		return NewNodeFloat(p.curToken.FloatVal)
+		return NewNodeFloat(p.curToken.FloatVal, scopeLevel)
 	case token.CHARLIT:
 		defer p.nextToken()
-		return NewNodeChar(p.curToken.Literal)
+		return NewNodeChar(p.curToken.Literal, scopeLevel)
 	case token.IDENT:
 		var ident *Node
 		var ok bool
@@ -94,7 +94,7 @@ func (p *Parser) mul() *Node {
 			break
 		}
 		p.nextToken()
-		lop = NewNode(NodeType(t.Type), lop, p.term())
+		lop = NewNode(NodeType(t.Type), lop, p.term(), scopeLevel)
 	}
 	return lop
 }
@@ -211,7 +211,7 @@ func (p *Parser) add() *Node {
 			break
 		}
 		p.nextToken()
-		lop = NewNode(NodeType(t.Type), lop, p.mul())
+		lop = NewNode(NodeType(t.Type), lop, p.mul(), scopeLevel)
 	}
 	return lop
 }
@@ -224,7 +224,7 @@ func (p *Parser) expr() *Node {
 			break
 		}
 		p.nextToken()
-		lop = NewNode(NodeType(t.Type), lop, p.add())
+		lop = NewNode(NodeType(t.Type), lop, p.add(), scopeLevel)
 	}
 	return lop
 }
@@ -255,6 +255,7 @@ func (p *Parser) function() *Function {
 
 func (p *Parser) Parse() *RootNode {
 	envTable[1] = newEnv(1)
+	envTable[0] = newEnv(0)
 	functions := make(map[string]*Function)
 	rn := &RootNode{Functions: functions}
 	fn := p.function()

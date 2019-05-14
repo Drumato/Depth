@@ -36,21 +36,21 @@ var (
 	}
 )
 
-func NewNode(ntype NodeType, lop, rop *Node) *Node {
-	return &Node{Type: ntype, Loperand: lop, Roperand: rop}
+func NewNode(ntype NodeType, lop, rop *Node, scope uint8) *Node {
+	return &Node{Type: ntype, Loperand: lop, Roperand: rop, Level: scope}
 }
 
-func NewNodeNum(val int64) *Node {
-	return &Node{IntVal: val, Type: ND_INTEGER}
+func NewNodeNum(val int64, scope uint8) *Node {
+	return &Node{IntVal: val, Type: ND_INTEGER, Level: scope}
 }
-func NewNodeFloat(val float64) *Node {
-	return &Node{FloatVal: val, Type: ND_FLOAT}
+func NewNodeFloat(val float64, scope uint8) *Node {
+	return &Node{FloatVal: val, Type: ND_FLOAT, Level: scope}
 }
 
-func NewNodeChar(ch string) *Node {
+func NewNodeChar(ch string, scope uint8) *Node {
 	code, err := strconv.ParseUint(fmt.Sprintf("%d", ch[0]), 10, 32)
 	if err != nil {
 		logrus.Error("%+v\n", err)
 	}
-	return &Node{CharVal: uint32(code), Type: ND_CHAR}
+	return &Node{CharVal: uint32(code), Type: ND_CHAR, Level: scope}
 }
