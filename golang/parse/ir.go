@@ -56,7 +56,14 @@ func stmt(n *Node) *IR {
 	switch n.Type {
 	case ND_RETURN:
 		retReg := expr(n.Expression)
-		return newIR(IR_RETURN, retReg, 0, false, n.Level)
+		idx := len(irs) - 1
+		rn := newIR(IR_RETURN, retReg, 0, false, n.Level)
+		if isCompare(irs[idx].Type) {
+			retReg = int64(irs[idx].True)
+			irs[idx].Type = IR_NOP
+			rn.True = irs[idx].True
+		}
+		return rn
 	case ND_IF:
 		i := newIR(IR_IF, 0, 0, false, n.Level)
 		expr(n.Condition)
@@ -64,22 +71,26 @@ func stmt(n *Node) *IR {
 		for idx > 0 {
 			if isCompare(irs[idx].Type) {
 				if compare(idx) {
-					i.True = 1
+					i.True = 2
 				} else {
-					i.True = 0
+					i.True = 1
 				}
 				break
 			}
 			idx--
 		}
-		i.Type = IR_NOP
+		idx = len(irs) - 1
+		for irs[idx].Type != IR_IF {
+			irs[idx].Type = IR_NOP
+			idx--
+		}
 		scopeLevel++
 		nReg--
-		if i.True == 1 {
+		if i.True == 2 {
 			for _, st := range n.Body {
 				stmt(st)
 			}
-		} else {
+		} else if i.True == 1 {
 			for _, st := range n.Alternative {
 				stmt(st)
 			}
@@ -135,6 +146,11 @@ func expr(n *Node) int64 {
 		lop := expr(n.Loperand)
 		rop := expr(n.Roperand)
 		newIR(IRType(n.Type), lop, rop, true, n.Level)
+		if compare(len(irs) - 1) {
+			irs[len(irs)-1].True = 2
+		} else {
+			irs[len(irs)-1].True = 1
+		}
 		/*
 			newIR(IR_CMP, lop, rop, true)
 			newIR(IRType(n.Type), labelNum, 0, false)
