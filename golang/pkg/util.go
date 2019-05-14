@@ -11,8 +11,10 @@ import (
 )
 
 type ByteManager struct {
-	Input []byte
-	Pos   int
+	Input    []byte
+	Pos      int
+	Filename string
+	Little   bool
 }
 
 func NewBytes(filepath string, mode string) *ByteManager {
@@ -25,7 +27,7 @@ func NewBytes(filepath string, mode string) *ByteManager {
 			logrus.Errorf("%+v", err)
 		}
 	case "w":
-		f, err = os.OpenFile(filepath, os.O_RDWR, 0755)
+		f, err = os.OpenFile(filepath, os.O_RDWR|os.O_CREATE, 0755)
 		if err != nil {
 			logrus.Errorf("%+v", err)
 		}
@@ -38,6 +40,7 @@ func NewBytes(filepath string, mode string) *ByteManager {
 		logrus.Errorf("no such an filemode")
 	}
 	b := &ByteManager{}
+	b.Filename = filepath
 	b.Input, err = ioutil.ReadAll(f)
 	if err != nil {
 		logrus.Errorf("%+v", err)
@@ -61,8 +64,8 @@ func (b *ByteManager) WriteRange(src, dst int, content []byte) {
 	b.Input = bytes.ReplaceAll(b.Input, b.Input[src:dst], content)
 }
 
-func (b *ByteManager) Flush(filepath string) error {
-	f, err := os.OpenFile(filepath, os.O_WRONLY, 0755)
+func (b *ByteManager) Flush() error {
+	f, err := os.OpenFile(b.Filename, os.O_WRONLY, 0755)
 	if err != nil {
 		return err
 	}

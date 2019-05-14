@@ -1,0 +1,4 @@
+f main(){ 
+  let x : i8 = 10  
+  return 20>0
+}
