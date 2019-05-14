@@ -56,3 +56,38 @@ func compare(i int) bool {
 	logrus.Errorf("Invalid IR:%s", irs[i].Type)
 	return false
 }
+
+func accumulate(i int) int64 {
+	lop, ok := envTable[int(irs[i].Level)].RegMaps[int(irs[i].Loperand)].(int64)
+	rop, ok2 := envTable[int(irs[i].Level)].RegMaps[int(irs[i].Roperand)].(int64)
+	if !ok && !ok2 {
+		logrus.Errorf("not mapped register")
+		return 0
+	}
+
+	switch irs[i].Type {
+	case IR_ADD:
+		if ok && ok2 {
+			return lop + rop
+		}
+		logrus.Errorf("Invalid values:%d-%d", lop, rop)
+	case IR_SUB:
+		if ok && ok2 {
+			return lop - rop
+		}
+		logrus.Errorf("Invalid values:%d-%d", lop, rop)
+	case IR_MUL:
+		if ok && ok2 {
+			return lop * rop
+		}
+		logrus.Errorf("Invalid values:%d-%d", lop, rop)
+	case IR_DIV:
+		if ok && ok2 {
+			return lop / rop
+		}
+		logrus.Errorf("Invalid values:%d-%d", lop, rop)
+	}
+	logrus.Errorf("Invalid IR:%s", irs[i].Type)
+	return 0
+
+}
