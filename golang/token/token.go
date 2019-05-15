@@ -37,6 +37,7 @@ const (
 	ASTERISKASSIGN = "*="
 	SLASHASSIGN    = "/="
 	PERCENTASSIGN  = "%="
+	ARROW          = "->"
 
 	LT        = "<"
 	GT        = ">"

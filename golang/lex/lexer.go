@@ -99,20 +99,24 @@ func (l *Lexer) NextToken() token.Token {
 			}
 		}
 	case '-':
-		if l.peekChar() == '-' {
+		switch l.peekChar() {
+		case '-':
 			ch := l.ch
 			l.readChar()
 			literal := string(ch) + string(l.ch)
 			tok = token.Token{Type: token.DECRE, Literal: literal}
-		} else {
-			if l.peekChar() == '=' {
-				ch := l.ch
-				l.readChar()
-				literal := string(ch) + string(l.ch)
-				tok = token.Token{Type: token.MINUSASSIGN, Literal: literal}
-			} else {
-				tok = newToken(token.MINUS, l.ch)
-			}
+		case '=':
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.MINUSASSIGN, Literal: literal}
+		case '>':
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.ARROW, Literal: literal}
+		default:
+			tok = newToken(token.MINUS, l.ch)
 		}
 	case '!':
 		if l.peekChar() == '=' {
@@ -288,7 +292,7 @@ func isValid(ch rune) bool {
 }
 
 func isDigit(ch rune) bool {
-	return '0' <= ch && ch <= '9'
+	return '0' <= ch && ch <= '9' || 'a' <= ch && ch <= 'f' || 'A' <= ch && ch <= 'F'
 }
 
 func (l *Lexer) skipWhitespace() {

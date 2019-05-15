@@ -50,7 +50,7 @@ func NewNodeFloat(val float64, scope uint8) *Node {
 func NewNodeChar(ch string, scope uint8) *Node {
 	code, err := strconv.ParseUint(fmt.Sprintf("%d", ch[0]), 10, 32)
 	if err != nil {
-		logrus.Error("%+v\n", err)
+		logrus.Errorf("%+v", err)
 	}
 	return &Node{CharVal: uint32(code), Type: ND_CHAR, Level: scope}
 }
