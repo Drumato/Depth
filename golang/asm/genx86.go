@@ -7,6 +7,8 @@ import (
 func GenObject(c *cli.Context) *ELF64 {
 	elf := &ELF64{}
 	elf.Ehdr = genEhdr()
+	elf.Sections = append(elf.Sections, []byte("\x00sample.dep\x00x\x00y\x00")) //shstrtab
+	elf.Sections = append(elf.Sections, []byte("\x00.text\x00.ststrtab\x00"))   //shstrtab
 	return elf
 }
 
@@ -30,7 +32,7 @@ func genEhdr() *Elf64_Ehdr {
 		Phsize:              0x0,
 		Phnum:               0x0,
 		Shsize:              0x40,
-		Shnum:               0xb,
-		Shstr:               0xa,
+		Shnum:               0x1,
+		Shstr:               0x0,
 	}
 }

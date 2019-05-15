@@ -29,6 +29,7 @@ type IR struct {
 
 type Manager struct {
 	FuncTable map[*Function][]*IR
+	Filename  string
 }
 
 type ErrorType string

@@ -9,8 +9,8 @@ import (
 )
 
 type ELF64 struct {
-	Ehdr *Elf64_Ehdr
-	//Sections []*Section
+	Ehdr     *Elf64_Ehdr
+	Sections [][]byte
 	//Segments []*Segment
 	Phdrs []*Elf64_Phdr
 	Shdrs []*Elf64_Shdr
@@ -20,6 +20,11 @@ func (e *ELF64) Dump() []byte {
 	var buf bytes.Buffer
 	if _, err := buf.Write(e.Ehdr.Dump()); err != nil {
 		logrus.Errorf("Error found: %+v", err)
+	}
+	for _, section := range e.Sections {
+		if _, err := buf.Write(section); err != nil {
+			logrus.Errorf("Error found: %+v", err)
+		}
 	}
 	fmt.Println(buf.Bytes())
 	return buf.Bytes()
@@ -125,6 +130,15 @@ type Elf64_Shdr struct {
 	Info      Elf64_Word
 	Alignment Elf64_Xword
 	EntrySize Elf64_Xword
+}
+
+type Elf64_Sym struct {
+	Name    uint32
+	Info    uint16 //unsigned char
+	Other   uint16 //unsigned char
+	Shndx   uint16
+	Address uint64
+	Size    uint64
 }
 
 const (
