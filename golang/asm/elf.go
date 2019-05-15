@@ -142,16 +142,16 @@ func NewSection(b []byte) *Section {
 }
 
 type Elf64_Shdr struct {
-	Name      Elf64_Word
-	Type      Elf64_Word
-	Flags     Elf64_Xword
-	Addr      Elf64_Addr
-	Offset    Elf64_Off
-	Size      Elf64_Xword
-	Link      Elf64_Word
-	Info      Elf64_Word
-	Alignment Elf64_Xword
-	EntrySize Elf64_Xword
+	Name      uint32
+	Type      uint32
+	Flags     uint64
+	Addr      uint64
+	Offset    uint64
+	Size      uint64
+	Link      uint32
+	Info      uint32
+	Alignment uint64
+	EntrySize uint64
 }
 
 type Elf64_Sym struct {

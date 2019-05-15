@@ -210,6 +210,10 @@ func generateBinary(c *cli.Context, manager *parse.Manager) {
 	var bmanager *util.ByteManager = util.NewBytes("sample.o", "w")
 	var bins [][]byte
 	var syms []byte
+	syms = append(syms, '\x00')
+	for i := range manager.Lexer.Filename {
+		syms = append(syms, manager.Lexer.Filename[i])
+	}
 	for name := range manager.EnvTable[1].Variables {
 		syms = append(syms, '\x00')
 		for i := range name {

@@ -63,6 +63,11 @@ func stmt(n *Node) *IR {
 			irs[idx].Type = IR_NOP
 			rn.True = irs[idx].True
 		}
+		//	if isAccumulate(irs[idx].Type) {
+		//		retReg = int64(irs[idx].Val)
+		//		irs[idx].Type = IR_NOP
+		//		rn.Val = irs[idx].Val
+		//	}
 		return rn
 	case ND_IF:
 		i := newIR(IR_IF, 0, 0, false, n.Level)
@@ -130,16 +135,11 @@ func expr(n *Node) int64 {
 		m.EnvTable[int(n.Level)].RegMaps[int(reg)] = n.FloatVal
 		newIR(IR_IMM, reg, int64(n.FloatVal), true, n.Level)
 		return reg
-	case ND_PLUS, ND_MINUS:
+	case ND_PLUS, ND_MINUS, ND_MUL, ND_DIV:
 		lop := expr(n.Loperand)
 		rop := expr(n.Roperand)
 		newIR(IRType(n.Type), lop, rop, true, n.Level)
-		nReg--
-		return lop
-	case ND_MUL, ND_DIV:
-		lop := expr(n.Loperand)
-		rop := expr(n.Roperand)
-		newIR(IRType(n.Type), lop, rop, true, n.Level)
+		irs[len(irs)-1].Val = accumulate(len(irs) - 1)
 		nReg--
 		return lop
 	case ND_LT, ND_GT, ND_LTEQ, ND_GTEQ:
@@ -181,6 +181,13 @@ func GenerateIR(rootNode *RootNode, c *cli.Context) map[*Function][]*IR {
 
 func isCompare(ty IRType) bool {
 	if ty == IR_LT || ty == IR_GT || ty == IR_LTEQ || ty == IR_GTEQ {
+		return true
+	}
+	return false
+}
+
+func isAccumulate(ty IRType) bool {
+	if ty == IR_ADD || ty == IR_SUB || ty == IR_MUL || ty == IR_DIV {
 		return true
 	}
 	return false

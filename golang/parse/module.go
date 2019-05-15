@@ -25,6 +25,7 @@ type IR struct {
 	Level              uint8
 	Registerable       bool
 	True               int8
+	Val                int64
 }
 
 type Manager struct {
