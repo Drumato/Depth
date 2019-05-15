@@ -4,15 +4,16 @@ import (
 	"github.com/urfave/cli"
 )
 
-func GenObject(c *cli.Context) *ELF64 {
+func GenObject(sbins [][]byte, c *cli.Context) *ELF64 {
 	elf := &ELF64{}
-	elf.Ehdr = genEhdr()
-	elf.Sections = append(elf.Sections, []byte("\x00sample.dep\x00x\x00y\x00")) //shstrtab
-	elf.Sections = append(elf.Sections, []byte("\x00.text\x00.ststrtab\x00"))   //shstrtab
+	elf.Ehdr = genEhdr(3, 2)
+	for _, b := range sbins {
+		elf.Sections = append(elf.Sections, NewSection(b))
+	}
 	return elf
 }
 
-func genEhdr() *Elf64_Ehdr {
+func genEhdr(shnum int, shstrndx int) *Elf64_Ehdr {
 	//Prototype
 	return &Elf64_Ehdr{
 		MagicNumber:         0x7f454c46,
@@ -32,7 +33,7 @@ func genEhdr() *Elf64_Ehdr {
 		Phsize:              0x0,
 		Phnum:               0x0,
 		Shsize:              0x40,
-		Shnum:               0x1,
-		Shstr:               0x0,
+		Shnum:               uint16(shnum),
+		Shstr:               uint16(shstrndx),
 	}
 }

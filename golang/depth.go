@@ -1,6 +1,7 @@
 package main
 
 import (
+	"depth/golang/asm"
 	"depth/golang/codegen"
 	"depth/golang/lex"
 	"depth/golang/parse"
@@ -67,14 +68,17 @@ func init() {
 
 func Start(c *cli.Context) error {
 	sourcecode := os.Args[len(os.Args)-1]
-	lexer := lexing(c, sourcecode)
-	rootNode := builtAST(c, lexer)
-	walkAST(rootNode, c)
-	manager := translateIRs(c, rootNode)
+	manager := &parse.Manager{}
+	manager.EnvTable = make(map[int]*parse.Environment)
+	manager.Lexer = lexing(c, sourcecode)
+	builtAST(c, manager)
+	walkAST(manager.Root, c)
+	translateIRs(c, manager)
 	semantic(c, manager)
 	analysis(c, manager)
 	optimize(c, manager)
-	generateCode(c, manager, lexer.Filename)
+	generateCode(c, manager, manager.Lexer.Filename)
+	generateBinary(c, manager)
 	if c.Bool("until-compile") {
 		return nil
 	}
@@ -122,16 +126,15 @@ func lexing(c *cli.Context, sourcecode string) *lex.Lexer {
 	return lexer
 }
 
-func builtAST(c *cli.Context, lexer *lex.Lexer) *parse.RootNode {
+func builtAST(c *cli.Context, manager *parse.Manager) {
 	if c.Bool("verbosity") {
 		fmt.Println(util.ColorString("Builds ast...", "blue"))
 	}
-	parser := parse.New(lexer)
-	rootNode := parser.Parse()
+	parser := parse.New(manager.Lexer)
+	manager.Root = parser.Parse(manager)
 	if c.Bool("dump-ast") {
-		fmt.Printf("%+v\n", rootNode)
+		fmt.Printf("%+v\n", manager.Root)
 	}
-	return rootNode
 }
 
 func walkAST(rootNode *parse.RootNode, c *cli.Context) {
@@ -141,9 +144,9 @@ func walkAST(rootNode *parse.RootNode, c *cli.Context) {
 	parse.Walk(rootNode, c)
 }
 
-func translateIRs(c *cli.Context, rootNode *parse.RootNode) *parse.Manager {
-	manager := parse.GenerateIR(rootNode, c)
-	parse.AllocateRegisters(manager)
+func translateIRs(c *cli.Context, manager *parse.Manager) {
+	manager.FuncTable = parse.GenerateIR(manager.Root, c)
+	parse.AllocateRegisters(manager.FuncTable)
 	if c.Bool("verbosity") {
 		fmt.Println(util.ColorString("Tramslates intermediate representation...", "blue"))
 	}
@@ -156,7 +159,6 @@ func translateIRs(c *cli.Context, rootNode *parse.RootNode) *parse.Manager {
 			}
 		}
 	}
-	return manager
 }
 
 func generateCode(c *cli.Context, manager *parse.Manager, filename string) {
@@ -198,5 +200,36 @@ func optimize(c *cli.Context, manager *parse.Manager) {
 				fmt.Printf("%+v\n", ir)
 			}
 		}
+	}
+}
+
+func generateBinary(c *cli.Context, manager *parse.Manager) {
+	if c.Bool("verbosity") {
+		fmt.Println(util.ColorString("Generate binary...", "blue"))
+	}
+	var bmanager *util.ByteManager = util.NewBytes("sample.o", "w")
+	var bins [][]byte
+	var syms []byte
+	for name := range manager.EnvTable[1].Variables {
+		syms = append(syms, '\x00')
+		for i := range name {
+			syms = append(syms, name[i])
+		}
+	}
+	syms = append(syms, '\x00')
+	bins = append(bins, syms) //strtab
+	bins = append(bins, []byte{0x55, 0x48, 0x89, 0xe5,
+		0x8b, 0x15, 0x00, 0x00, 0x00, 0x00,
+		0x8b, 0x05, 0x00, 0x00, 0x00, 0x00,
+		0x01, 0xc2,
+		0x8b, 0x05, 0x00, 0x00, 0x00, 0x00,
+		0x01, 0xc2,
+		0x8b, 0x05, 0x00, 0x00, 0x00, 0x00,
+		0x01, 0xd0,
+		0x5d, 0xc3}) //text
+	elf := asm.GenObject(bins, nil)
+	bmanager.Input = elf.Dump()
+	if err := bmanager.Flush(); err != nil {
+		logrus.Errorf("%+v\n", err)
 	}
 }

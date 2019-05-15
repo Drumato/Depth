@@ -61,8 +61,8 @@ func checkRegister(irs []*IR) {
 	}
 }
 
-func AllocateRegisters(manager *Manager) {
-	for _, irs := range manager.FuncTable {
+func AllocateRegisters(ft map[*Function][]*IR) {
+	for _, irs := range ft {
 		registerMap = make([]int64, len(irs))
 		initialize(irs)
 		checkRegister(irs)

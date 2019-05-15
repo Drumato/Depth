@@ -26,8 +26,8 @@ func Semantic(manager *Manager, c *cli.Context) {
 }
 
 func compare(i int) bool {
-	lop, ok := envTable[int(irs[i].Level)].RegMaps[int(irs[i].Loperand)].(int64)
-	rop, ok2 := envTable[int(irs[i].Level)].RegMaps[int(irs[i].Roperand)].(int64)
+	lop, ok := m.EnvTable[int(irs[i].Level)].RegMaps[int(irs[i].Loperand)].(int64)
+	rop, ok2 := m.EnvTable[int(irs[i].Level)].RegMaps[int(irs[i].Roperand)].(int64)
 	if !ok && !ok2 {
 		logrus.Errorf("not mapped register")
 	}
@@ -58,8 +58,8 @@ func compare(i int) bool {
 }
 
 func accumulate(i int) int64 {
-	lop, ok := envTable[int(irs[i].Level)].RegMaps[int(irs[i].Loperand)].(int64)
-	rop, ok2 := envTable[int(irs[i].Level)].RegMaps[int(irs[i].Roperand)].(int64)
+	lop, ok := m.EnvTable[int(irs[i].Level)].RegMaps[int(irs[i].Loperand)].(int64)
+	rop, ok2 := m.EnvTable[int(irs[i].Level)].RegMaps[int(irs[i].Roperand)].(int64)
 	if !ok && !ok2 {
 		logrus.Errorf("not mapped register")
 		return 0

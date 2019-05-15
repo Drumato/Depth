@@ -3,14 +3,13 @@ package asm
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 
 	"github.com/sirupsen/logrus"
 )
 
 type ELF64 struct {
 	Ehdr     *Elf64_Ehdr
-	Sections [][]byte
+	Sections []*Section
 	//Segments []*Segment
 	Phdrs []*Elf64_Phdr
 	Shdrs []*Elf64_Shdr
@@ -21,12 +20,25 @@ func (e *ELF64) Dump() []byte {
 	if _, err := buf.Write(e.Ehdr.Dump()); err != nil {
 		logrus.Errorf("Error found: %+v", err)
 	}
+	/*
+		for _, phdr := range e.Phdrs {
+			if _, err := buf.Write(phdr.Dump()); err != nil {
+				logrus.Errorf("Error found: %+v", err)
+			}
+		}
+	*/
 	for _, section := range e.Sections {
-		if _, err := buf.Write(section); err != nil {
+		if _, err := buf.Write(section.Binary); err != nil {
 			logrus.Errorf("Error found: %+v", err)
 		}
 	}
-	fmt.Println(buf.Bytes())
+	/*
+		for _, shdr := range e.Shdrs {
+			if _, err := buf.Write(shdr.Dump()); err != nil {
+				logrus.Errorf("Error found: %+v", err)
+			}
+		}
+	*/
 	return buf.Bytes()
 
 }
@@ -118,6 +130,16 @@ func (e *Elf64_Ehdr) Check() bool {
 }
 
 /* Section */
+
+type Section struct {
+	Size   uint64
+	Binary []byte
+}
+
+func NewSection(b []byte) *Section {
+	return &Section{Binary: b, Size: uint64(len(b))}
+
+}
 
 type Elf64_Shdr struct {
 	Name      Elf64_Word

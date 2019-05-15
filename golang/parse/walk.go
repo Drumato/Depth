@@ -30,16 +30,16 @@ func doWalk(n *Node) {
 		doWalk(n.Loperand)
 		doWalk(n.Roperand)
 	case ND_DEFINE:
-		envTable[int(n.Level)].Variables[n.Identifier.Name].Level = n.Level
+		m.EnvTable[int(n.Level)].Variables[n.Identifier.Name].Level = n.Level
 		doWalk(n.Identifier)
-		if _, ok := envTable[int(n.Level)].Variables[n.Identifier.Name]; ok {
-			switch envTable[int(n.Level)].Variables[n.Identifier.Name].ElementType.Type {
+		if _, ok := m.EnvTable[int(n.Level)].Variables[n.Identifier.Name]; ok {
+			switch m.EnvTable[int(n.Level)].Variables[n.Identifier.Name].ElementType.Type {
 			case token.I8:
-				envTable[int(n.Level)].Variables[n.Identifier.Name].IntVal = n.Expression.IntVal
+				m.EnvTable[int(n.Level)].Variables[n.Identifier.Name].IntVal = n.Expression.IntVal
 			case token.CHAR:
-				envTable[int(n.Level)].Variables[n.Identifier.Name].CharVal = n.Expression.CharVal
+				m.EnvTable[int(n.Level)].Variables[n.Identifier.Name].CharVal = n.Expression.CharVal
 			case token.F32:
-				envTable[int(n.Level)].Variables[n.Identifier.Name].FloatVal = n.Expression.FloatVal
+				m.EnvTable[int(n.Level)].Variables[n.Identifier.Name].FloatVal = n.Expression.FloatVal
 			}
 		}
 	case ND_IDENT:
@@ -49,13 +49,13 @@ func doWalk(n *Node) {
 				FoundError(NewError(InvalidReferenceError, fmt.Sprintf("cannot find '%s' in this scope", n.Name)))
 				os.Exit(1)
 			}
-			if _, ok := envTable[i].Variables[n.Name]; ok {
+			if _, ok := m.EnvTable[i].Variables[n.Name]; ok {
 				break
 			}
 			i--
 		}
-		if _, ok := envTable[int(n.Level)].Variables[n.Name]; !ok {
-			envTable[int(n.Level)].Variables[n.Name] = n
+		if _, ok := m.EnvTable[int(n.Level)].Variables[n.Name]; !ok {
+			m.EnvTable[int(n.Level)].Variables[n.Name] = n
 			return
 		}
 	default:

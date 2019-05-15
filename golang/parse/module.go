@@ -28,6 +28,9 @@ type IR struct {
 }
 
 type Manager struct {
+	Lexer     *lex.Lexer
+	EnvTable  map[int]*Environment
+	Root      *RootNode
 	FuncTable map[*Function][]*IR
 	Filename  string
 }

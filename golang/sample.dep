@@ -1,4 +1,6 @@
 f main(){ 
   let x : i8 = 10  
-  return 20>0
+  let y : i8 = 20  
+  let z : i8 = 30  
+  return 20
 }
