@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	scopeLevel uint8                = 0
-	envTable   map[int]*Environment = make(map[int]*Environment)
+	scopeLevel uint8 = 0
+	m          *Manager
 )
 
 func New(l *lex.Lexer) *Parser {
@@ -63,12 +63,12 @@ func (p *Parser) term() *Node {
 				FoundError(NewError(InvalidReferenceError, fmt.Sprintf("cannot find '%s' in this scope", p.curToken.Literal)))
 				os.Exit(1)
 			}
-			if ident, ok = envTable[i].Variables[p.curToken.Literal]; ok {
+			if ident, ok = m.EnvTable[i].Variables[p.curToken.Literal]; ok {
 				break
 			}
 			i--
 		}
-		n := &Node{Name: p.curToken.Literal, Type: ND_IDENT, Level: scopeLevel, IntVal: ident.IntVal, ElementType: envTable[i].Variables[p.curToken.Literal].ElementType}
+		n := &Node{Name: p.curToken.Literal, Type: ND_IDENT, Level: scopeLevel, IntVal: ident.IntVal, ElementType: m.EnvTable[i].Variables[p.curToken.Literal].ElementType}
 		switch n.ElementType.Type {
 		case token.I8, token.I16, token.I32, token.I64, token.I128:
 			n.IntVal = ident.IntVal
@@ -109,7 +109,7 @@ func (p *Parser) stmt() *Node {
 		p.consume(token.LBRACE)
 		scopeLevel++
 		n.Level = scopeLevel
-		envTable[int(n.Level)] = newEnv(int(n.Level))
+		m.EnvTable[int(n.Level)] = newEnv(int(n.Level))
 		for {
 			if p.curToken.Type == token.RBRACE {
 				break
@@ -159,11 +159,11 @@ func (p *Parser) stmt() *Node {
 		n.Expression = p.expr()
 		switch n.Identifier.ElementType.Type {
 		case token.I8, token.I16, token.I32, token.I64, token.I128:
-			envTable[int(n.Level)].Variables[n.Identifier.Name].IntVal = n.Expression.IntVal
+			m.EnvTable[int(n.Level)].Variables[n.Identifier.Name].IntVal = n.Expression.IntVal
 		case token.F32, token.F64:
-			envTable[int(n.Level)].Variables[n.Identifier.Name].FloatVal = n.Expression.FloatVal
+			m.EnvTable[int(n.Level)].Variables[n.Identifier.Name].FloatVal = n.Expression.FloatVal
 		case token.CHAR:
-			envTable[int(n.Level)].Variables[n.Identifier.Name].CharVal = n.Expression.CharVal
+			m.EnvTable[int(n.Level)].Variables[n.Identifier.Name].CharVal = n.Expression.CharVal
 		}
 	default:
 		FoundError(NewError(ParseError, fmt.Sprintf("invalid statement startswith %s", p.curToken.Type)))
@@ -197,7 +197,7 @@ func (p *Parser) define() *Node {
 		os.Exit(1)
 	}
 	n.ElementType = &Element{Type: p.curToken.Type, Stacksize: stackTable[p.curToken.Literal]}
-	envTable[int(n.Level)].Variables[n.Name] = n
+	m.EnvTable[int(n.Level)].Variables[n.Name] = n
 	p.expect(token.ASSIGN)
 	p.nextToken()
 	return n
@@ -253,9 +253,10 @@ func (p *Parser) function() *Function {
 	return fn
 }
 
-func (p *Parser) Parse() *RootNode {
-	envTable[1] = newEnv(1)
-	envTable[0] = newEnv(0)
+func (p *Parser) Parse(manager *Manager) *RootNode {
+	manager.EnvTable[1] = newEnv(1)
+	manager.EnvTable[0] = newEnv(0)
+	m = manager
 	functions := make(map[string]*Function)
 	rn := &RootNode{Functions: functions}
 	fn := p.function()

@@ -25,9 +25,13 @@ type IR struct {
 	Level              uint8
 	Registerable       bool
 	True               int8
+	Val                int64
 }
 
 type Manager struct {
+	Lexer     *lex.Lexer
+	EnvTable  map[int]*Environment
+	Root      *RootNode
 	FuncTable map[*Function][]*IR
 	Filename  string
 }

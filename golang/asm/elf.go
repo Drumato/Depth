@@ -3,14 +3,13 @@ package asm
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 
 	"github.com/sirupsen/logrus"
 )
 
 type ELF64 struct {
 	Ehdr     *Elf64_Ehdr
-	Sections [][]byte
+	Sections []*Section
 	//Segments []*Segment
 	Phdrs []*Elf64_Phdr
 	Shdrs []*Elf64_Shdr
@@ -21,12 +20,25 @@ func (e *ELF64) Dump() []byte {
 	if _, err := buf.Write(e.Ehdr.Dump()); err != nil {
 		logrus.Errorf("Error found: %+v", err)
 	}
+	/*
+		for _, phdr := range e.Phdrs {
+			if _, err := buf.Write(phdr.Dump()); err != nil {
+				logrus.Errorf("Error found: %+v", err)
+			}
+		}
+	*/
 	for _, section := range e.Sections {
-		if _, err := buf.Write(section); err != nil {
+		if _, err := buf.Write(section.Binary); err != nil {
 			logrus.Errorf("Error found: %+v", err)
 		}
 	}
-	fmt.Println(buf.Bytes())
+	/*
+		for _, shdr := range e.Shdrs {
+			if _, err := buf.Write(shdr.Dump()); err != nil {
+				logrus.Errorf("Error found: %+v", err)
+			}
+		}
+	*/
 	return buf.Bytes()
 
 }
@@ -119,29 +131,98 @@ func (e *Elf64_Ehdr) Check() bool {
 
 /* Section */
 
+type Section struct {
+	Size   uint64
+	Binary []byte
+}
+
+func NewSection(b []byte) *Section {
+	return &Section{Binary: b, Size: uint64(len(b))}
+
+}
+
 type Elf64_Shdr struct {
-	Name      Elf64_Word
-	Type      Elf64_Word
-	Flags     Elf64_Xword
-	Addr      Elf64_Addr
-	Offset    Elf64_Off
-	Size      Elf64_Xword
-	Link      Elf64_Word
-	Info      Elf64_Word
-	Alignment Elf64_Xword
-	EntrySize Elf64_Xword
+	Name      uint32
+	Type      uint32
+	Flags     uint64
+	Addr      uint64
+	Offset    uint64
+	Size      uint64
+	Link      uint32
+	Info      uint32
+	Alignment uint64
+	EntrySize uint64
+}
+
+func (s *Elf64_Shdr) Dump() []byte {
+	buf := make([]byte, s.Size)
+	binary.LittleEndian.PutUint32(buf[0:], s.Name)
+	binary.LittleEndian.PutUint32(buf[4:], s.Type)
+	binary.LittleEndian.PutUint64(buf[8:], s.Flags)
+	binary.LittleEndian.PutUint64(buf[16:], s.Addr)
+	binary.LittleEndian.PutUint64(buf[24:], s.Offset)
+	binary.LittleEndian.PutUint64(buf[32:], s.Size)
+	binary.LittleEndian.PutUint32(buf[40:], s.Link)
+	binary.LittleEndian.PutUint32(buf[44:], s.Info)
+	binary.LittleEndian.PutUint64(buf[48:], s.Alignment)
+	binary.LittleEndian.PutUint64(buf[56:], s.EntrySize)
+	return buf
 }
 
 type Elf64_Sym struct {
-	Name    uint32
-	Info    uint16 //unsigned char
-	Other   uint16 //unsigned char
-	Shndx   uint16
-	Address uint64
-	Size    uint64
+	Name  uint32
+	Info  uint16 //unsigned char
+	Other uint16 //unsigned char
+	Shndx uint16
+	Value uint64
+	Size  uint64
+}
+
+func NewInfo(bind uint16, ty uint16) uint16 {
+	return ((bind << 4) + (ty & 0xf))
+}
+
+func (s *Elf64_Sym) Dump() []byte {
+	buf := make([]byte, s.Size)
+	binary.LittleEndian.PutUint32(buf[0:], s.Name)
+	binary.LittleEndian.PutUint16(buf[4:], s.Info)
+	binary.LittleEndian.PutUint16(buf[6:], s.Other)
+	binary.LittleEndian.PutUint16(buf[8:], s.Shndx)
+	binary.LittleEndian.PutUint64(buf[10:], s.Value)
+	binary.LittleEndian.PutUint64(buf[18:], s.Size)
+	return buf
 }
 
 const (
+	/* st_other */
+	STV_DEFAULT   = 0 /* Default symbol visibility rules */
+	STV_INTERNAL  = 1 /* Processor specific hidden class */
+	STV_HIDDEN    = 2 /* Sym unavailable in other modules */
+	STV_PROTECTED = 3 /* Not preemptible, not exported */
+
+	/* st_bind */
+	STB_LOCAL  = 0
+	STB_GLOBAL = 1
+	STB_WEAR   = 2
+	STB_LOOS   = 10
+	STB_HIOS   = 12
+	STB_LOPROC = 13
+	STB_HIPROC = 15
+
+	/* st_type */
+	STT_NOTYPE        = 0  /* Symbol type is unspecified */
+	STT_OBJECT        = 1  /* Symbol is a data object */
+	STT_FUNC          = 2  /* Symbol is a code object */
+	STT_SECTION       = 3  /* Symbol associated with a section */
+	STT_FILE          = 4  /* Symbol's name is file name */
+	STT_COMMON        = 5  /* Symbol is a common data object */
+	STT_TLS           = 6  /* Symbol is thread-local data object*/
+	STT_NUM           = 7  /* Number of defined types.  */
+	STT_LOOS          = 10 /* Start of OS-specific */
+	STT_GNU_IFUNC     = 10 /* Symbol is indirect code object */
+	STT_HIOS          = 12 /* End of OS-specific */
+	STT_LOPROC        = 13 /* Start of processor-specific */
+	STT_HIPROC        = 15 /* End of processor-specific */
 	SHT_NULL          = 0
 	SHT_PROGBITS      = 1
 	SHT_SYMTAB        = 2

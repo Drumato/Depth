@@ -4,15 +4,16 @@ import (
 	"github.com/urfave/cli"
 )
 
-func GenObject(c *cli.Context) *ELF64 {
+func GenObject(sbins [][]byte, c *cli.Context) *ELF64 {
 	elf := &ELF64{}
-	elf.Ehdr = genEhdr()
-	elf.Sections = append(elf.Sections, []byte("\x00sample.dep\x00x\x00y\x00")) //shstrtab
-	elf.Sections = append(elf.Sections, []byte("\x00.text\x00.ststrtab\x00"))   //shstrtab
+	elf.Ehdr = genEhdr(uint16(len(sbins)), uint16(len(sbins))-1)
+	for _, b := range sbins {
+		elf.Sections = append(elf.Sections, NewSection(b))
+	}
 	return elf
 }
 
-func genEhdr() *Elf64_Ehdr {
+func genEhdr(shnum uint16, shstrndx uint16) *Elf64_Ehdr {
 	//Prototype
 	return &Elf64_Ehdr{
 		MagicNumber:         0x7f454c46,
@@ -32,7 +33,23 @@ func genEhdr() *Elf64_Ehdr {
 		Phsize:              0x0,
 		Phnum:               0x0,
 		Shsize:              0x40,
-		Shnum:               0x1,
-		Shstr:               0x0,
+		Shnum:               shnum,
+		Shstr:               shstrndx,
+	}
+}
+
+func genShdr(ty uint32, flag uint64, name uint32, size uint64) *Elf64_Shdr {
+	return &Elf64_Shdr{
+
+		Name:  name,
+		Type:  ty,
+		Flags: flag,
+		Addr:  0x0,
+		//Offset:    uint64,
+		Size: size,
+		//Link:      uint32,
+		//Info:      uint32,
+		//Alignment: uint64,
+		//EntrySize: uint64,
 	}
 }

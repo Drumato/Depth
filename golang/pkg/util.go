@@ -70,16 +70,14 @@ func (b *ByteManager) Flush() error {
 		return err
 	}
 	var buf bytes.Buffer
-	n, err := buf.Write(b.Input)
+	_, err = buf.Write(b.Input)
 	if err != nil {
 		return err
 	}
-	fmt.Println(n)
-	nn, err := buf.WriteTo(f)
+	_, err = buf.WriteTo(f)
 	if err != nil {
 		return err
 	}
-	fmt.Println(nn)
 	return nil
 }
 

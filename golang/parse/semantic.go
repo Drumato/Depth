@@ -3,6 +3,7 @@ package parse
 import (
 	util "depth/golang/pkg"
 	"fmt"
+	"os"
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -26,10 +27,11 @@ func Semantic(manager *Manager, c *cli.Context) {
 }
 
 func compare(i int) bool {
-	lop, ok := envTable[int(irs[i].Level)].RegMaps[int(irs[i].Loperand)].(int64)
-	rop, ok2 := envTable[int(irs[i].Level)].RegMaps[int(irs[i].Roperand)].(int64)
+	lop, ok := m.EnvTable[int(irs[i].Level)].RegMaps[int(irs[i].Loperand)].(int64)
+	rop, ok2 := m.EnvTable[int(irs[i].Level)].RegMaps[int(irs[i].Roperand)].(int64)
 	if !ok && !ok2 {
 		logrus.Errorf("not mapped register")
+		os.Exit(1)
 	}
 	switch irs[i].Type {
 	case IR_LT:
@@ -54,15 +56,16 @@ func compare(i int) bool {
 		logrus.Errorf("Invalid values:%d-%d", lop, rop)
 	}
 	logrus.Errorf("Invalid IR:%s", irs[i].Type)
+	os.Exit(1)
 	return false
 }
 
 func accumulate(i int) int64 {
-	lop, ok := envTable[int(irs[i].Level)].RegMaps[int(irs[i].Loperand)].(int64)
-	rop, ok2 := envTable[int(irs[i].Level)].RegMaps[int(irs[i].Roperand)].(int64)
+	lop, ok := m.EnvTable[int(irs[i].Level)].RegMaps[int(irs[i].Loperand)].(int64)
+	rop, ok2 := m.EnvTable[int(irs[i].Level)].RegMaps[int(irs[i].Roperand)].(int64)
 	if !ok && !ok2 {
 		logrus.Errorf("not mapped register")
-		return 0
+		os.Exit(1)
 	}
 
 	switch irs[i].Type {
@@ -88,6 +91,7 @@ func accumulate(i int) int64 {
 		logrus.Errorf("Invalid values:%d-%d", lop, rop)
 	}
 	logrus.Errorf("Invalid IR:%s", irs[i].Type)
-	return 0
+	os.Exit(1)
+	return -9223372036854775808
 
 }
