@@ -13,9 +13,9 @@ func GenObject(sbins [][]byte, c *cli.Context) *ELF64 {
 	return elf
 }
 
-func genEhdr(shnum uint16, shstrndx uint16) *Elf64_Ehdr {
+func genEhdr(shnum uint16, shstrndx uint16) *ELF64_Ehdr {
 	//Prototype
-	return &Elf64_Ehdr{
+	return &ELF64_Ehdr{
 		MagicNumber:         0x7f454c46,
 		Class:               0x2,
 		Data:                0x1,
@@ -38,8 +38,8 @@ func genEhdr(shnum uint16, shstrndx uint16) *Elf64_Ehdr {
 	}
 }
 
-func genShdr(ty uint32, flag uint64, name uint32, size uint64) *Elf64_Shdr {
-	return &Elf64_Shdr{
+func genShdr(ty uint32, flag uint64, name uint32, size uint64) *ELF64_Shdr {
+	return &ELF64_Shdr{
 
 		Name:  name,
 		Type:  ty,

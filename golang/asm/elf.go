@@ -8,11 +8,11 @@ import (
 )
 
 type ELF64 struct {
-	Ehdr     *Elf64_Ehdr
+	Ehdr     *ELF64_Ehdr
 	Sections []*Section
 	//Segments []*Segment
-	Phdrs []*Elf64_Phdr
-	Shdrs []*Elf64_Shdr
+	Phdrs []*ELF64_Phdr
+	Shdrs []*ELF64_Shdr
 }
 
 func (e *ELF64) Dump() []byte {
@@ -44,24 +44,24 @@ func (e *ELF64) Dump() []byte {
 }
 
 /* 32-bit ELF base types. */
-type Elf32_Addr uint32
-type Elf32_Half uint16
-type Elf32_Off uint32
-type Elf32_Sword int32
-type Elf32_Word uint32
+type ELF32_Addr uint32
+type ELF32_Half uint16
+type ELF32_Off uint32
+type ELF32_Sword int32
+type ELF32_Word uint32
 
 /* 64-bit ELF base types. */
-type Elf64_Addr uint64
-type Elf64_Half uint16
-type Elf64_SHalf int16
-type Elf64_Off uint64
-type Elf64_Sword int32
-type Elf64_Word uint32
-type Elf64_Xword uint64
-type Elf64_Sxword int64
-type Elf64_Section uint16
+type ELF64_Addr uint64
+type ELF64_Half uint16
+type ELF64_SHalf int16
+type ELF64_Off uint64
+type ELF64_Sword int32
+type ELF64_Word uint32
+type ELF64_Xword uint64
+type ELF64_Sxword int64
+type ELF64_Section uint16
 
-type Elf64_Ehdr struct {
+type ELF64_Ehdr struct {
 	MagicNumber         uint32
 	Class               uint16
 	Data                uint16
@@ -84,7 +84,7 @@ type Elf64_Ehdr struct {
 	Shstr               uint16
 }
 
-func (e *Elf64_Ehdr) Dump() []byte {
+func (e *ELF64_Ehdr) Dump() []byte {
 	if e.Check() {
 		buf := make([]byte, 64)
 		binary.BigEndian.PutUint32(buf[0:], e.MagicNumber)
@@ -113,7 +113,7 @@ func (e *Elf64_Ehdr) Dump() []byte {
 	return nil
 }
 
-func (e *Elf64_Ehdr) Check() bool {
+func (e *ELF64_Ehdr) Check() bool {
 	if e.MagicNumber != 0x7f454c46 {
 		logrus.Errorf("Invalid MagicNumber: it's not an elf format file")
 		return false
@@ -141,7 +141,7 @@ func NewSection(b []byte) *Section {
 
 }
 
-type Elf64_Shdr struct {
+type ELF64_Shdr struct {
 	Name      uint32
 	Type      uint32
 	Flags     uint64
@@ -154,7 +154,7 @@ type Elf64_Shdr struct {
 	EntrySize uint64
 }
 
-func (s *Elf64_Shdr) Dump() []byte {
+func (s *ELF64_Shdr) Dump() []byte {
 	buf := make([]byte, s.Size)
 	binary.LittleEndian.PutUint32(buf[0:], s.Name)
 	binary.LittleEndian.PutUint32(buf[4:], s.Type)
@@ -169,7 +169,7 @@ func (s *Elf64_Shdr) Dump() []byte {
 	return buf
 }
 
-type Elf64_Sym struct {
+type ELF64_Sym struct {
 	Name  uint32
 	Info  uint16 //unsigned char
 	Other uint16 //unsigned char
@@ -182,7 +182,7 @@ func NewInfo(bind uint16, ty uint16) uint16 {
 	return ((bind << 4) + (ty & 0xf))
 }
 
-func (s *Elf64_Sym) Dump() []byte {
+func (s *ELF64_Sym) Dump() []byte {
 	buf := make([]byte, s.Size)
 	binary.LittleEndian.PutUint32(buf[0:], s.Name)
 	binary.LittleEndian.PutUint16(buf[4:], s.Info)
@@ -305,13 +305,13 @@ const (
 	PF_X            = 0x1
 )
 
-type Elf64_Phdr struct {
-	Type         Elf64_Word
-	Flags        Elf64_Word
-	Offset       Elf64_Off
-	VirtualAddr  Elf64_Addr
-	PhysicalAddr Elf64_Addr
-	SegmentSize  Elf64_Xword
-	MemorySize   Elf64_Xword
-	Alignment    Elf64_Xword
+type ELF64_Phdr struct {
+	Type         ELF64_Word
+	Flags        ELF64_Word
+	Offset       ELF64_Off
+	VirtualAddr  ELF64_Addr
+	PhysicalAddr ELF64_Addr
+	SegmentSize  ELF64_Xword
+	MemorySize   ELF64_Xword
+	Alignment    ELF64_Xword
 }

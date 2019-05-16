@@ -229,9 +229,9 @@ func generateBinary(c *cli.Context, manager *parse.Manager) {
 	syms = append(syms, '\x00')
 
 	/* symtab*/
-	var symtab []*asm.Elf64_Sym
-	symtab = append(symtab, &asm.Elf64_Sym{0, 0, 0, 0, 0, 0}) //NULL Symbols
-	symtab = append(symtab, &asm.Elf64_Sym{                   //filename
+	var symtab []*asm.ELF64_Sym
+	symtab = append(symtab, &asm.ELF64_Sym{0, 0, 0, 0, 0, 0}) //NULL Symbols
+	symtab = append(symtab, &asm.ELF64_Sym{                   //filename
 		Name:  uint32(bytes.Index(syms, []byte(manager.Lexer.Filename))),
 		Info:  asm.NewInfo(asm.STB_LOCAL, asm.STT_FILE),
 		Other: asm.STV_DEFAULT,
@@ -241,7 +241,7 @@ func generateBinary(c *cli.Context, manager *parse.Manager) {
 	})
 
 	for _, idx := range [...]uint16{1, 2, 3, 5, 6, 4} {
-		symtab = append(symtab, &asm.Elf64_Sym{
+		symtab = append(symtab, &asm.ELF64_Sym{
 			Name:  '\x00',
 			Info:  asm.NewInfo(asm.STB_LOCAL, asm.STT_SECTION),
 			Other: asm.STV_DEFAULT,
@@ -258,7 +258,7 @@ func generateBinary(c *cli.Context, manager *parse.Manager) {
 			logrus.Errorf("Invalid Symbols: %s is not defined", name)
 			os.Exit(1)
 		}
-		symtab = append(symtab, &asm.Elf64_Sym{
+		symtab = append(symtab, &asm.ELF64_Sym{
 			Name:  uint32(idx),
 			Info:  asm.NewInfo(asm.STB_GLOBAL, asm.STT_OBJECT),
 			Other: asm.STV_DEFAULT,
@@ -269,7 +269,7 @@ func generateBinary(c *cli.Context, manager *parse.Manager) {
 		addr += uint64(n.ElementType.Stacksize) / uint64(8)
 	}
 
-	symtab = append(symtab, &asm.Elf64_Sym{ //main functions
+	symtab = append(symtab, &asm.ELF64_Sym{ //main functions
 		Name:  uint32(bytes.Index(syms, []byte("main"))),
 		Info:  asm.NewInfo(asm.STB_GLOBAL, asm.STT_FUNC),
 		Other: asm.STV_DEFAULT,
