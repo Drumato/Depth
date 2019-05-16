@@ -6,7 +6,7 @@ import (
 
 func GenObject(sbins [][]byte, c *cli.Context) *ELF64 {
 	elf := &ELF64{}
-	elf.Ehdr = genEhdr(3, 2)
+	elf.Ehdr = genEhdr(uint16(len(sbins)), uint16(len(sbins))-1)
 	for _, b := range sbins {
 		elf.Sections = append(elf.Sections, NewSection(b))
 	}

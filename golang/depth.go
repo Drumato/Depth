@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"depth/golang/asm"
 	"depth/golang/codegen"
 	"depth/golang/lex"
@@ -210,6 +211,11 @@ func generateBinary(c *cli.Context, manager *parse.Manager) {
 	var bmanager *util.ByteManager = util.NewBytes("sample.o", "w")
 	var bins [][]byte
 	var syms []byte
+	/* text */
+	texts := []byte{0x55, 0x48, 0x89, 0xe5, 0x8b, 0x14, 0x00, 0x00, 0x00, 0x5d, 0xc3}
+	bins = append(bins, texts)
+
+	/* for using symnames */
 	syms = append(syms, '\x00')
 	for i := range manager.Lexer.Filename {
 		syms = append(syms, manager.Lexer.Filename[i])
@@ -221,16 +227,62 @@ func generateBinary(c *cli.Context, manager *parse.Manager) {
 		}
 	}
 	syms = append(syms, '\x00')
-	bins = append(bins, syms) //strtab
-	bins = append(bins, []byte{0x55, 0x48, 0x89, 0xe5,
-		0x8b, 0x15, 0x00, 0x00, 0x00, 0x00,
-		0x8b, 0x05, 0x00, 0x00, 0x00, 0x00,
-		0x01, 0xc2,
-		0x8b, 0x05, 0x00, 0x00, 0x00, 0x00,
-		0x01, 0xc2,
-		0x8b, 0x05, 0x00, 0x00, 0x00, 0x00,
-		0x01, 0xd0,
-		0x5d, 0xc3}) //text
+
+	/* symtab*/
+	var symtab []*asm.Elf64_Sym
+	symtab = append(symtab, &asm.Elf64_Sym{0, 0, 0, 0, 0, 0}) //NULL Symbols
+	symtab = append(symtab, &asm.Elf64_Sym{                   //filename
+		Name:  uint32(bytes.Index(syms, []byte(manager.Lexer.Filename))),
+		Info:  asm.NewInfo(asm.STB_LOCAL, asm.STT_FILE),
+		Other: asm.STV_DEFAULT,
+		Shndx: asm.SHN_ABS,
+		Value: 0, // byte offset at the start
+		Size:  0,
+	})
+
+	for _, idx := range [...]uint16{1, 2, 3, 5, 6, 4} {
+		symtab = append(symtab, &asm.Elf64_Sym{
+			Name:  '\x00',
+			Info:  asm.NewInfo(asm.STB_LOCAL, asm.STT_SECTION),
+			Other: asm.STV_DEFAULT,
+			Shndx: idx, // index indicates the position of .data section
+			Value: 0,   // byte offset at the start of .data section
+			Size:  0,   //bits -> bytes
+		}) //sections
+	}
+
+	var addr uint64
+	for name, n := range manager.EnvTable[1].Variables {
+		idx := bytes.Index(syms, []byte(name))
+		if idx == -1 {
+			logrus.Errorf("Invalid Symbols: %s is not defined", name)
+			os.Exit(1)
+		}
+		symtab = append(symtab, &asm.Elf64_Sym{
+			Name:  uint32(idx),
+			Info:  asm.NewInfo(asm.STB_GLOBAL, asm.STT_OBJECT),
+			Other: asm.STV_DEFAULT,
+			Shndx: 2,                                   // index indicates the position of .data section
+			Value: addr,                                // byte offset at the start of .data section
+			Size:  uint64(n.ElementType.Stacksize / 8), //bits -> bytes
+		}) //variables
+		addr += uint64(n.ElementType.Stacksize) / uint64(8)
+	}
+
+	symtab = append(symtab, &asm.Elf64_Sym{ //main functions
+		Name:  uint32(bytes.Index(syms, []byte("main"))),
+		Info:  asm.NewInfo(asm.STB_GLOBAL, asm.STT_FUNC),
+		Other: asm.STV_DEFAULT,
+		Shndx: 1, // index indicates the position of .text section
+		Value: 0, // byte offset at the start of .text section
+		Size:  uint64(len(texts)),
+	})
+
+	/* strtab */
+	bins = append(bins, syms)
+
+	/* shstrtab */
+	bins = append(bins, []byte("\x00.text\x00.data\x00.symtab\x00.strtab\x00.shstrtab\x00"))
 	elf := asm.GenObject(bins, nil)
 	bmanager.Input = elf.Dump()
 	if err := bmanager.Flush(); err != nil {
