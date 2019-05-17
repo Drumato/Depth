@@ -1,3 +1,3 @@
-pub mod binary;
+pub mod asm;
 pub mod elf;
 pub mod lex;

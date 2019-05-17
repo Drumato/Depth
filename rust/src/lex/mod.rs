@@ -77,52 +77,30 @@ impl Lexer {
             self.read_char();
         }
     }
-    fn next_token(&mut self) -> Token {
+    fn next_token<T>(&mut self) -> Token<T> {
         self.skip_whitespace();
         match self.ch {
-            _ => Token::new((TokenType::EOF, -42, String::new())),
+            _ => Token::new((TokenType::EOF, String::new())),
         }
     }
 }
 
-struct Assembly {
-    opcode: Mnemonic,
-    lop: Operand,
-    rop: Operand,
-}
-struct Mnemonic {
-    code: u8,
-    name: String,
-}
-struct Operand {
-    reg: String,
-    val: u64,
-}
-struct Token {
+struct Token<T> {
     ty: TokenType,
-    intval: i64,
-    literal: String,
+    sem_val: T,
 }
 
-impl Token {
-    fn new(param: (TokenType, i64, String)) -> Token {
+impl<T> Token<T> {
+    fn new(param: (TokenType, T)) -> Token<T> {
         Token {
             ty: param.0,
-            intval: param.1,
-            literal: param.2,
+            sem_val: param.1,
         }
     }
 }
 
 enum TokenType {
     /*elements*/
-    MNEMONIC,
-    IMMEDIATE,
-    REGISTER,
-    WORD,
-    DWORD,
-    QWORD,
-    TKPTR,
 
     /* symbols */
     PLUS,
@@ -136,7 +114,7 @@ enum TokenType {
     RBRACKET,
     QUOTE,
     DOUBLEQUOTE,
-    ATSIGN,
+    ASSIGN,
 
     /* etc */
     EOF,
@@ -148,9 +126,9 @@ fn lex(input: &String) /*-> Assembly*/
     let tokens = tokenize(&input_chars);
 }
 
-fn tokenize(input: &Vec<char>) /*-> Vec<Token>*/
+fn tokenize<T>(input: &Vec<char>) /*-> Vec<Token>*/
 {
-    let mut tokens: Vec<Token> = vec![];
+    let mut tokens: Vec<Token<T>> = vec![];
     let mut lexer = Lexer::new((0, 0, input.to_vec()[0], input.to_vec()));
     lexer.read_char();
     lexer.read_char();
