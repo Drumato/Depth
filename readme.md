@@ -7,6 +7,17 @@ This is the main source code repository for Depth.
 
 **SecHack365の成果物**として開発しています｡
 
+# Directory configuration
+
+- **Golang**
+  - 主にプロトタイプとして開発している｡
+  - Rustでの本実装に先駆けてコンパイラの実装を置いています｡
+- **Rust**
+  - **本実装**であり､本成果物の**本体**
+  
+
+
+
 # Details
 
 ## Depth
