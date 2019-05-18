@@ -1,3 +1,26 @@
+pub struct Token {
+    ty: TokenType,
+    literal: String,
+    //val:,
+}
+
+pub fn new_token(param: (TokenType, String)) -> Token {
+    Token {
+        ty: param.0,
+        literal: param.1,
+    }
+}
+
+impl Token {
+    pub fn dump(&self) -> String {
+        format!(
+            "type:{tokentype}\tinput:{tokenliteral}\n",
+            tokentype = self.ty.string(),
+            tokenliteral = self.literal
+        )
+    }
+}
+
 pub enum TokenType {
     /* for identifying Type */
     TkIllegal,

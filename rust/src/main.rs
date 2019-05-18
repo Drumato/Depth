@@ -21,6 +21,9 @@ fn main() -> Result<(), Box<std::error::Error>> {
     }
     println!("{}", out_str);
     println!("\n\n");
+    let t: lex::token::Token =
+        lex::token::new_token((lex::token::TokenType::TkIllegal, "$$$".to_string()));
+    println!("{}", t.dump());
     Ok(())
 }
 

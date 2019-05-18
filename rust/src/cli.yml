@@ -11,7 +11,7 @@ args:
         takes_value: true
     - source:
         help: Sets the input file to use
-        required: true
+        #required: true
         index: 1
     - verbose:
         short: v
