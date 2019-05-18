@@ -7,6 +7,8 @@ use yaml_rust::{YamlEmitter, YamlLoader};
 #[macro_use]
 extern crate clap;
 use clap::App;
+mod lex;
+use lex::token;
 
 fn main() -> Result<(), Box<std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
@@ -18,7 +20,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
         emitter.dump(cfg).unwrap(); // dump the YAML object to a String
     }
     println!("{}", out_str);
-    println!("{}", lex::TkIllegal.string());
+    println!("\n\n");
     Ok(())
 }
 

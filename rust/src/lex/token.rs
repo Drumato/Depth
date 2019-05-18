@@ -1,4 +1,4 @@
-enum TokenType {
+pub enum TokenType {
     /* for identifying Type */
     TkIllegal,
     TkIdent,
