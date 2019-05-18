@@ -3,6 +3,8 @@ name = "asm"
 version = "0.1.0"
 authors = ["Drumato <drumatech109@gmail.com>"]
 edition = "2018"
+description = "The Depth Programming Language"
 
 [dependencies]
-yaml-rust = "0.4"
+clap = {version = "2.33", features = ["yaml"]}
+yaml-rust = "0.4.3"
