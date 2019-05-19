@@ -10,7 +10,22 @@ use clap::App;
 mod lex;
 use lex::token;
 
-fn main() -> Result<(), Box<std::error::Error>> {
+fn main() {
+    dump_yaml();
+    let t: token::Token<()> =
+        token::new_token((token::TokenType::TkIllegal, "$$$".to_string(), ()));
+    println!("{}", t.dump());
+}
+
+fn get_yaml() -> Result<Vec<yaml_rust::Yaml>, yaml_rust::ScanError> {
+    let mut f = File::open("elf.yaml").expect("file not found");
+    let mut fstr = String::new();
+    f.read_to_string(&mut fstr)
+        .expect("something went wront reading the file");
+    YamlLoader::load_from_str(&fstr)
+}
+
+fn dump_yaml() -> Result<(), Box<std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
     let cfg = &get_yaml()?[0];
@@ -20,17 +35,5 @@ fn main() -> Result<(), Box<std::error::Error>> {
         emitter.dump(cfg).unwrap(); // dump the YAML object to a String
     }
     println!("{}", out_str);
-    println!("\n\n");
-    let t: lex::token::Token =
-        lex::token::new_token((lex::token::TokenType::TkIllegal, "$$$".to_string()));
-    println!("{}", t.dump());
     Ok(())
-}
-
-fn get_yaml() -> Result<Vec<yaml_rust::Yaml>, yaml_rust::ScanError> {
-    let mut f = File::open("elf.yaml").expect("file not found");
-    let mut fstr = String::new();
-    f.read_to_string(&mut fstr)
-        .expect("something went wront reading the file");
-    YamlLoader::load_from_str(&fstr)
 }

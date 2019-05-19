@@ -1,17 +1,18 @@
-pub struct Token {
+pub struct Token<T> {
     ty: TokenType,
     literal: String,
-    //val:,
+    val: T,
 }
 
-pub fn new_token(param: (TokenType, String)) -> Token {
+pub fn new_token<T>(param: (TokenType, String, T)) -> Token<T> {
     Token {
         ty: param.0,
         literal: param.1,
+        val: param.2,
     }
 }
 
-impl Token {
+impl<T> Token<T> {
     pub fn dump(&self) -> String {
         format!(
             "type:{tokentype}\tinput:{tokenliteral}\n",
