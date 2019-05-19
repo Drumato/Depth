@@ -13,6 +13,9 @@ args:
         help: Sets the input file to use
         #required: true
         index: 1
+    - dump-token:
+        long: dump-token
+        help: dump tokens with lexer
     - verbose:
         short: v
         multiple: true
