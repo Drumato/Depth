@@ -4,21 +4,25 @@ pub struct Token<T> {
     val: T,
 }
 
-pub fn new_token<T>(param: (TokenType, String, T)) -> Token<T> {
-    Token {
-        ty: param.0,
-        literal: param.1,
-        val: param.2,
-    }
-}
-
 impl<T> Token<T> {
     pub fn dump(&self) -> String {
-        format!(
-            "type:{tokentype}\tinput:{tokenliteral}\n",
-            tokentype = self.ty.string(),
-            tokenliteral = self.literal
-        )
+        format!("type:{}\tinput:{}\n", self.ty.string(), self.literal)
+    }
+    pub fn new(param: (TokenType, String, T)) -> Token<T> {
+        Token {
+            ty: param.0,
+            literal: param.1,
+            val: param.2,
+        }
+    }
+    pub fn lookup(&self) -> bool {
+        let s: &str = &self.literal;
+        match s {
+            "mut" | "f" | "true" | "false" | "loop" | "for" | "let" | "const" | "if" | "else"
+            | "return" | "struct" | "bool" | "str" | "u8" | "u16" | "u32" | "u64" | "u128"
+            | "ch" | "i8" | "i16" | "i32" | "i64" | "i128" | "f32" | "f64" => true,
+            _ => false,
+        }
     }
 }
 

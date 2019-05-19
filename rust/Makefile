@@ -1,4 +1,5 @@
 all:
+	cargo test
 	cargo build && ./target/debug/depth
 clean:
 	cargo clean

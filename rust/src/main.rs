@@ -12,9 +12,9 @@ use lex::token;
 
 fn main() {
     dump_yaml();
-    let t: token::Token<()> =
-        token::new_token((token::TokenType::TkIllegal, "$$$".to_string(), ()));
-    println!("{}", t.dump());
+
+    //let t = token::Token::new((token::TokenType::TkIntlit, "30".to_string(), 30));
+    //println!("{}", t.dump());
 }
 
 fn get_yaml() -> Result<Vec<yaml_rust::Yaml>, yaml_rust::ScanError> {
