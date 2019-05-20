@@ -72,12 +72,19 @@ mod tests {
     fn test_read_ident() {
         let input_str: &str = "main(){}";
         let mut lexer = super::lexing::Lexer::new(input_str.to_string()).unwrap();
-        assert_eq!(String::from("main"), lexer.read_ident().unwrap());
+        assert_eq!(String::from("main"), lexer.read_ident());
     }
     #[test]
     fn test_read_number() {
         let input_str: &str = "123main";
         let mut lexer = super::lexing::Lexer::new(input_str.to_string()).unwrap();
-        assert_eq!(String::from("123"), lexer.read_number().unwrap());
+        assert_eq!(String::from("123"), lexer.read_number());
+    }
+    #[test]
+    fn test_skip_whitespace() {
+        let input_str: &str = "           123";
+        let mut lexer = super::lexing::Lexer::new(input_str.to_string()).unwrap();
+        lexer.skip_whitespace();
+        assert_eq!(String::from("123"), lexer.read_number());
     }
 }
