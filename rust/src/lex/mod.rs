@@ -5,39 +5,12 @@ pub mod token;
 mod tests {
     #[test]
     fn test_lookup() {
-        assert_eq!(
-            super::token::Token::new((super::token::TokenType::TkMutable, "mut".to_string(), ()))
-                .lookup(),
-            true
-        );
-        assert_eq!(
-            super::token::Token::new((super::token::TokenType::TkF, "f".to_string(), ())).lookup(),
-            true
-        );
-        assert_eq!(
-            super::token::Token::new((super::token::TokenType::TkIntlit, "30".to_string(), 30))
-                .lookup(),
-            false
-        );
-        assert_eq!(
-            super::token::Token::new((super::token::TokenType::TkCharlit, "a".to_string(), ()))
-                .lookup(),
-            false
-        );
-        assert_eq!(
-            super::token::Token::new((super::token::TokenType::TkIdent, "x".to_string(), ()))
-                .lookup(),
-            false
-        );
-        assert_eq!(
-            super::token::Token::new((
-                super::token::TokenType::TkReallit,
-                "3.0".to_string(),
-                "3.0"
-            ))
-            .lookup(),
-            false
-        );
+        assert_eq!(super::token::lookup("mut"), true);
+        assert_eq!(super::token::lookup("f"), true);
+        assert_eq!(super::token::lookup("30"), false);
+        assert_eq!(super::token::lookup("a"), false);
+        assert_eq!(super::token::lookup("x"), false);
+        assert_eq!(super::token::lookup("3.0"), false);
     }
 
     #[test]
@@ -82,6 +55,13 @@ mod tests {
     }
     #[test]
     fn test_skip_whitespace() {
+        let input_str: &str = "           123";
+        let mut lexer = super::lexing::Lexer::new(input_str.to_string()).unwrap();
+        lexer.skip_whitespace();
+        assert_eq!(String::from("123"), lexer.read_number());
+    }
+    #[test]
+    fn test_read_string() {
         let input_str: &str = "           123";
         let mut lexer = super::lexing::Lexer::new(input_str.to_string()).unwrap();
         lexer.skip_whitespace();

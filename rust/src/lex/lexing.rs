@@ -27,7 +27,7 @@ impl Lexer {
         self.pos = self.npos;
         self.npos += 1;
     }
-    pub fn peak_char(self) -> char {
+    pub fn peak_char(&self) -> char {
         if self.npos >= self.input.len() {
             return '\0';
         } else {
@@ -54,6 +54,16 @@ impl Lexer {
         }
         self.input[p..self.pos].to_string()
     }
+    pub fn read_string(&mut self) -> String {
+        self.read_char(); //ignore "
+        let p: usize = self.pos;
+        while self.peak_char() != '"' {
+            self.read_char();
+        }
+        self.read_char(); //ignore "
+        self.read_char();
+        self.input[p..self.pos].to_string()
+    }
     pub fn read_number(&mut self) -> String {
         let p: usize = self.pos;
         while self.ch.is_ascii_digit() {
@@ -65,5 +75,9 @@ impl Lexer {
         while self.ch.is_ascii_whitespace() {
             self.read_char();
         }
+    }
+    pub fn next_token<T>(&mut self) -> super::token::Token<T> {
+        self.skip_whitespace();
+        super::token::Token::new((super::token::TokenType::TkIllegal, "".to_string(), T))
     }
 }
