@@ -19,4 +19,16 @@ impl Binaryen {
         file.flush()?;
         Ok(())
     }
+
+    pub fn range(&mut self, src: u64, dst: u64) -> Option<Vec<u8>> {
+        if src > dst {
+            println!("Error found: src is bigger than dst");
+        }
+        let orig = self.input.position();
+        let length: u64 = dst - src;
+        let mut v = Vec::with_capacity(length as usize);
+        self.input.read_exact(&mut v).unwrap();
+        self.input.set_position(orig);
+        Some(v)
+    }
 }
