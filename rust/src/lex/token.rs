@@ -1,7 +1,7 @@
-pub struct Token<T> {
+pub struct Token {
     ty: TokenType,
     literal: String,
-    val: T,
+    val: TokenVal,
 }
 
 pub fn lookup(s: &str) -> bool {
@@ -13,15 +13,38 @@ pub fn lookup(s: &str) -> bool {
     }
 }
 
-impl<T> Token<T> {
+impl Token {
     pub fn dump(&self) -> String {
-        format!("type:{}\tinput:{}\n", self.ty.string(), self.literal)
+        format!(
+            "type:{}\tinput:{}\tval:{}\n",
+            self.ty.string(),
+            self.literal,
+            self.val.string()
+        )
     }
-    pub fn new(param: (TokenType, String, T)) -> Token<T> {
+    pub fn new(param: (TokenType, String, TokenVal)) -> Token {
         Token {
             ty: param.0,
             literal: param.1,
             val: param.2,
+        }
+    }
+}
+
+pub enum TokenVal {
+    IntVal(i64),
+    RealVal(f64),
+    CharVal(char), //change u32 after
+    StrVal(String),
+}
+
+impl TokenVal {
+    pub fn string(&self) -> String {
+        match self {
+            TokenVal::IntVal(d) => format!("{}", d),
+            TokenVal::RealVal(r) => format!("{}", r),
+            TokenVal::CharVal(c) => format!("{}", c),
+            TokenVal::StrVal(s) => format!("{}", s),
         }
     }
 }
