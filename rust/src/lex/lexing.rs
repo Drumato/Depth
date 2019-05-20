@@ -5,6 +5,8 @@ pub struct Lexer {
     pub ch: u8,
 }
 
+use super::token::{Token, TokenType, TokenVal};
+
 impl Lexer {
     pub fn new(input_str: String) -> Option<Lexer> {
         let ch: u8 = input_str.bytes().nth(0)?;
@@ -76,8 +78,12 @@ impl Lexer {
             self.read_char();
         }
     }
-    pub fn next_token<T>(&mut self) -> super::token::Token<T> {
+    pub fn next_token(&mut self) -> Token {
         self.skip_whitespace();
-        super::token::Token::new((super::token::TokenType::TkIllegal, "".to_string(), T))
+        Token::new((
+            TokenType::TkIllegal,
+            "".to_string(),
+            TokenVal::StrVal("invalid".to_string()),
+        ))
     }
 }
