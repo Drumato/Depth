@@ -49,4 +49,11 @@ mod tests {
         assert_eq!(1, lexer.npos);
         assert_eq!(input_str, lexer.input);
     }
+    #[test]
+    fn test_read_char() {
+        let input_str: &str = "f main(){}";
+        let mut lexer = super::lexing::Lexer::new(input_str.to_string()).unwrap();
+        lexer.read_char();
+        assert_eq!(0x20, lexer.ch); //f
+    }
 }
