@@ -27,4 +27,24 @@ impl Lexer {
         self.pos = self.npos;
         self.npos += 1;
     }
+    pub fn peak_char(self) -> char {
+        if self.npos >= self.input.len() {
+            return '\0';
+        } else {
+            match self.input.bytes().nth(self.npos) {
+                Some(c) => c as char,
+                None => panic!("Error found between calling read_char() function"),
+            }
+        }
+    }
+    pub fn peak_byte(self) -> u8 {
+        if self.npos >= self.input.len() {
+            return 0;
+        } else {
+            match self.input.bytes().nth(self.npos) {
+                Some(c) => c,
+                None => panic!("Error found between calling read_char() function"),
+            }
+        }
+    }
 }

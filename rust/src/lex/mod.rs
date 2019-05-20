@@ -54,6 +54,18 @@ mod tests {
         let input_str: &str = "f main(){}";
         let mut lexer = super::lexing::Lexer::new(input_str.to_string()).unwrap();
         lexer.read_char();
-        assert_eq!(0x20, lexer.ch); //f
+        assert_eq!(0x20, lexer.ch); //' '
+    }
+    #[test]
+    fn test_peek_char() {
+        let input_str: &str = "main(){}";
+        let lexer = super::lexing::Lexer::new(input_str.to_string()).unwrap();
+        assert_eq!('a', lexer.peak_char());
+    }
+    #[test]
+    fn test_peek_byte() {
+        let input_str: &str = "main(){}";
+        let lexer = super::lexing::Lexer::new(input_str.to_string()).unwrap();
+        assert_eq!(0x61, lexer.peak_byte());
     }
 }
