@@ -39,4 +39,14 @@ mod tests {
             false
         );
     }
+
+    #[test]
+    fn test_new_lexer() {
+        let input_str: &str = "f main(){}";
+        let lexer = super::lexing::Lexer::new(input_str.to_string()).unwrap();
+        assert_eq!(0x66, lexer.ch); //f
+        assert_eq!(0, lexer.pos);
+        assert_eq!(1, lexer.npos);
+        assert_eq!(input_str, lexer.input);
+    }
 }
