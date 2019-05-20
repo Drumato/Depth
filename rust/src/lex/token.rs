@@ -36,6 +36,7 @@ pub enum TokenVal {
     RealVal(f64),
     CharVal(char), //change u32 after
     StrVal(String),
+    InVal,
 }
 
 impl TokenVal {
@@ -45,6 +46,7 @@ impl TokenVal {
             TokenVal::RealVal(r) => format!("{}", r),
             TokenVal::CharVal(c) => format!("{}", c),
             TokenVal::StrVal(s) => format!("{}", s),
+            _ => "".to_string(),
         }
     }
 }

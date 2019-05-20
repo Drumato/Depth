@@ -67,4 +67,11 @@ mod tests {
         lexer.skip_whitespace();
         assert_eq!(String::from("123"), lexer.read_number());
     }
+    #[test]
+    fn test_next_token() {
+        let input_str: &str = "abc";
+        let mut lexer = super::lexing::Lexer::new(input_str.to_string()).unwrap();
+        let t = lexer.next_token();
+        assert_eq!(t.dump(), "");
+    }
 }
