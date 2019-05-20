@@ -68,4 +68,16 @@ mod tests {
         let lexer = super::lexing::Lexer::new(input_str.to_string()).unwrap();
         assert_eq!(0x61, lexer.peak_byte());
     }
+    #[test]
+    fn test_read_ident() {
+        let input_str: &str = "main(){}";
+        let mut lexer = super::lexing::Lexer::new(input_str.to_string()).unwrap();
+        assert_eq!(String::from("main"), lexer.read_ident().unwrap());
+    }
+    #[test]
+    fn test_read_number() {
+        let input_str: &str = "123main";
+        let mut lexer = super::lexing::Lexer::new(input_str.to_string()).unwrap();
+        assert_eq!(String::from("123"), lexer.read_number().unwrap());
+    }
 }

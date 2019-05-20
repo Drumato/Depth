@@ -47,4 +47,18 @@ impl Lexer {
             }
         }
     }
+    pub fn read_ident(&mut self) -> Result<String, Box<std::error::Error>> {
+        let p: usize = self.pos;
+        while self.ch.is_ascii_alphabetic() || self.ch == 0x20 {
+            self.read_char();
+        }
+        Ok(self.input[p..self.pos].to_string())
+    }
+    pub fn read_number(&mut self) -> Result<String, Box<std::error::Error>> {
+        let p: usize = self.pos;
+        while self.ch.is_ascii_digit() {
+            self.read_char();
+        }
+        Ok(self.input[p..self.pos].to_string())
+    }
 }
