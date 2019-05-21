@@ -7,6 +7,8 @@ pub struct Lexer {
 
 use super::token;
 use token::{Token, TokenType, TokenVal};
+extern crate drumatech;
+use drumatech::conv;
 
 impl Lexer {
     pub fn new(input_str: String) -> Option<Lexer> {
@@ -52,7 +54,7 @@ impl Lexer {
     }
     pub fn read_ident(&mut self) -> String {
         let p: usize = self.pos;
-        while self.ch.is_ascii_alphabetic() || self.ch == 0x20 {
+        while self.ch.is_ascii_alphabetic() || self.ch == 0x5f {
             self.read_char();
         }
         self.input[p..self.pos].to_string()
@@ -81,9 +83,20 @@ impl Lexer {
     }
     pub fn next_token(&mut self) -> Token {
         self.skip_whitespace();
-        match self.ch {
-            0 => Token::new((TokenType::TkEof, "\0".to_string(), TokenVal::InVal)),
-            _ => Token::new((TokenType::TkIllegal, self.ch.to_string(), TokenVal::InVal)),
+        let s = conv::u8_to_string(&mut self.ch);
+        match self.ch as char {
+            '\0' => Token::new((TokenType::TkEof, s, TokenVal::InVal)),
+            c if c.is_alphabetic() => self.judge_keyword(),
+            _ => Token::new((TokenType::TkIllegal, s, TokenVal::InVal)),
         }
+    }
+    pub fn judge_keyword(&mut self) -> Token {
+        let s: String = self.read_ident();
+        if token::lookup(&s) {
+            self.read_char();
+            return Token::new((token::get_keyword(&s), s, TokenVal::InVal));
+        }
+        self.read_char();
+        Token::new((TokenType::TkIdent, s, TokenVal::InVal))
     }
 }

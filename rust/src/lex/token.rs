@@ -1,7 +1,7 @@
 pub struct Token {
-    ty: TokenType,
-    literal: String,
-    val: TokenVal,
+    pub ty: TokenType,
+    pub literal: String,
+    pub val: TokenVal,
 }
 
 pub fn lookup(s: &str) -> bool {
@@ -13,10 +13,43 @@ pub fn lookup(s: &str) -> bool {
     }
 }
 
+pub fn get_keyword(s: &str) -> TokenType {
+    match s {
+        "mut" => TokenType::TkMutable,
+        "f" => TokenType::TkF,
+        "true" => TokenType::TkTrue,
+        "false" => TokenType::TkFalse,
+        "loop" => TokenType::TkLoop,
+        "for" => TokenType::TkFor,
+        "let" => TokenType::TkLet,
+        "const" => TokenType::TkConst,
+        "if" => TokenType::TkIf,
+        "else" => TokenType::TkElse,
+        "return" => TokenType::TkReturn,
+        "struct" => TokenType::TkStruct,
+        "bool" => TokenType::TkBool,
+        "ch" => TokenType::TkChar,
+        "str" => TokenType::TkString,
+        "u8" => TokenType::TkU8,
+        "u16" => TokenType::TkU16,
+        "u32" => TokenType::TkU32,
+        "u64" => TokenType::TkU64,
+        "u128" => TokenType::TkU128,
+        "i8" => TokenType::TkI8,
+        "i16" => TokenType::TkI16,
+        "i32" => TokenType::TkI32,
+        "i64" => TokenType::TkI64,
+        "i128" => TokenType::TkI128,
+        "f32" => TokenType::TkF32,
+        "f64" => TokenType::TkF64,
+        _ => TokenType::TkIllegal,
+    }
+}
+
 impl Token {
     pub fn dump(&self) -> String {
         format!(
-            "type:{}\tinput:{}\tval:{}\n",
+            "type:{}\tinput:{}\tval:{}",
             self.ty.string(),
             self.literal,
             self.val.string()
@@ -137,42 +170,42 @@ impl TokenType {
     pub fn string(&self) -> &str {
         match self {
             TokenType::TkIllegal => "ILLEGAL",
-            TokenType::TkIdent => "IDENTIFER",
+            TokenType::TkIdent => "IDENTIFIER",
             TokenType::TkEof => "EOF",
             TokenType::TkFunction => "FUNCTION",
             TokenType::TkIntlit => "INT-LITERAL",
             TokenType::TkCharlit => "CHAR-LITERAL",
             TokenType::TkStrlit => "STRING-LITERAL",
             TokenType::TkReallit => "REAL-LITERAL",
-            TokenType::TkMutable => "mut",
-            TokenType::TkF => "f",
-            TokenType::TkTrue => "true",
-            TokenType::TkFalse => "false",
-            TokenType::TkLoop => "loop",
-            TokenType::TkFor => "for",
-            TokenType::TkLet => "let",
-            TokenType::TkConst => "const",
-            TokenType::TkIf => "if",
-            TokenType::TkElse => "else",     //else
-            TokenType::TkReturn => "return", //return
-            TokenType::TkStruct => "struct", //struct
+            TokenType::TkMutable => "MUTABLE",
+            TokenType::TkF => "F",
+            TokenType::TkTrue => "TRUE",
+            TokenType::TkFalse => "FALSE",
+            TokenType::TkLoop => "LOOP",
+            TokenType::TkFor => "FOR",
+            TokenType::TkLet => "LET",
+            TokenType::TkConst => "CONST",
+            TokenType::TkIf => "IF",
+            TokenType::TkElse => "ELSE",     //else
+            TokenType::TkReturn => "RETURN", //return
+            TokenType::TkStruct => "STRUCT", //struct
 
             /* types */
-            TokenType::TkBool => "bool",  //bool
-            TokenType::TkChar => "ch",    //ch
-            TokenType::TkString => "str", //str
-            TokenType::TkU8 => "u8",      //u8
-            TokenType::TkU16 => "u16",    //u16
-            TokenType::TkU32 => "u32",    //u32
-            TokenType::TkU64 => "u64",    //u64
-            TokenType::TkU128 => "u128",
-            TokenType::TkI8 => "i8",     //i16
-            TokenType::TkI16 => "i16",   //i16
-            TokenType::TkI32 => "i32",   //i32
-            TokenType::TkI64 => "i64",   //i64
-            TokenType::TkI128 => "i128", //i128
-            TokenType::TkF32 => "f32",   //f32
-            TokenType::TkF64 => "f64",   //f64
+            TokenType::TkBool => "BOOL",     //bool
+            TokenType::TkChar => "CHAR",     //ch
+            TokenType::TkString => "STRING", //str
+            TokenType::TkU8 => "U8",         //u8
+            TokenType::TkU16 => "U16",       //u16
+            TokenType::TkU32 => "U32",       //u32
+            TokenType::TkU64 => "U64",       //u64
+            TokenType::TkU128 => "U128",
+            TokenType::TkI8 => "I8",     //i16
+            TokenType::TkI16 => "I16",   //i16
+            TokenType::TkI32 => "I32",   //i32
+            TokenType::TkI64 => "I64",   //i64
+            TokenType::TkI128 => "I128", //i128
+            TokenType::TkF32 => "F32",   //f32
+            TokenType::TkF64 => "F64",   //f64
 
             /* marks */
             TokenType::TkAssign => "=",
