@@ -104,6 +104,34 @@ mod tests {
             "type:INT-LITERAL\tinput:0b1000000\tval:64"
         );
     }
+    #[test]
+    fn test_lexer() {
+        let s: String = String::from("f main() -> i8 { let x : i8 = 20 return x++}");
+        let mut lexer = lexing::Lexer::new(s).unwrap();
+        assert_eq!(lexer.next_token().dump(), "type:F\tinput:f\tval:");
+        assert_eq!(
+            lexer.next_token().dump(),
+            "type:IDENTIFIER\tinput:main\tval:"
+        );
+        assert_eq!(lexer.next_token().dump(), "type:LPAREN\tinput:(\tval:");
+        assert_eq!(lexer.next_token().dump(), "type:RPAREN\tinput:)\tval:");
+        assert_eq!(lexer.next_token().dump(), "type:ARROW\tinput:->\tval:");
+        assert_eq!(lexer.next_token().dump(), "type:I8\tinput:i8\tval:");
+        assert_eq!(lexer.next_token().dump(), "type:LBRACE\tinput:{\tval:");
+        assert_eq!(lexer.next_token().dump(), "type:LET\tinput:let\tval:");
+        assert_eq!(lexer.next_token().dump(), "type:IDENTIFIER\tinput:x\tval:");
+        assert_eq!(lexer.next_token().dump(), "type:COLON\tinput::\tval:");
+        assert_eq!(lexer.next_token().dump(), "type:I8\tinput:i8\tval:");
+        assert_eq!(lexer.next_token().dump(), "type:ASSIGN\tinput:=\tval:");
+        assert_eq!(
+            lexer.next_token().dump(),
+            "type:INT-LITERAL\tinput:20\tval:20"
+        );
+        assert_eq!(lexer.next_token().dump(), "type:RETURN\tinput:return\tval:");
+        assert_eq!(lexer.next_token().dump(), "type:IDENTIFIER\tinput:x\tval:");
+        assert_eq!(lexer.next_token().dump(), "type:INCRE\tinput:++\tval:");
+        assert_eq!(lexer.next_token().dump(), "type:RBRACE\tinput:}\tval:");
+    }
 }
 
 fn test_token(s: &str) -> token::Token {

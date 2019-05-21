@@ -54,7 +54,7 @@ impl Lexer {
     }
     pub fn read_ident(&mut self) -> String {
         let p: usize = self.pos;
-        while self.ch.is_ascii_alphabetic() || self.ch == 0x5f {
+        while self.ch.is_ascii_alphabetic() || self.ch.is_ascii_digit() || self.ch == 0x5f {
             self.read_char();
         }
         self.input[p..self.pos].to_string()
@@ -148,6 +148,7 @@ impl Lexer {
             '*' => self.judge_star(),
             '/' => self.judge_slash(),
             '%' => self.judge_percent(),
+            '=' => self.judge_assign(),
             '&' => self.judge_ampersand(),
             '|' => self.judge_pipe(),
             '!' => self.judge_bang(),
@@ -172,38 +173,50 @@ impl Lexer {
         let p = self.pos;
         if self.peak_char() == '=' {
             self.read_char();
-            s = self.input[p..self.pos].to_string();
             self.read_char();
+            s = self.input[p..self.pos].to_string();
             return Token::new((TokenType::TkPlusassign, s, TokenVal::InVal));
         }
         if self.peak_char() == '+' {
             self.read_char();
-            s = self.input[p..self.pos].to_string();
             self.read_char();
+            s = self.input[p..self.pos].to_string();
             return Token::new((TokenType::TkIncre, s, TokenVal::InVal));
         }
         self.read_char();
         Token::new((TokenType::TkPlus, s, TokenVal::InVal))
+    }
+    fn judge_assign(&mut self) -> Token {
+        let mut s = conv::u8_to_string(&mut self.ch);
+        let p = self.pos;
+        if self.peak_char() == '=' {
+            self.read_char();
+            self.read_char();
+            s = self.input[p..self.pos].to_string();
+            return Token::new((TokenType::TkEq, s, TokenVal::InVal));
+        }
+        self.read_char();
+        Token::new((TokenType::TkAssign, s, TokenVal::InVal))
     }
     fn judge_minus(&mut self) -> Token {
         let mut s = conv::u8_to_string(&mut self.ch);
         let p = self.pos;
         if self.peak_char() == '=' {
             self.read_char();
-            s = self.input[p..self.pos].to_string();
             self.read_char();
+            s = self.input[p..self.pos].to_string();
             return Token::new((TokenType::TkMinusassign, s, TokenVal::InVal));
         }
         if self.peak_char() == '>' {
             self.read_char();
-            s = self.input[p..self.pos].to_string();
             self.read_char();
+            s = self.input[p..self.pos].to_string();
             return Token::new((TokenType::TkArrow, s, TokenVal::InVal));
         }
         if self.peak_char() == '-' {
             self.read_char();
-            s = self.input[p..self.pos].to_string();
             self.read_char();
+            s = self.input[p..self.pos].to_string();
             return Token::new((TokenType::TkDecre, s, TokenVal::InVal));
         }
         self.read_char();
@@ -214,8 +227,8 @@ impl Lexer {
         let p = self.pos;
         if self.peak_char() == '=' {
             self.read_char();
-            s = self.input[p..self.pos].to_string();
             self.read_char();
+            s = self.input[p..self.pos].to_string();
             return Token::new((TokenType::TkStarassign, s, TokenVal::InVal));
         }
         self.read_char();
@@ -226,8 +239,8 @@ impl Lexer {
         let p = self.pos;
         if self.peak_char() == '=' {
             self.read_char();
-            s = self.input[p..self.pos].to_string();
             self.read_char();
+            s = self.input[p..self.pos].to_string();
             return Token::new((TokenType::TkSlashassign, s, TokenVal::InVal));
         }
         self.read_char();
@@ -238,8 +251,8 @@ impl Lexer {
         let p = self.pos;
         if self.peak_char() == '=' {
             self.read_char();
-            s = self.input[p..self.pos].to_string();
             self.read_char();
+            s = self.input[p..self.pos].to_string();
             return Token::new((TokenType::TkPercentassign, s, TokenVal::InVal));
         }
         self.read_char();
@@ -250,8 +263,8 @@ impl Lexer {
         let p = self.pos;
         if self.peak_char() == '&' {
             self.read_char();
-            s = self.input[p..self.pos].to_string();
             self.read_char();
+            s = self.input[p..self.pos].to_string();
             return Token::new((TokenType::TkLogand, s, TokenVal::InVal));
         }
         self.read_char();
@@ -262,8 +275,8 @@ impl Lexer {
         let p = self.pos;
         if self.peak_char() == '|' {
             self.read_char();
-            s = self.input[p..self.pos].to_string();
             self.read_char();
+            s = self.input[p..self.pos].to_string();
             return Token::new((TokenType::TkLogor, s, TokenVal::InVal));
         }
         self.read_char();
@@ -274,8 +287,8 @@ impl Lexer {
         let p = self.pos;
         if self.peak_char() == '=' {
             self.read_char();
-            s = self.input[p..self.pos].to_string();
             self.read_char();
+            s = self.input[p..self.pos].to_string();
             return Token::new((TokenType::TkNoteq, s, TokenVal::InVal));
         }
         self.read_char();
@@ -286,8 +299,8 @@ impl Lexer {
         let p = self.pos;
         if self.peak_char() == '=' {
             self.read_char();
-            s = self.input[p..self.pos].to_string();
             self.read_char();
+            s = self.input[p..self.pos].to_string();
             return Token::new((TokenType::TkLteq, s, TokenVal::InVal));
         }
         self.read_char();
@@ -298,8 +311,8 @@ impl Lexer {
         let p = self.pos;
         if self.peak_char() == '=' {
             self.read_char();
-            s = self.input[p..self.pos].to_string();
             self.read_char();
+            s = self.input[p..self.pos].to_string();
             return Token::new((TokenType::TkGteq, s, TokenVal::InVal));
         }
         self.read_char();
