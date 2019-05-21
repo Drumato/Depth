@@ -115,10 +115,8 @@ impl Lexer {
     fn judge_keyword(&mut self) -> Token {
         let s: String = self.read_ident();
         if token::lookup(&s) {
-            self.read_char();
             return Token::new((token::get_keyword(&s), s, TokenVal::InVal));
         }
-        self.read_char();
         Token::new((TokenType::TkIdent, s, TokenVal::InVal))
     }
     fn judge_number(&mut self) -> Token {
@@ -145,18 +143,221 @@ impl Lexer {
     fn judge_mark(&mut self) -> Token {
         let s = conv::u8_to_string(&mut self.ch);
         match self.ch as char {
-            '.' => Token::new((TokenType::TkDot, s, TokenVal::InVal)),
-            ',' => Token::new((TokenType::TkComma, s, TokenVal::InVal)),
-            ':' => Token::new((TokenType::TkColon, s, TokenVal::InVal)),
-            ';' => Token::new((TokenType::TkSemicolon, s, TokenVal::InVal)),
-            '(' => Token::new((TokenType::TkLparen, s, TokenVal::InVal)),
-            ')' => Token::new((TokenType::TkRparen, s, TokenVal::InVal)),
-            '{' => Token::new((TokenType::TkLbrace, s, TokenVal::InVal)),
-            '}' => Token::new((TokenType::TkRbrace, s, TokenVal::InVal)),
-            '[' => Token::new((TokenType::TkLbracket, s, TokenVal::InVal)),
-            ']' => Token::new((TokenType::TkRbracket, s, TokenVal::InVal)),
-            '\\' => Token::new((TokenType::TkBackslash, s, TokenVal::InVal)),
+            '+' => self.judge_plus(),
+            '-' => self.judge_minus(),
+            '*' => self.judge_star(),
+            '/' => self.judge_slash(),
+            '%' => self.judge_percent(),
+            '&' => self.judge_ampersand(),
+            '|' => self.judge_pipe(),
+            '!' => self.judge_bang(),
+            '<' => self.judge_lt(),
+            '>' => self.judge_gt(),
+            '.' => self.judge_dot(),
+            ',' => self.judge_comma(),
+            ':' => self.judge_colon(),
+            ';' => self.judge_semicolon(),
+            '(' => self.judge_lparen(),
+            ')' => self.judge_rparen(),
+            '{' => self.judge_lbrace(),
+            '}' => self.judge_rbrace(),
+            '[' => self.judge_lbracket(),
+            ']' => self.judge_rbracket(),
+            '\\' => self.judge_backslash(),
             _ => Token::new((TokenType::TkIllegal, s, TokenVal::InVal)),
         }
+    }
+    fn judge_plus(&mut self) -> Token {
+        let mut s = conv::u8_to_string(&mut self.ch);
+        let p = self.pos;
+        if self.peak_char() == '=' {
+            self.read_char();
+            s = self.input[p..self.pos].to_string();
+            self.read_char();
+            return Token::new((TokenType::TkPlusassign, s, TokenVal::InVal));
+        }
+        if self.peak_char() == '+' {
+            self.read_char();
+            s = self.input[p..self.pos].to_string();
+            self.read_char();
+            return Token::new((TokenType::TkIncre, s, TokenVal::InVal));
+        }
+        self.read_char();
+        Token::new((TokenType::TkPlus, s, TokenVal::InVal))
+    }
+    fn judge_minus(&mut self) -> Token {
+        let mut s = conv::u8_to_string(&mut self.ch);
+        let p = self.pos;
+        if self.peak_char() == '=' {
+            self.read_char();
+            s = self.input[p..self.pos].to_string();
+            self.read_char();
+            return Token::new((TokenType::TkMinusassign, s, TokenVal::InVal));
+        }
+        if self.peak_char() == '>' {
+            self.read_char();
+            s = self.input[p..self.pos].to_string();
+            self.read_char();
+            return Token::new((TokenType::TkArrow, s, TokenVal::InVal));
+        }
+        if self.peak_char() == '-' {
+            self.read_char();
+            s = self.input[p..self.pos].to_string();
+            self.read_char();
+            return Token::new((TokenType::TkDecre, s, TokenVal::InVal));
+        }
+        self.read_char();
+        Token::new((TokenType::TkMinus, s, TokenVal::InVal))
+    }
+    fn judge_star(&mut self) -> Token {
+        let mut s = conv::u8_to_string(&mut self.ch);
+        let p = self.pos;
+        if self.peak_char() == '=' {
+            self.read_char();
+            s = self.input[p..self.pos].to_string();
+            self.read_char();
+            return Token::new((TokenType::TkStarassign, s, TokenVal::InVal));
+        }
+        self.read_char();
+        Token::new((TokenType::TkStar, s, TokenVal::InVal))
+    }
+    fn judge_slash(&mut self) -> Token {
+        let mut s = conv::u8_to_string(&mut self.ch);
+        let p = self.pos;
+        if self.peak_char() == '=' {
+            self.read_char();
+            s = self.input[p..self.pos].to_string();
+            self.read_char();
+            return Token::new((TokenType::TkSlashassign, s, TokenVal::InVal));
+        }
+        self.read_char();
+        Token::new((TokenType::TkSlash, s, TokenVal::InVal))
+    }
+    fn judge_percent(&mut self) -> Token {
+        let mut s = conv::u8_to_string(&mut self.ch);
+        let p = self.pos;
+        if self.peak_char() == '=' {
+            self.read_char();
+            s = self.input[p..self.pos].to_string();
+            self.read_char();
+            return Token::new((TokenType::TkPercentassign, s, TokenVal::InVal));
+        }
+        self.read_char();
+        Token::new((TokenType::TkPercent, s, TokenVal::InVal))
+    }
+    fn judge_ampersand(&mut self) -> Token {
+        let mut s = conv::u8_to_string(&mut self.ch);
+        let p = self.pos;
+        if self.peak_char() == '&' {
+            self.read_char();
+            s = self.input[p..self.pos].to_string();
+            self.read_char();
+            return Token::new((TokenType::TkLogand, s, TokenVal::InVal));
+        }
+        self.read_char();
+        Token::new((TokenType::TkAmpersand, s, TokenVal::InVal))
+    }
+    fn judge_pipe(&mut self) -> Token {
+        let mut s = conv::u8_to_string(&mut self.ch);
+        let p = self.pos;
+        if self.peak_char() == '|' {
+            self.read_char();
+            s = self.input[p..self.pos].to_string();
+            self.read_char();
+            return Token::new((TokenType::TkLogor, s, TokenVal::InVal));
+        }
+        self.read_char();
+        Token::new((TokenType::TkPipe, s, TokenVal::InVal))
+    }
+    fn judge_bang(&mut self) -> Token {
+        let mut s = conv::u8_to_string(&mut self.ch);
+        let p = self.pos;
+        if self.peak_char() == '=' {
+            self.read_char();
+            s = self.input[p..self.pos].to_string();
+            self.read_char();
+            return Token::new((TokenType::TkNoteq, s, TokenVal::InVal));
+        }
+        self.read_char();
+        Token::new((TokenType::TkBang, s, TokenVal::InVal))
+    }
+    fn judge_lt(&mut self) -> Token {
+        let mut s = conv::u8_to_string(&mut self.ch);
+        let p = self.pos;
+        if self.peak_char() == '=' {
+            self.read_char();
+            s = self.input[p..self.pos].to_string();
+            self.read_char();
+            return Token::new((TokenType::TkLteq, s, TokenVal::InVal));
+        }
+        self.read_char();
+        Token::new((TokenType::TkLt, s, TokenVal::InVal))
+    }
+    fn judge_gt(&mut self) -> Token {
+        let mut s = conv::u8_to_string(&mut self.ch);
+        let p = self.pos;
+        if self.peak_char() == '=' {
+            self.read_char();
+            s = self.input[p..self.pos].to_string();
+            self.read_char();
+            return Token::new((TokenType::TkGteq, s, TokenVal::InVal));
+        }
+        self.read_char();
+        Token::new((TokenType::TkGt, s, TokenVal::InVal))
+    }
+    fn judge_dot(&mut self) -> Token {
+        let s = conv::u8_to_string(&mut self.ch);
+        self.read_char();
+        Token::new((TokenType::TkDot, s, TokenVal::InVal))
+    }
+    fn judge_comma(&mut self) -> Token {
+        let s = conv::u8_to_string(&mut self.ch);
+        self.read_char();
+        Token::new((TokenType::TkComma, s, TokenVal::InVal))
+    }
+    fn judge_colon(&mut self) -> Token {
+        let s = conv::u8_to_string(&mut self.ch);
+        self.read_char();
+        Token::new((TokenType::TkColon, s, TokenVal::InVal))
+    }
+    fn judge_semicolon(&mut self) -> Token {
+        let s = conv::u8_to_string(&mut self.ch);
+        self.read_char();
+        Token::new((TokenType::TkSemicolon, s, TokenVal::InVal))
+    }
+    fn judge_lparen(&mut self) -> Token {
+        let s = conv::u8_to_string(&mut self.ch);
+        self.read_char();
+        Token::new((TokenType::TkLparen, s, TokenVal::InVal))
+    }
+    fn judge_rparen(&mut self) -> Token {
+        let s = conv::u8_to_string(&mut self.ch);
+        self.read_char();
+        Token::new((TokenType::TkRparen, s, TokenVal::InVal))
+    }
+    fn judge_lbrace(&mut self) -> Token {
+        let s = conv::u8_to_string(&mut self.ch);
+        self.read_char();
+        Token::new((TokenType::TkLbrace, s, TokenVal::InVal))
+    }
+    fn judge_rbrace(&mut self) -> Token {
+        let s = conv::u8_to_string(&mut self.ch);
+        self.read_char();
+        Token::new((TokenType::TkRbrace, s, TokenVal::InVal))
+    }
+    fn judge_lbracket(&mut self) -> Token {
+        let s = conv::u8_to_string(&mut self.ch);
+        self.read_char();
+        Token::new((TokenType::TkLbracket, s, TokenVal::InVal))
+    }
+    fn judge_rbracket(&mut self) -> Token {
+        let s = conv::u8_to_string(&mut self.ch);
+        self.read_char();
+        Token::new((TokenType::TkRbracket, s, TokenVal::InVal))
+    }
+    fn judge_backslash(&mut self) -> Token {
+        let s = conv::u8_to_string(&mut self.ch);
+        self.read_char();
+        Token::new((TokenType::TkBackslash, s, TokenVal::InVal))
     }
 }
