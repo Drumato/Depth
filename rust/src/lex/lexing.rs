@@ -106,12 +106,13 @@ impl Lexer {
         let s = conv::u8_to_string(&mut self.ch);
         match self.ch as char {
             '\0' => Token::new((TokenType::TkEof, s, TokenVal::InVal)),
+            c if c.is_ascii_punctuation() => self.judge_mark(),
             c if c.is_alphabetic() => self.judge_keyword(),
             c if c.is_ascii_digit() => self.judge_number(),
             _ => Token::new((TokenType::TkIllegal, s, TokenVal::InVal)),
         }
     }
-    pub fn judge_keyword(&mut self) -> Token {
+    fn judge_keyword(&mut self) -> Token {
         let s: String = self.read_ident();
         if token::lookup(&s) {
             self.read_char();
@@ -140,5 +141,22 @@ impl Lexer {
         let val: i64 = i64::from_str_radix(ns, base).unwrap();
         self.read_char();
         Token::new((TokenType::TkIntlit, s, TokenVal::IntVal(val)))
+    }
+    fn judge_mark(&mut self) -> Token {
+        let s = conv::u8_to_string(&mut self.ch);
+        match self.ch as char {
+            '.' => Token::new((TokenType::TkDot, s, TokenVal::InVal)),
+            ',' => Token::new((TokenType::TkComma, s, TokenVal::InVal)),
+            ':' => Token::new((TokenType::TkColon, s, TokenVal::InVal)),
+            ';' => Token::new((TokenType::TkSemicolon, s, TokenVal::InVal)),
+            '(' => Token::new((TokenType::TkLparen, s, TokenVal::InVal)),
+            ')' => Token::new((TokenType::TkRparen, s, TokenVal::InVal)),
+            '{' => Token::new((TokenType::TkLbrace, s, TokenVal::InVal)),
+            '}' => Token::new((TokenType::TkRbrace, s, TokenVal::InVal)),
+            '[' => Token::new((TokenType::TkLbracket, s, TokenVal::InVal)),
+            ']' => Token::new((TokenType::TkRbracket, s, TokenVal::InVal)),
+            '\\' => Token::new((TokenType::TkBackslash, s, TokenVal::InVal)),
+            _ => Token::new((TokenType::TkIllegal, s, TokenVal::InVal)),
+        }
     }
 }

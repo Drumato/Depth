@@ -76,6 +76,17 @@ mod tests {
         assert_eq!(test_token("x").dump(), "type:IDENTIFIER\tinput:x\tval:");
         assert_eq!(test_token("\0").dump(), "type:EOF\tinput:\u{0}\tval:");
         assert_eq!(test_token("$").dump(), "type:ILLEGAL\tinput:$\tval:");
+        assert_eq!(test_token("\\").dump(), "type:BACKSLASH\tinput:\\\tval:");
+        assert_eq!(test_token(".").dump(), "type:DOT\tinput:.\tval:");
+        assert_eq!(test_token(",").dump(), "type:COMMA\tinput:,\tval:");
+        assert_eq!(test_token(";").dump(), "type:SEMICOLON\tinput:;\tval:");
+        assert_eq!(test_token(":").dump(), "type:COLON\tinput::\tval:");
+        assert_eq!(test_token("(").dump(), "type:LPAREN\tinput:(\tval:");
+        assert_eq!(test_token(")").dump(), "type:RPAREN\tinput:)\tval:");
+        assert_eq!(test_token("{").dump(), "type:LBRACE\tinput:{\tval:");
+        assert_eq!(test_token("}").dump(), "type:RBRACE\tinput:}\tval:");
+        assert_eq!(test_token("[").dump(), "type:LBRACKET\tinput:[\tval:");
+        assert_eq!(test_token("]").dump(), "type:RBRACKET\tinput:]\tval:");
         assert_eq!(
             test_token("64").dump(),
             "type:INT-LITERAL\tinput:64\tval:64"
