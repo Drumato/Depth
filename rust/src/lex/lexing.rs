@@ -70,9 +70,29 @@ impl Lexer {
         self.input[p..self.pos].to_string()
     }
     pub fn read_number(&mut self) -> String {
-        let p: usize = self.pos;
-        while self.ch.is_ascii_digit() {
+        let mut p: usize = self.pos;
+        if self.ch as char == '0' {
             self.read_char();
+            if self.ch as char == 'b' {
+                self.read_char();
+                while (self.ch as char).is_digit(2) {
+                    self.read_char();
+                }
+            } else if self.ch as char == 'o' {
+                self.read_char();
+                while (self.ch as char).is_digit(8) {
+                    self.read_char();
+                }
+            } else if self.ch as char == 'x' {
+                self.read_char();
+                while (self.ch as char).is_digit(16) {
+                    self.read_char();
+                }
+            }
+        } else {
+            while (self.ch as char).is_digit(10) {
+                self.read_char();
+            }
         }
         self.input[p..self.pos].to_string()
     }
@@ -87,6 +107,7 @@ impl Lexer {
         match self.ch as char {
             '\0' => Token::new((TokenType::TkEof, s, TokenVal::InVal)),
             c if c.is_alphabetic() => self.judge_keyword(),
+            c if c.is_ascii_digit() => self.judge_number(),
             _ => Token::new((TokenType::TkIllegal, s, TokenVal::InVal)),
         }
     }
@@ -98,5 +119,26 @@ impl Lexer {
         }
         self.read_char();
         Token::new((TokenType::TkIdent, s, TokenVal::InVal))
+    }
+    fn judge_number(&mut self) -> Token {
+        let s: String = self.read_number();
+        let mut ns: &str = "";
+        let mut base: u32;
+        if s.starts_with("0x") {
+            base = 16;
+            ns = &s[2..];
+        } else if s.starts_with("0o") {
+            base = 8;
+            ns = &s[2..];
+        } else if s.starts_with("0b") {
+            base = 2;
+            ns = &s[2..];
+        } else {
+            ns = &s;
+            base = 10;
+        }
+        let val: i64 = i64::from_str_radix(ns, base).unwrap();
+        self.read_char();
+        Token::new((TokenType::TkIntlit, s, TokenVal::IntVal(val)))
     }
 }

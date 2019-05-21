@@ -29,7 +29,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
     println!("{}", out_str);
     */
     let mut tokens: Vec<token::Token> = Vec::new();
-    let mut lexer = lexing::Lexer::new("let x mut true false".to_string()).unwrap();
+    let mut lexer = lexing::Lexer::new("64 0xff 0o100 0b1000000".to_string()).unwrap();
     if matches.is_present("dump-source") {
         println!("{}", "--------source--------".green().bold());
         let out = std::io::stdout();

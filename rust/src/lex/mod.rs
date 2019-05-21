@@ -76,6 +76,22 @@ mod tests {
         assert_eq!(test_token("x").dump(), "type:IDENTIFIER\tinput:x\tval:");
         assert_eq!(test_token("\0").dump(), "type:EOF\tinput:\u{0}\tval:");
         assert_eq!(test_token("$").dump(), "type:ILLEGAL\tinput:$\tval:");
+        assert_eq!(
+            test_token("64").dump(),
+            "type:INT-LITERAL\tinput:64\tval:64"
+        );
+        assert_eq!(
+            test_token("0x40").dump(),
+            "type:INT-LITERAL\tinput:0x40\tval:64"
+        );
+        assert_eq!(
+            test_token("0o100").dump(),
+            "type:INT-LITERAL\tinput:0o100\tval:64"
+        );
+        assert_eq!(
+            test_token("0b1000000").dump(),
+            "type:INT-LITERAL\tinput:0b1000000\tval:64"
+        );
     }
 }
 
