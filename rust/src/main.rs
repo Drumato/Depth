@@ -12,6 +12,7 @@ use lex::lexing;
 use lex::token;
 //mod binary;
 //use binary::bytes;
+extern crate drumatech;
 
 extern crate colored;
 use colored::*;
@@ -29,7 +30,8 @@ fn main() -> Result<(), Box<std::error::Error>> {
     println!("{}", out_str);
     */
     let mut tokens: Vec<token::Token> = Vec::new();
-    let mut lexer = lexing::Lexer::new("f main(){ return 30 + 50 }".to_string()).unwrap();
+    let filecontent: String = drumatech::fileu::content_or_raw(matches.value_of("source").unwrap());
+    let mut lexer = lexing::Lexer::new(filecontent).unwrap();
     if matches.is_present("dump-source") {
         println!("{}", "--------source--------".green().bold());
         let out = std::io::stdout();

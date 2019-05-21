@@ -131,6 +131,7 @@ mod tests {
         assert_eq!(lexer.next_token().dump(), "type:IDENTIFIER\tinput:x\tval:");
         assert_eq!(lexer.next_token().dump(), "type:INCRE\tinput:++\tval:");
         assert_eq!(lexer.next_token().dump(), "type:RBRACE\tinput:}\tval:");
+        assert_eq!(lexer.next_token().dump(), "type:EOF\tinput:\u{0}\tval:");
     }
 }
 
