@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub struct Token {
     pub ty: TokenType,
     pub literal: String,
@@ -64,6 +65,7 @@ impl Token {
     }
 }
 
+#[derive(Clone)]
 pub enum TokenVal {
     IntVal(i64),
     RealVal(f64),
@@ -84,6 +86,7 @@ impl TokenVal {
     }
 }
 
+#[derive(Clone)]
 pub enum TokenType {
     /* for identifying Type */
     TkIllegal,

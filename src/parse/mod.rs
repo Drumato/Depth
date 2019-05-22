@@ -1,13 +1,11 @@
-pub mod ll;
+pub mod lr;
 pub mod node;
-use super::lex::{lexing, token};
-
 #[cfg(test)]
 
 mod tests {
-    use super::lexing::Lexer;
-    use super::ll::Parser;
-    use super::token::{Token, TokenType, TokenVal};
+    use super::super::lex::lexing::Lexer;
+    use super::super::lex::token::{Token, TokenType, TokenVal};
+    use super::lr::Parser;
     #[test]
     fn test_new_parser() {
         let input_str: &str = "f main(){}";

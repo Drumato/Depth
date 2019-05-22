@@ -70,7 +70,7 @@ impl Lexer {
         self.input[p..self.pos].to_string()
     }
     pub fn read_number(&mut self) -> String {
-        let mut p: usize = self.pos;
+        let p: usize = self.pos;
         if self.ch as char == '0' {
             self.read_char();
             if self.ch as char == 'b' {
@@ -122,7 +122,7 @@ impl Lexer {
     fn judge_number(&mut self) -> Token {
         let s: String = self.read_number();
         let mut ns: &str = "";
-        let mut base: u32;
+        let base: u32;
         if s.starts_with("0x") {
             base = 16;
             ns = &s[2..];

@@ -150,7 +150,7 @@ mod lex {
 
     fn tokenize(input: &Vec<char>) /*-> Vec<Token>*/
     {
-        let mut tokens: Vec<Token> = vec![];
+        let tokens: Vec<Token> = vec![];
         let mut lexer = Lexer::new((0, 0, input.to_vec()[0], input.to_vec()));
         lexer.read_char();
         lexer.read_char();
