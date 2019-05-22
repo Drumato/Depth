@@ -4,4 +4,4 @@ echo ''
 echo ''
 echo ''
 echo '----------------all steps written by rust----------------'
-wc -l src/*.rs src/lex/*.rs src/elf/*.rs
+wc -l src/*.rs src/lex/*.rs src/elf/*.rs src/parse/*.rs

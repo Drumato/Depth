@@ -29,6 +29,11 @@ fn main() -> Result<(), Box<std::error::Error>> {
     }
     println!("{}", out_str);
     */
+    let tokens: Vec<token::Token> = lex_phase(matches);
+    Ok(())
+}
+
+fn lex_phase(matches: clap::ArgMatches) -> Vec<token::Token> {
     let mut tokens: Vec<token::Token> = Vec::new();
     let filecontent: String = drumatech::fileu::content_or_raw(matches.value_of("source").unwrap());
     let mut lexer = lexing::Lexer::new(filecontent).unwrap();
@@ -53,7 +58,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
             writeln!(out, "{}", t.dump()).unwrap();
         }
     }
-    Ok(())
+    tokens
 }
 
 fn get_yaml() -> Result<Vec<yaml_rust::Yaml>, yaml_rust::ScanError> {
