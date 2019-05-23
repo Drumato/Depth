@@ -21,7 +21,7 @@ mod parse;
 use parse::{node, parser};
 
 struct Manager {
-    tokens: Vec<token::Token>,
+    nodes: Vec<node::Node>,
 }
 
 fn main() -> Result<(), Box<std::error::Error>> {
@@ -36,14 +36,20 @@ fn main() -> Result<(), Box<std::error::Error>> {
     }
     println!("{}", out_str);
     */
-    let tokens: Vec<token::Token> = lex_phase(matches);
-    let mut manager: Manager = Manager { tokens: tokens };
-    parse_phase(&mut manager, matches);
+    //let lexer: lexing::Lexer = lex_phase(&matches);
+    let mut manager: Manager = parse_phase(&matches);
+    if matches.is_present("dump-ast") {
+        println!("{}", "--------AST--------".green().bold());
+        let out = std::io::stdout();
+        let mut out = BufWriter::new(out.lock());
+        for n in &manager.nodes {
+            writeln!(out, "{}", n.ty.dump()).unwrap();
+        }
+    }
     Ok(())
 }
 
-fn lex_phase(matches: clap::ArgMatches) -> Vec<token::Token> {
-    let mut tokens: Vec<token::Token> = Vec::new();
+fn parse_phase(matches: &clap::ArgMatches) -> Manager {
     let filecontent: String = drumatech::fileu::content_or_raw(matches.value_of("source").unwrap());
     let mut lexer = lexing::Lexer::new(filecontent).unwrap();
     if matches.is_present("dump-source") {
@@ -52,25 +58,29 @@ fn lex_phase(matches: clap::ArgMatches) -> Vec<token::Token> {
         let mut out = BufWriter::new(out.lock());
         writeln!(out, "{}", lexer.input).unwrap();
     }
-    loop {
-        let t: token::Token = lexer.next_token();
-        tokens.push(t);
-        if lexer.ch == 0 {
-            break;
-        }
-    }
     if matches.is_present("dump-token") {
+        let mut tokens: Vec<token::Token> = Vec::new();
+        loop {
+            let t: token::Token = lexer.next_token();
+            tokens.push(t);
+            if lexer.ch == 0 {
+                break;
+            }
+        }
         println!("{}", "--------tokens--------".green().bold());
         let out = std::io::stdout();
         let mut out = BufWriter::new(out.lock());
-        for t in &tokens {
+        for t in tokens {
             writeln!(out, "{}", t.dump()).unwrap();
         }
+        lexer = lexing::Lexer::new(drumatech::fileu::content_or_raw(
+            matches.value_of("source").unwrap(),
+        ))
+        .unwrap();
     }
-    tokens
+    let nodes: Vec<node::Node> = parse::parser::parse(lexer);
+    Manager { nodes }
 }
-
-fn parse_phase(manager: &mut Manager, matches: clap::ArgMatches) {}
 
 fn get_yaml() -> Result<Vec<yaml_rust::Yaml>, yaml_rust::ScanError> {
     let mut f = File::open("elf.yaml").expect("file not found");

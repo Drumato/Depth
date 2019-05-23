@@ -19,6 +19,9 @@ args:
     - dump-token:
         long: dump-token
         help: dump tokens with lexer
+    - dump-ast:
+        long: dump-ast
+        help: dump ast nodes with parser
     - verbose:
         short: v
         multiple: true

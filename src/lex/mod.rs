@@ -54,6 +54,7 @@ mod tests {
         let input_str: &str = "123main";
         let mut lexer = lexing::Lexer::new(input_str.to_string()).unwrap();
         assert_eq!(String::from("123"), lexer.read_number());
+        assert_eq!('m', lexer.ch as char);
     }
     #[test]
     fn test_skip_whitespace() {

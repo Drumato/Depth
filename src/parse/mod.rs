@@ -6,7 +6,7 @@ pub mod parser;
 mod tests {
     use super::super::lex::lexing::Lexer;
     use super::super::lex::token::{Token, TokenType, TokenVal};
-    use super::lr::Parser;
+    use super::super::parse::parser::Parser;
     #[test]
     fn test_new_parser() {
         let input_str: &str = "f main(){}";

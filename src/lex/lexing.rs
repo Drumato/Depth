@@ -106,9 +106,9 @@ impl Lexer {
         let s = conv::u8_to_string(&mut self.ch);
         match self.ch as char {
             '\0' => Token::new((TokenType::TkEof, s, TokenVal::InVal)),
-            c if c.is_ascii_punctuation() => self.judge_mark(),
-            c if c.is_alphabetic() => self.judge_keyword(),
             c if c.is_ascii_digit() => self.judge_number(),
+            c if c.is_alphabetic() => self.judge_keyword(),
+            c if c.is_ascii_punctuation() => self.judge_mark(),
             _ => Token::new((TokenType::TkIllegal, s, TokenVal::InVal)),
         }
     }
@@ -137,7 +137,6 @@ impl Lexer {
             base = 10;
         }
         let val: i64 = i64::from_str_radix(ns, base).unwrap();
-        self.read_char();
         Token::new((TokenType::TkIntlit, s, TokenVal::IntVal(val)))
     }
     fn judge_mark(&mut self) -> Token {

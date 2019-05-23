@@ -1,5 +1,5 @@
 use super::super::lex::{lexing, token};
-use super::node::{Node, Operator, OperatorType, Term, TermType, TermVal};
+use super::node::Node;
 use token::{Token, TokenType, TokenVal};
 
 pub struct Parser {
@@ -23,7 +23,7 @@ impl Parser {
         self.next = self.l.next_token();
     }
     pub fn consume(&mut self, ty: TokenType) -> bool {
-        if self.cur.ty.string() == ty.string() {
+        if self.cur.ty == ty {
             self.next_token();
             return true;
         }
@@ -35,7 +35,7 @@ impl Parser {
         false
     }
     pub fn expect(&mut self, ty: TokenType) {
-        if self.next.ty.string() == ty.string() {
+        if self.next.ty == ty {
             self.next_token();
         }
         println!(
@@ -44,32 +44,37 @@ impl Parser {
             self.next.ty.string()
         );
     }
-    pub fn term(&mut self) -> Box<Node> {
-        if self.cur.ty.string() != TokenType::TkIntlit.string() {
+    pub fn term(&mut self) -> Node {
+        if self.cur.ty != TokenType::TkIntlit {
             println!(
                 "Error! Int-Literal expected but got {}",
                 self.cur.ty.string()
             );
         }
-        let t: Token = self.cur;
+        let t: Token = self.cur.clone();
         self.next_token();
-        Term::new(
-            String::from("intval"),
-            TermType::INT,
-            TermVal::IntVal(t.val),
-        ) as Node
+        Node::new_num(t.val)
     }
-    pub fn adsub(&mut self) -> Box<Node> {
+    pub fn adsub(&mut self) -> Node {
         let mut lchild: Node = self.term();
-        if self.cur.ty.compare(TokenType::TkPlus) && self.cur.ty.compare(TokenType::TkMinus) {
-            println!("Error! Operator expected but got {}", self.cur.ty.string());
+        loop {
+            let t: Token = self.cur.clone();
+            if t.ty != TokenType::TkPlus && t.ty != TokenType::TkMinus {
+                break;
+            }
+            self.next_token();
+            lchild = Node::new_binop(t.ty, lchild, self.term());
         }
-        Operator::new(
-            OperatorType::find(self.cur.literal).unwrap(),
-            lchild,
-            self.term(),
-        ) as Node
+        if self.cur.ty != TokenType::TkEof {
+            println!("Error! EOF token expected but got {}", self.cur.ty.string());
+        }
+        lchild
     }
 }
 
-pub fn parse() {}
+pub fn parse(lexer: lexing::Lexer) -> Vec<Node> {
+    let mut parser: Parser = Parser::new(lexer);
+    let mut nodes: Vec<Node> = Vec::new();
+    nodes.push(parser.adsub());
+    nodes
+}

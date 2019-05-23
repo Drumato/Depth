@@ -1,4 +1,4 @@
-#[derive(Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub ty: TokenType,
     pub literal: String,
@@ -65,7 +65,7 @@ impl Token {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TokenVal {
     IntVal(i64),
     RealVal(f64),
@@ -86,7 +86,7 @@ impl TokenVal {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
     /* for identifying Type */
     TkIllegal,
@@ -173,9 +173,6 @@ pub enum TokenType {
 }
 
 impl TokenType {
-    pub fn compare(&self, ty: TokenType) -> bool {
-        self.string() == ty.string()
-    }
     pub fn string(&self) -> &str {
         match self {
             TokenType::TkIllegal => "ILLEGAL",
