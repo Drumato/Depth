@@ -167,6 +167,9 @@ pub enum TokenType {
     TkRbrace,
     TkLbracket,
     TkRbracket,
+    TkExp,
+    TkTerm,
+    TkAtom,
 }
 
 impl TokenType {
@@ -247,6 +250,9 @@ impl TokenType {
             TokenType::TkRbrace => "RBRACE",
             TokenType::TkLbracket => "LBRACKET",
             TokenType::TkRbracket => "RBRACKET",
+            TokenType::TkExp => "EXP",
+            TokenType::TkTerm => "TERM",
+            TokenType::TkAtom => "ATOM",
         }
     }
 }
