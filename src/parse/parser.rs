@@ -43,12 +43,26 @@ impl Parser {
             self.next.ty.string()
         );
     }
-    pub fn term(&mut self) {
+    pub fn term(&mut self) -> Node {
         if self.cur.ty.string() != TokenType::TkIntlit.string() {
             println!(
                 "Error! Int-Literal expected but got {}",
                 self.cur.ty.string()
             );
         }
+        let t: Token = self.cur;
+        self.next_token();
+        Term::new(
+            String::from("intval"),
+            TermType::INT,
+            TermVal::IntVal(t.val),
+        )
+    }
+    pub fn adsub(&mut self) -> Node {
+        let mut lchild: Node = self.term();
+        if self.cur.ty != TokenType::TkPlus && self.cur.ty != TokenType::TkMinus {
+            println!("Error! Operator expected but got {}", self.cur.ty.string());
+        }
+        Operator::new(OperatorType::find(self.cur.literal), lchild, self.term())
     }
 }

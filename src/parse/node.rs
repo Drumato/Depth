@@ -1,7 +1,26 @@
+pub trait Node {
+    fn dump(&self) -> String;
+    fn ty(&self) -> NodeType;
+}
+
+pub enum NodeType {
+    Term,
+    Operator,
+}
+
 pub struct Term {
     pub name: String,
     pub ty: TermType,
     pub val: TermVal,
+}
+
+impl Node for Term {
+    fn dump(&self) -> String {
+        self.string()
+    }
+    fn ty(&self) -> NodeType {
+        NodeType::Term
+    }
 }
 
 impl Term {
@@ -22,6 +41,61 @@ impl Term {
     }
 }
 
+pub struct Operator {
+    pub ty: OperatorType,
+    pub lchild: Node,
+    pub rchild: Node,
+}
+
+impl Node for Operator {
+    fn dump(&self) -> String {
+        format! {
+            "Type:{}\tlchild:{}\trchild:{}",
+            self.ty.string(),
+            self.lchild.dump(),
+            self.rchild.dump(),
+        }
+    }
+    fn ty(&self) -> NodeType {
+        NodeType::Operator
+    }
+}
+
+impl Operator {
+    fn new(param: (OperatorType, Node, Node)) -> Operator {
+        Operator {
+            ty: param.0,
+            lchild: param.1,
+            rchild: param.2,
+        }
+    }
+}
+
+pub enum OperatorType {
+    PLUS,
+    MINUS,
+    MUL,
+    DIV,
+}
+
+impl OperatorType {
+    pub fn string(&self) -> String {
+        match self {
+            OperatorType::PLUS => String::from("NADD"),
+            OperatorType::MINUS => String::from("NSUB"),
+            OperatorType::MUL => String::from("NMUL"),
+            OperatorType::DIV => String::from("NDIV"),
+        }
+    }
+    pub fn find(s: String) -> OperatorType {
+        match s {
+            String::from("+") => OperatorType::PLUS,
+            String::from("-") => OperatorType::MINUS,
+            String::from("*") => OperatorType::MUL,
+            String::from("/") => OperatorType::DIV,
+        }
+    }
+}
 pub enum TermVal {
     IntVal(i64),
     RealVal(f64),
