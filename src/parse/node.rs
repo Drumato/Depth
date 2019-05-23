@@ -43,8 +43,8 @@ impl Term {
 
 pub struct Operator {
     pub ty: OperatorType,
-    pub lchild: Node,
-    pub rchild: Node,
+    pub lchild: Box<Node>,
+    pub rchild: Box<Node>,
 }
 
 impl Node for Operator {
@@ -62,11 +62,11 @@ impl Node for Operator {
 }
 
 impl Operator {
-    fn new(param: (OperatorType, Node, Node)) -> Operator {
+    fn new(ty: OperatorType, lchild: Box<Node>, rchild: Box<Node>) -> Operator {
         Operator {
-            ty: param.0,
-            lchild: param.1,
-            rchild: param.2,
+            ty: ty,
+            lchild: lchild,
+            rchild: rchild,
         }
     }
 }
@@ -87,12 +87,13 @@ impl OperatorType {
             OperatorType::DIV => String::from("NDIV"),
         }
     }
-    pub fn find(s: String) -> OperatorType {
+    pub fn find(s: &str) -> Option<OperatorType> {
         match s {
-            String::from("+") => OperatorType::PLUS,
-            String::from("-") => OperatorType::MINUS,
-            String::from("*") => OperatorType::MUL,
-            String::from("/") => OperatorType::DIV,
+            "+" => Some(OperatorType::PLUS),
+            "-" => Some(OperatorType::MINUS),
+            "*" => Some(OperatorType::MUL),
+            "/" => Some(OperatorType::DIV),
+            _ => None,
         }
     }
 }
