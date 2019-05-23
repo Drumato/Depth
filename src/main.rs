@@ -18,6 +18,11 @@ extern crate colored;
 use colored::*;
 
 mod parse;
+use parse::{node, parser};
+
+struct Manager {
+    tokens: Vec<token::Token>,
+}
 
 fn main() -> Result<(), Box<std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
@@ -32,6 +37,8 @@ fn main() -> Result<(), Box<std::error::Error>> {
     println!("{}", out_str);
     */
     let tokens: Vec<token::Token> = lex_phase(matches);
+    let mut manager: Manager = Manager { tokens: tokens };
+    parse_phase(&mut manager, matches);
     Ok(())
 }
 
@@ -62,6 +69,8 @@ fn lex_phase(matches: clap::ArgMatches) -> Vec<token::Token> {
     }
     tokens
 }
+
+fn parse_phase(manager: &mut Manager, matches: clap::ArgMatches) {}
 
 fn get_yaml() -> Result<Vec<yaml_rust::Yaml>, yaml_rust::ScanError> {
     let mut f = File::open("elf.yaml").expect("file not found");

@@ -1,4 +1,5 @@
 use super::super::lex::{lexing, token};
+use super::node::{Node, Operator, OperatorType, Term, TermType, TermVal};
 use token::{Token, TokenType, TokenVal};
 
 pub struct Parser {
@@ -43,7 +44,7 @@ impl Parser {
             self.next.ty.string()
         );
     }
-    pub fn term(&mut self) -> Node {
+    pub fn term(&mut self) -> Box<Node> {
         if self.cur.ty.string() != TokenType::TkIntlit.string() {
             println!(
                 "Error! Int-Literal expected but got {}",
@@ -56,13 +57,19 @@ impl Parser {
             String::from("intval"),
             TermType::INT,
             TermVal::IntVal(t.val),
-        )
+        ) as Node
     }
-    pub fn adsub(&mut self) -> Node {
+    pub fn adsub(&mut self) -> Box<Node> {
         let mut lchild: Node = self.term();
-        if self.cur.ty != TokenType::TkPlus && self.cur.ty != TokenType::TkMinus {
+        if self.cur.ty.compare(TokenType::TkPlus) && self.cur.ty.compare(TokenType::TkMinus) {
             println!("Error! Operator expected but got {}", self.cur.ty.string());
         }
-        Operator::new(OperatorType::find(self.cur.literal), lchild, self.term())
+        Operator::new(
+            OperatorType::find(self.cur.literal).unwrap(),
+            lchild,
+            self.term(),
+        ) as Node
     }
 }
+
+pub fn parse() {}

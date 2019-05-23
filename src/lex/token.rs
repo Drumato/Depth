@@ -173,6 +173,9 @@ pub enum TokenType {
 }
 
 impl TokenType {
+    pub fn compare(&self, ty: TokenType) -> bool {
+        self.string() == ty.string()
+    }
     pub fn string(&self) -> &str {
         match self {
             TokenType::TkIllegal => "ILLEGAL",
