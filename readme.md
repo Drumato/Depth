@@ -1,4 +1,4 @@
-[![Go Report Card](https://goreportcard.com/badge/github.com/Drumato/Depth)](https://goreportcard.com/report/github.com/Drumato/Depth)
+[![Build Status](https://travis-ci.org/Drumato/Depth.svg?branch=master)](https://travis-ci.org/Drumato/Depth)[![Go Report Card](https://goreportcard.com/badge/github.com/Drumato/Depth)](https://goreportcard.com/report/github.com/Drumato/Depth)
 
 # The Depth Programming Language
 
