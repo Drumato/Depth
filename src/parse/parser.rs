@@ -154,12 +154,14 @@ impl Parser {
         let mut arguments: Vec<Node> = Vec::new();
         self.expect(TokenType::TkRparen);
 
-        let mut ret: TokenType = TokenType::TkIllegal;
-        if self.next.ty == TokenType::TkArrow {
+        let mut ret: TokenType = if self.next.ty == TokenType::TkArrow {
             self.next_token();
             self.next_token();
-            ret = self.cur.ty.clone();
-        }
+            self.cur.ty.clone()
+        } else {
+            TokenType::TkIllegal
+        };
+
         self.expect(TokenType::TkLbrace);
         self.next_token();
         let mut statements: Vec<Node> = Vec::new();
