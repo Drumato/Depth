@@ -288,6 +288,8 @@ impl TokenType {
             TokenType::TkLteq => "LTEQ",
             TokenType::TkGt => "GT",
             TokenType::TkGteq => "GTEQ",
+            TokenType::TkLshift => "LSHIFT",
+            TokenType::TkRshift => "LSHIFT",
             TokenType::TkComma => "COMMA",
             TokenType::TkSemicolon => "SEMICOLON",
             TokenType::TkColon => "COLON",

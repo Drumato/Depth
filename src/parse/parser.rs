@@ -56,6 +56,46 @@ impl Parser {
         self.next_token();
         Node::new_num(t)
     }
+    fn equal(&mut self) -> Node {
+        let mut lchild: Node = self.cmp();
+        loop {
+            let t: Token = self.cur.clone();
+            if t.ty != TokenType::TkEq && t.ty != TokenType::TkNoteq {
+                break;
+            }
+            self.next_token();
+            lchild = Node::new_binop(t.ty, lchild, self.cmp());
+        }
+        lchild
+    }
+    fn cmp(&mut self) -> Node {
+        let mut lchild: Node = self.shift();
+        loop {
+            let t: Token = self.cur.clone();
+            if t.ty != TokenType::TkLt
+                && t.ty != TokenType::TkGt
+                && t.ty != TokenType::TkGteq
+                && t.ty != TokenType::TkLteq
+            {
+                break;
+            }
+            self.next_token();
+            lchild = Node::new_binop(t.ty, lchild, self.shift());
+        }
+        lchild
+    }
+    fn shift(&mut self) -> Node {
+        let mut lchild: Node = self.adsub();
+        loop {
+            let t: Token = self.cur.clone();
+            if t.ty != TokenType::TkLshift && t.ty != TokenType::TkRshift {
+                break;
+            }
+            self.next_token();
+            lchild = Node::new_binop(t.ty, lchild, self.adsub());
+        }
+        lchild
+    }
     fn adsub(&mut self) -> Node {
         let mut lchild: Node = self.muldiv();
         loop {
@@ -90,7 +130,7 @@ impl Parser {
                 self.cur.ty.string()
             );
         }
-        self.adsub()
+        self.equal()
     }
     fn stmt(&mut self) -> Node {
         match self.cur.ty {
