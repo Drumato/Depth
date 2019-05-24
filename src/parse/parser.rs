@@ -72,7 +72,10 @@ impl Parser {
         let mut lchild: Node = self.term();
         loop {
             let t: Token = self.cur.clone();
-            if t.ty != TokenType::TkStar && t.ty != TokenType::TkSlash {
+            if t.ty != TokenType::TkStar
+                && t.ty != TokenType::TkSlash
+                && t.ty != TokenType::TkPercent
+            {
                 break;
             }
             self.next_token();
@@ -110,6 +113,13 @@ impl Parser {
         self.expect(TokenType::TkLparen);
         let mut arguments: Vec<Node> = Vec::new();
         self.expect(TokenType::TkRparen);
+
+        let mut ret: TokenType = TokenType::TkIllegal;
+        if self.next.ty == TokenType::TkArrow {
+            self.next_token();
+            self.next_token();
+            ret = self.cur.ty.clone();
+        }
         self.expect(TokenType::TkLbrace);
         self.next_token();
         let mut statements: Vec<Node> = Vec::new();
@@ -119,7 +129,7 @@ impl Parser {
         }
         self.consume(TokenType::TkRbrace);
         self.consume(TokenType::TkEof);
-        Node::new_func(func_name, arguments, statements)
+        Node::new_func(func_name, arguments, ret, statements)
     }
 }
 

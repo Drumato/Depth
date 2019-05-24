@@ -22,35 +22,45 @@ impl Node {
     pub fn new_rets(ty: TokenType, expr: Node) -> Self {
         Node::new(NodeType::RETS(ty, Box::new(expr)))
     }
-    pub fn new_func(name: String, args: Vec<Node>, stmts: Vec<Node>) -> Self {
-        Node::new(NodeType::FUNC(name, Box::new(args), Box::new(stmts)))
+    pub fn new_func(name: String, args: Vec<Node>, ret: TokenType, stmts: Vec<Node>) -> Self {
+        Node::new(NodeType::FUNC(name, Box::new(args), ret, Box::new(stmts)))
+    }
+    pub fn string(&self) -> String {
+        format!("{}\n", self.ty.dump())
     }
 }
 
 #[derive(Clone, Debug)]
 pub enum NodeType {
-    INT(Token),                                   //intlit
-    ID(String),                                   //identifier
-    BINOP(TokenType, Box<Node>, Box<Node>),       //binary-operation
-    EX(Box<Node>),                                //expression
-    RETS(TokenType, Box<Node>),                   //return statement
-    FUNC(String, Box<Vec<Node>>, Box<Vec<Node>>), //func-name,arguments,statements
-    INVALID,                                      //invalid ast-node
+    INT(Token),                                              //intlit
+    ID(String),                                              //identifier
+    BINOP(TokenType, Box<Node>, Box<Node>),                  //binary-operation
+    EX(Box<Node>),                                           //expression
+    RETS(TokenType, Box<Node>),                              //return statement
+    FUNC(String, Box<Vec<Node>>, TokenType, Box<Vec<Node>>), //func-name,arguments,statements
+    INVALID,                                                 //invalid ast-node
 }
 
 impl NodeType {
     pub fn dump(&self) -> String {
         match self {
-            NodeType::INT(v) => format!("{:?}", v),
+            NodeType::INT(v) => v.dump(),
             NodeType::ID(s) => format!("{}", s),
-            NodeType::BINOP(ty, l, r) => {
-                format!("type:{:?}\tlchild:{:?}\trchild:{:?}", ty, l.ty, r.ty)
-            }
-            NodeType::EX(n) => format!("type:EXPRESSION\tchild:{:?}", n.ty),
-            NodeType::RETS(ty, n) => format!("type:{:?}\texpression:{:?}", ty, n.ty),
-            NodeType::FUNC(name, args, stmts) => {
-                format!("name:{:?}\nargs:{:?}\nstmts:{:?}", name, args, stmts)
-            }
+            NodeType::BINOP(ty, l, r) => format!(
+                "type:{}\tlchild:{:?}\trchild:{:?}",
+                String::from(ty.string()),
+                l.ty,
+                r.ty
+            ),
+            NodeType::EX(n) => format!("{}", n.string()),
+            NodeType::RETS(ty, n) => format!("type:{:?}\texpression:{:?}", ty, n.string()),
+            NodeType::FUNC(name, args, ret, stmts) => format!(
+                "name:{}\nargs:{:?}\nreturn:{}\nstmts:{:?}",
+                name,
+                args,
+                ret.string(),
+                stmts
+            ),
             _ => format!("Invalid Node"),
         }
     }
