@@ -1,5 +1,5 @@
 use super::super::lex::{lexing, token};
-use super::node::Node;
+use super::node::{Node, NodeType};
 use token::{Token, TokenType, TokenVal};
 
 pub struct Parser {
@@ -37,6 +37,7 @@ impl Parser {
     pub fn expect(&mut self, ty: TokenType) {
         if self.next.ty == ty {
             self.next_token();
+            return;
         }
         println!(
             "Error! {} expected but got {}",
@@ -44,7 +45,7 @@ impl Parser {
             self.next.ty.string()
         );
     }
-    pub fn term(&mut self) -> Node {
+    fn term(&mut self) -> Node {
         if self.cur.ty != TokenType::TkIntlit && self.cur.ty != TokenType::TkUintlit {
             println!(
                 "Error! Number-Literal expected but got {}",
@@ -55,26 +56,76 @@ impl Parser {
         self.next_token();
         Node::new_num(t)
     }
-    pub fn adsub(&mut self) -> Node {
-        let mut lchild: Node = self.term();
+    fn adsub(&mut self) -> Node {
+        let mut lchild: Node = self.muldiv();
         loop {
             let t: Token = self.cur.clone();
             if t.ty != TokenType::TkPlus && t.ty != TokenType::TkMinus {
                 break;
             }
             self.next_token();
-            lchild = Node::new_binop(t.ty, lchild, self.term());
-        }
-        if self.cur.ty != TokenType::TkEof {
-            println!("Error! EOF token expected but got {}", self.cur.ty.string());
+            lchild = Node::new_binop(t.ty, lchild, self.muldiv());
         }
         lchild
+    }
+    fn muldiv(&mut self) -> Node {
+        let mut lchild: Node = self.term();
+        loop {
+            let t: Token = self.cur.clone();
+            if t.ty != TokenType::TkStar && t.ty != TokenType::TkSlash {
+                break;
+            }
+            self.next_token();
+            lchild = Node::new_binop(t.ty, lchild, self.term());
+        }
+        lchild
+    }
+    fn expr(&mut self) -> Node {
+        if self.cur.ty != TokenType::TkIntlit && self.cur.ty != TokenType::TkUintlit {
+            println!(
+                "Error! Number-Literal expected but got {}",
+                self.cur.ty.string()
+            );
+        }
+        self.adsub()
+    }
+    fn stmt(&mut self) -> Node {
+        match self.cur.ty {
+            TokenType::TkReturn => self.parse_return(),
+            _ => Node::new(NodeType::INVALID),
+        }
+    }
+
+    fn parse_return(&mut self) -> Node {
+        let ret_keyword: TokenType = self.cur.ty.clone();
+        self.next_token();
+        Node::new_rets(ret_keyword, self.expr())
+    }
+    fn func(&mut self) -> Node {
+        if !self.consume(TokenType::TkF) {
+            println!("invalid f {}", self.cur.literal);
+            return Node::new(NodeType::INVALID);
+        }
+        let func_name: String = self.cur.literal.clone();
+        self.expect(TokenType::TkLparen);
+        let mut arguments: Vec<Node> = Vec::new();
+        self.expect(TokenType::TkRparen);
+        self.expect(TokenType::TkLbrace);
+        self.next_token();
+        let mut statements: Vec<Node> = Vec::new();
+        while self.cur.ty != TokenType::TkRbrace {
+            let n: Node = self.stmt();
+            statements.push(n);
+        }
+        self.consume(TokenType::TkRbrace);
+        self.consume(TokenType::TkEof);
+        Node::new_func(func_name, arguments, statements)
     }
 }
 
 pub fn parse(lexer: lexing::Lexer) -> Vec<Node> {
     let mut parser: Parser = Parser::new(lexer);
     let mut nodes: Vec<Node> = Vec::new();
-    nodes.push(parser.adsub());
+    nodes.push(parser.func());
     nodes
 }
