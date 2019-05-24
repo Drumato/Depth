@@ -67,7 +67,7 @@ impl Token {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenVal {
-    IntVal(i64),
+    IntVal(i128),
     RealVal(f64),
     CharVal(char), //change u32 after
     StrVal(String),
@@ -96,18 +96,39 @@ pub enum IntType {
 }
 
 impl IntType {
-    pub fn judge(sem_val: i64) -> IntType {
+    pub fn judge(sem_val: i128) -> IntType {
         match sem_val {
             n if (std::i8::MAX >= n as i8 || n as i8 >= std::i8::MIN) => IntType::I8,
             n if (std::i16::MAX >= n as i16 || n as i16 >= std::i16::MIN) => IntType::I16,
             n if (std::i32::MAX >= n as i32 || n as i32 >= std::i32::MIN) => IntType::I32,
             n if (std::i64::MAX >= n as i64 || n as i64 >= std::i64::MIN) => IntType::I64,
-            n if (std::i128::MAX >= n as i128 || n as i128 >= std::i128::MIN) => IntType::I128,
+            n if (std::i128::MAX >= n || n >= std::i128::MIN) => IntType::I128,
             _ => IntType::INVALID,
         }
     }
 }
 
+pub enum UintType {
+    U8,
+    U16,
+    U32,
+    U64,
+    U128,
+    INVALID,
+}
+
+impl UintType {
+    pub fn judge(sem_val: u128) -> UintType {
+        match sem_val {
+            n if (std::u8::MAX >= n as u8 || n as u8 >= std::u8::MIN) => UintType::U8,
+            n if (std::u16::MAX >= n as u16 || n as u16 >= std::u16::MIN) => UintType::U16,
+            n if (std::u32::MAX >= n as u32 || n as u32 >= std::u32::MIN) => UintType::U32,
+            n if (std::u64::MAX >= n as u64 || n as u64 >= std::u64::MIN) => UintType::U64,
+            n if (std::u128::MAX >= n as u128 || n as u128 >= std::u128::MIN) => UintType::U128,
+            _ => UintType::INVALID,
+        }
+    }
+}
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
     /* for identifying Type */

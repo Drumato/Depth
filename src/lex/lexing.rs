@@ -136,7 +136,7 @@ impl Lexer {
             ns = &s;
             base = 10;
         }
-        let val: i64 = i64::from_str_radix(ns, base).unwrap();
+        let val: i128 = i128::from_str_radix(ns, base).unwrap();
         Token::new((TokenType::TkIntlit, s, TokenVal::IntVal(val)))
     }
     fn judge_mark(&mut self) -> Token {
