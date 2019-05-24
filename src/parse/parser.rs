@@ -53,7 +53,7 @@ impl Parser {
         }
         let t: Token = self.cur.clone();
         self.next_token();
-        Node::new_num(t.val)
+        Node::new_num(t)
     }
     pub fn adsub(&mut self) -> Node {
         let mut lchild: Node = self.term();

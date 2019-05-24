@@ -16,14 +16,14 @@ impl Node {
         Node::new(NodeType::BINOP(ty, Box::new(lchild), Box::new(rchild)))
     }
 
-    pub fn new_num(num: TokenVal) -> Self {
+    pub fn new_num(num: Token) -> Self {
         Node::new(NodeType::INT(num))
     }
 }
 
 #[derive(Clone, Debug)]
 pub enum NodeType {
-    INT(TokenVal),
+    INT(Token),
     ID(String),
     BINOP(TokenType, Box<Node>, Box<Node>),
 }
@@ -34,7 +34,7 @@ impl NodeType {
             NodeType::INT(v) => format!("{:?}", v),
             NodeType::ID(s) => format!("{}", s),
             NodeType::BINOP(ty, l, r) => {
-                format!("type:{:?}\tlchild:{:?}\trchild{:?}", ty, l.ty, r.ty)
+                format!("type:{:?}\tlchild:{:?}\trchild:{:?}", ty, l.ty, r.ty)
             }
         }
     }
