@@ -197,6 +197,8 @@ pub enum TokenType {
 
     TkLt,
     TkGt,
+    TkLshift,
+    TkRshift,
     TkEq,
     TkNoteq,
     TkLteq,

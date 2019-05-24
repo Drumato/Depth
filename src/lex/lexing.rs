@@ -319,6 +319,12 @@ impl Lexer {
     fn judge_lt(&mut self) -> Token {
         let mut s = conv::u8_to_string(&mut self.ch);
         let p = self.pos;
+        if self.peak_char == '<' {
+            self.read_char();
+            self.read_char();
+            s = self.input[p..self.pos].to_string();
+            return Token::new((TokenType::TkLshift, s, TokenVal::InVal));
+        }
         if self.peak_char() == '=' {
             self.read_char();
             self.read_char();
@@ -331,6 +337,12 @@ impl Lexer {
     fn judge_gt(&mut self) -> Token {
         let mut s = conv::u8_to_string(&mut self.ch);
         let p = self.pos;
+        if self.peak_char == '>' {
+            self.read_char();
+            self.read_char();
+            s = self.input[p..self.pos].to_string();
+            return Token::new((TokenType::TkRshift, s, TokenVal::InVal));
+        }
         if self.peak_char() == '=' {
             self.read_char();
             self.read_char();
