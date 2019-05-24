@@ -135,6 +135,7 @@ impl Parser {
     fn stmt(&mut self) -> Node {
         match self.cur.ty {
             TokenType::TkReturn => self.parse_return(),
+            TokenType::TkLet => self.parse_let(),
             _ => Node::new(NodeType::INVALID),
         }
     }
@@ -143,6 +144,21 @@ impl Parser {
         let ret_keyword: TokenType = self.cur.ty.clone();
         self.next_token();
         Node::new_rets(ret_keyword, self.expr())
+    }
+    fn parse_let(&mut self) -> Node {
+        let let_keyword: TokenType = self.cur.ty.clone();
+        self.next_token();
+        let ident_name: String = self.cur.literal.clone();
+        self.expect(TokenType::TkColon);
+        self.next_token();
+        if !self.cur.ty.is_typename() {
+            println!("expected typename but got {}", self.cur.literal);
+        }
+        let typename: TokenType = self.cur.ty.clone();
+        self.expect(TokenType::TkAssign);
+        self.next_token();
+        let expr: Node = self.expr();
+        Node::new_lets(let_keyword, ident_name, typename, expr)
     }
     fn func(&mut self) -> Node {
         if !self.consume(TokenType::TkF) {

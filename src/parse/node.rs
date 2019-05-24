@@ -19,8 +19,11 @@ impl Node {
     pub fn new_num(num: Token) -> Self {
         Node::new(NodeType::INT(num))
     }
-    pub fn new_rets(ty: TokenType, expr: Node) -> Self {
-        Node::new(NodeType::RETS(ty, Box::new(expr)))
+    pub fn new_rets(ret: TokenType, expr: Node) -> Self {
+        Node::new(NodeType::RETS(ret, Box::new(expr)))
+    }
+    pub fn new_lets(let_key: TokenType, ident: String, ty: TokenType, expr: Node) -> Self {
+        Node::new(NodeType::LETS(let_key, ident, ty, Box::new(expr)))
     }
     pub fn new_func(name: String, args: Vec<Node>, ret: TokenType, stmts: Vec<Node>) -> Self {
         Node::new(NodeType::FUNC(name, Box::new(args), ret, Box::new(stmts)))
@@ -37,6 +40,7 @@ pub enum NodeType {
     BINOP(TokenType, Box<Node>, Box<Node>),                  //binary-operation
     EX(Box<Node>),                                           //expression
     RETS(TokenType, Box<Node>),                              //return statement
+    LETS(TokenType, String, TokenType, Box<Node>),           //let statement
     FUNC(String, Box<Vec<Node>>, TokenType, Box<Vec<Node>>), //func-name,arguments,statements
     INVALID,                                                 //invalid ast-node
 }

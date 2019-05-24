@@ -306,4 +306,24 @@ impl TokenType {
             TokenType::TkAtom => "ATOM",
         }
     }
+    pub fn is_typename(&self) -> bool {
+        match self {
+            TokenType::TkBool
+            | TokenType::TkChar
+            | TokenType::TkString
+            | TokenType::TkU8
+            | TokenType::TkU16
+            | TokenType::TkU32
+            | TokenType::TkU64
+            | TokenType::TkU128
+            | TokenType::TkI8
+            | TokenType::TkI16
+            | TokenType::TkI32
+            | TokenType::TkI64
+            | TokenType::TkI128
+            | TokenType::TkF32
+            | TokenType::TkF64 => true,
+            _ => false,
+        }
+    }
 }
