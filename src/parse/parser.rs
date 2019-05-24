@@ -45,9 +45,9 @@ impl Parser {
         );
     }
     pub fn term(&mut self) -> Node {
-        if self.cur.ty != TokenType::TkIntlit {
+        if self.cur.ty != TokenType::TkIntlit && self.cur.ty != TokenType::TkUintlit {
             println!(
-                "Error! Int-Literal expected but got {}",
+                "Error! Number-Literal expected but got {}",
                 self.cur.ty.string()
             );
         }
