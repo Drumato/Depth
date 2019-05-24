@@ -68,6 +68,7 @@ impl Token {
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenVal {
     IntVal(i128),
+    UintVal(u128),
     RealVal(f64),
     CharVal(char), //change u32 after
     StrVal(String),
@@ -78,6 +79,7 @@ impl TokenVal {
     pub fn string(&self) -> String {
         match self {
             TokenVal::IntVal(d) => format!("{}", d),
+            TokenVal::UintVal(d) => format!("{}", d),
             TokenVal::RealVal(r) => format!("{}", r),
             TokenVal::CharVal(c) => format!("{}", c),
             TokenVal::StrVal(s) => format!("{}", s),
@@ -138,6 +140,7 @@ pub enum TokenType {
     TkFunction,
     TkCharlit,
     TkIntlit,
+    TkUintlit,
     TkStrlit,
     TkReallit,
 
@@ -223,6 +226,7 @@ impl TokenType {
             TokenType::TkEof => "EOF",
             TokenType::TkFunction => "FUNCTION",
             TokenType::TkIntlit => "INT-LITERAL",
+            TokenType::TkUintlit => "UINT-LITERAL",
             TokenType::TkCharlit => "CHAR-LITERAL",
             TokenType::TkStrlit => "STRING-LITERAL",
             TokenType::TkReallit => "REAL-LITERAL",
