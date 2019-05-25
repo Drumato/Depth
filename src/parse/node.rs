@@ -51,6 +51,21 @@ impl Node {
             Box::new(stmts),
         ))
     }
+    pub fn new_ifs(
+        if_key: TokenType,
+        cond: Node,
+        stmts: Vec<Node>,
+        else_key: TokenType,
+        alt: Vec<Node>,
+    ) -> Self {
+        Node::new(NodeType::IFS(
+            if_key,
+            Box::new(cond),
+            Box::new(stmts),
+            else_key,
+            Box::new(alt),
+        ))
+    }
     pub fn string(&self) -> String {
         format!("{}\n", self.ty.dump())
     }
@@ -58,31 +73,38 @@ impl Node {
 
 #[derive(Clone, Debug)]
 pub enum NodeType {
-    INT(Token),                                              //intlit
-    UINT(Token),                                             //uintlit
-    ID(String),                                              //identifier
-    BINOP(TokenType, Box<Node>, Box<Node>),                  //binary-operation
-    EX(Box<Node>),                                           //expression
-    RETS(TokenType, Box<Node>),                              //return statement
-    LETS(TokenType, String, TokenType, Box<Node>),           //let statement
+    INT(Token),                                    //intlit
+    UINT(Token),                                   //uintlit
+    ID(String),                                    //identifier
+    BINOP(TokenType, Box<Node>, Box<Node>),        //binary-operation
+    EX(Box<Node>),                                 //expression
+    RETS(TokenType, Box<Node>),                    //return statement
+    LETS(TokenType, String, TokenType, Box<Node>), //let statement
+    IFS(
+        TokenType,
+        Box<Node>,
+        Box<Vec<Node>>,
+        TokenType,
+        Box<Vec<Node>>,
+    ), //if-else statement
     FUNC(String, Box<Vec<Node>>, TokenType, Box<Vec<Node>>), //func-name,arguments,statements
-    LOOP(TokenType, Box<Vec<Node>>),                         //loop statement
-    FOR(TokenType, String, String, Box<Vec<Node>>),          //for statement
-    INVALID,                                                 //invalid ast-node
+    LOOP(TokenType, Box<Vec<Node>>),               //loop statement
+    FOR(TokenType, String, String, Box<Vec<Node>>), //for statement
+    INVALID,                                       //invalid ast-node
 }
 
 impl NodeType {
     pub fn dump(&self) -> String {
         match self {
             NodeType::INT(v) => v.dump(),
-            NodeType::ID(s) => format!("{}", s),
+            NodeType::ID(s) => s.to_string(),
             NodeType::BINOP(ty, l, r) => format!(
                 "type:{}\tlchild:{:?}\trchild:{:?}",
                 String::from(ty.string()),
                 l.ty,
                 r.ty
             ),
-            NodeType::EX(n) => format!("{}", n.string()),
+            NodeType::EX(n) => n.string().to_string(),
             NodeType::RETS(ty, n) => format!("type:{:?}\texpression:{:?}", ty, n.string()),
             NodeType::FUNC(name, args, ret, stmts) => format!(
                 "name:{}\nargs:{:?}\nreturn:{}\nstmts:{:?}",
@@ -91,7 +113,7 @@ impl NodeType {
                 ret.string(),
                 stmts
             ),
-            _ => format!("Invalid Node"),
+            _ => "Invalid Node".to_string(),
         }
     }
 }

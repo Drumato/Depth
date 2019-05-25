@@ -132,10 +132,38 @@ impl Parser {
             TokenType::TkLet => self.parse_let(),
             TokenType::TkLoop => self.parse_loop(),
             TokenType::TkFor => self.parse_for(),
+            TokenType::TkIf => self.parse_if(),
             _ => Node::new(NodeType::INVALID),
         }
     }
-
+    fn parse_if(&mut self) -> Node {
+        let if_keyword: TokenType = self.cur.ty.clone();
+        self.next_token();
+        let condition: Node = self.expr();
+        self.consume(TokenType::TkLbrace);
+        let mut statements: Vec<Node> = Vec::new();
+        while self.cur.ty != TokenType::TkRbrace {
+            let n: Node = self.stmt();
+            statements.push(n);
+        }
+        self.consume(TokenType::TkRbrace);
+        let mut alternatives: Vec<Node> = Vec::new();
+        if self.cur.ty == TokenType::TkElse {
+            self.consume(TokenType::TkElse);
+            self.consume(TokenType::TkLbrace);
+            while self.cur.ty != TokenType::TkRbrace {
+                let n: Node = self.stmt();
+                alternatives.push(n);
+            }
+        }
+        Node::new_ifs(
+            if_keyword,
+            condition,
+            statements,
+            TokenType::TkElse,
+            alternatives,
+        )
+    }
     fn parse_return(&mut self) -> Node {
         let ret_keyword: TokenType = self.cur.ty.clone();
         self.next_token();
