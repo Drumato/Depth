@@ -122,13 +122,9 @@ impl Parser {
         lchild
     }
     fn expr(&mut self) -> Node {
-        if self.cur.ty != TokenType::TkIntlit && self.cur.ty != TokenType::TkUintlit {
-            println!(
-                "Error! Number-Literal expected but got {}",
-                self.cur.ty.string()
-            );
+        match self.cur.ty {
+            _ => self.equal(),
         }
-        self.equal()
     }
     fn stmt(&mut self) -> Node {
         match self.cur.ty {
