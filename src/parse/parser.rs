@@ -46,15 +46,13 @@ impl Parser {
         );
     }
     fn term(&mut self) -> Node {
-        if self.cur.ty != TokenType::TkIntlit && self.cur.ty != TokenType::TkUintlit {
-            println!(
-                "Error! Number-Literal expected but got {}",
-                self.cur.ty.string()
-            );
-        }
         let t: Token = self.cur.clone();
         self.next_token();
-        Node::new_num(t)
+        match t.ty {
+            TokenType::TkIntlit | TokenType::TkUintlit => Node::new_num(t),
+            TokenType::TkIdent => Node::new_ident(t.literal),
+            _ => Node::new(NodeType::INVALID),
+        }
     }
     fn equal(&mut self) -> Node {
         let mut lchild: Node = self.cmp();
@@ -137,7 +135,7 @@ impl Parser {
             TokenType::TkReturn => self.parse_return(),
             TokenType::TkLet => self.parse_let(),
             TokenType::TkLoop => self.parse_loop(),
-            TokenType::TkLoop => self.parse_for(),
+            TokenType::TkFor => self.parse_for(),
             _ => Node::new(NodeType::INVALID),
         }
     }

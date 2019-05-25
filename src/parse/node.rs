@@ -17,7 +17,14 @@ impl Node {
     }
 
     pub fn new_num(num: Token) -> Self {
-        Node::new(NodeType::INT(num))
+        match num.ty {
+            TokenType::TkIntlit => Node::new(NodeType::INT(num)),
+            TokenType::TkUintlit => Node::new(NodeType::UINT(num)),
+            _ => Node::new(NodeType::INVALID),
+        }
+    }
+    pub fn new_ident(ident: String) -> Self {
+        Node::new(NodeType::ID(ident))
     }
     pub fn new_rets(ret: TokenType, expr: Node) -> Self {
         Node::new(NodeType::RETS(ret, Box::new(expr)))
@@ -52,6 +59,7 @@ impl Node {
 #[derive(Clone, Debug)]
 pub enum NodeType {
     INT(Token),                                              //intlit
+    UINT(Token),                                             //uintlit
     ID(String),                                              //identifier
     BINOP(TokenType, Box<Node>, Box<Node>),                  //binary-operation
     EX(Box<Node>),                                           //expression
