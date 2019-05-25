@@ -28,6 +28,9 @@ impl Node {
     pub fn new_func(name: String, args: Vec<Node>, ret: TokenType, stmts: Vec<Node>) -> Self {
         Node::new(NodeType::FUNC(name, Box::new(args), ret, Box::new(stmts)))
     }
+    pub fn new_loops(loop_key: TokenType, stmts: Vec<Node>) -> Self {
+        Node::new(NodeType::LOOP(loop_key, Box::new(stmts)))
+    }
     pub fn string(&self) -> String {
         format!("{}\n", self.ty.dump())
     }
@@ -42,6 +45,7 @@ pub enum NodeType {
     RETS(TokenType, Box<Node>),                              //return statement
     LETS(TokenType, String, TokenType, Box<Node>),           //let statement
     FUNC(String, Box<Vec<Node>>, TokenType, Box<Vec<Node>>), //func-name,arguments,statements
+    LOOP(TokenType, Box<Vec<Node>>),                         //loop statement
     INVALID,                                                 //invalid ast-node
 }
 

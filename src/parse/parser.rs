@@ -136,6 +136,7 @@ impl Parser {
         match self.cur.ty {
             TokenType::TkReturn => self.parse_return(),
             TokenType::TkLet => self.parse_let(),
+            TokenType::TkLoop => self.parse_loop(),
             _ => Node::new(NodeType::INVALID),
         }
     }
@@ -159,6 +160,19 @@ impl Parser {
         self.next_token();
         let expr: Node = self.expr();
         Node::new_lets(let_keyword, ident_name, typename, expr)
+    }
+    fn parse_loop(&mut self) -> Node {
+        println!("loop");
+        let loop_keyword: TokenType = self.cur.ty.clone();
+        self.expect(TokenType::TkLbrace);
+        self.next_token();
+        let mut statements: Vec<Node> = Vec::new();
+        while self.cur.ty != TokenType::TkRbrace {
+            let n: Node = self.stmt();
+            statements.push(n);
+        }
+        self.consume(TokenType::TkRbrace);
+        Node::new_loops(loop_keyword, statements)
     }
     fn func(&mut self) -> Node {
         if !self.consume(TokenType::TkF) {
