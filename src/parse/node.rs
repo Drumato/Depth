@@ -31,6 +31,19 @@ impl Node {
     pub fn new_loops(loop_key: TokenType, stmts: Vec<Node>) -> Self {
         Node::new(NodeType::LOOP(loop_key, Box::new(stmts)))
     }
+    pub fn new_fors(
+        for_key: TokenType,
+        loop_ident: String,
+        src_ident: String,
+        stmts: Vec<Node>,
+    ) -> Self {
+        Node::new(NodeType::FOR(
+            for_key,
+            loop_ident,
+            src_ident,
+            Box::new(stmts),
+        ))
+    }
     pub fn string(&self) -> String {
         format!("{}\n", self.ty.dump())
     }
@@ -46,6 +59,7 @@ pub enum NodeType {
     LETS(TokenType, String, TokenType, Box<Node>),           //let statement
     FUNC(String, Box<Vec<Node>>, TokenType, Box<Vec<Node>>), //func-name,arguments,statements
     LOOP(TokenType, Box<Vec<Node>>),                         //loop statement
+    FOR(TokenType, String, String, Box<Vec<Node>>),          //for statement
     INVALID,                                                 //invalid ast-node
 }
 

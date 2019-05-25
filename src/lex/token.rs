@@ -7,9 +7,9 @@ pub struct Token {
 
 pub fn lookup(s: &str) -> bool {
     match s {
-        "mut" | "f" | "true" | "false" | "loop" | "for" | "let" | "const" | "if" | "else"
-        | "return" | "struct" | "bool" | "str" | "u8" | "u16" | "u32" | "u64" | "u128" | "ch"
-        | "i8" | "i16" | "i32" | "i64" | "i128" | "f32" | "f64" => true,
+        "mut" | "f" | "true" | "false" | "loop" | "for" | "in" | "let" | "const" | "if"
+        | "else" | "return" | "struct" | "bool" | "str" | "u8" | "u16" | "u32" | "u64" | "u128"
+        | "ch" | "i8" | "i16" | "i32" | "i64" | "i128" | "f32" | "f64" => true,
         _ => false,
     }
 }
@@ -22,6 +22,7 @@ pub fn get_keyword(s: &str) -> TokenType {
         "false" => TokenType::TkFalse,
         "loop" => TokenType::TkLoop,
         "for" => TokenType::TkFor,
+        "in" => TokenType::TkIn,
         "let" => TokenType::TkLet,
         "const" => TokenType::TkConst,
         "if" => TokenType::TkIf,
@@ -100,11 +101,15 @@ pub enum IntType {
 impl IntType {
     pub fn judge(sem_val: i128) -> IntType {
         match sem_val {
-            n if (std::i8::MAX >= n as i8 || n as i8 >= std::i8::MIN) => IntType::I8,
-            n if (std::i16::MAX >= n as i16 || n as i16 >= std::i16::MIN) => IntType::I16,
-            n if (std::i32::MAX >= n as i32 || n as i32 >= std::i32::MIN) => IntType::I32,
-            n if (std::i64::MAX >= n as i64 || n as i64 >= std::i64::MIN) => IntType::I64,
-            n if (std::i128::MAX >= n || n >= std::i128::MIN) => IntType::I128,
+            n if (127 >= n && n >= -128) => IntType::I8,
+            n if (32767 >= n && n >= -32768) => IntType::I16,
+            n if (2147483647 >= n && n >= -2147483648) => IntType::I32,
+            n if (9223372036854775807 >= n && n >= -9223372036854775808) => IntType::I64,
+            n if (170141183460469231731687303715884105727 >= n
+                && -170141183460469231731687303715884105728 >= n) =>
+            {
+                IntType::I128
+            }
             _ => IntType::INVALID,
         }
     }
@@ -122,11 +127,11 @@ pub enum UintType {
 impl UintType {
     pub fn judge(sem_val: u128) -> UintType {
         match sem_val {
-            n if (std::u8::MAX >= n as u8 || n as u8 >= std::u8::MIN) => UintType::U8,
-            n if (std::u16::MAX >= n as u16 || n as u16 >= std::u16::MIN) => UintType::U16,
-            n if (std::u32::MAX >= n as u32 || n as u32 >= std::u32::MIN) => UintType::U32,
-            n if (std::u64::MAX >= n as u64 || n as u64 >= std::u64::MIN) => UintType::U64,
-            n if (std::u128::MAX >= n as u128 || n as u128 >= std::u128::MIN) => UintType::U128,
+            n if (255 >= n) => UintType::U8,
+            n if (65535 >= n) => UintType::U16,
+            n if (4294967295 >= n) => UintType::U32,
+            n if (18446744073709551615 >= n) => UintType::U64,
+            n if (340282366920938463463374607431768211455 >= n) => UintType::U128,
             _ => UintType::INVALID,
         }
     }
@@ -151,6 +156,7 @@ pub enum TokenType {
     TkFalse,   //false
     TkLoop,    //loop
     TkFor,     //for
+    TkIn,      //in
     TkLet,     //let
     TkConst,   //const
     TkIf,      //if
@@ -238,6 +244,7 @@ impl TokenType {
             TokenType::TkFalse => "FALSE",
             TokenType::TkLoop => "LOOP",
             TokenType::TkFor => "FOR",
+            TokenType::TkIn => "IN",
             TokenType::TkLet => "LET",
             TokenType::TkConst => "CONST",
             TokenType::TkIf => "IF",
