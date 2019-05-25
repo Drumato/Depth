@@ -1,4 +1,5 @@
 extern crate yaml_rust;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::{BufReader, BufWriter, Write};
@@ -19,9 +20,11 @@ use colored::*;
 
 mod parse;
 use parse::{node, parser};
-
-struct Manager {
+mod analysis;
+use analysis::semantic;
+pub struct Manager {
     nodes: Vec<node::Node>,
+    env: semantic::Environment,
 }
 
 fn main() -> Result<(), Box<std::error::Error>> {
@@ -46,6 +49,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
             writeln!(out, "{}", n.ty.dump()).unwrap();
         }
     }
+    semantic::walk(&mut manager.nodes);
     Ok(())
 }
 
