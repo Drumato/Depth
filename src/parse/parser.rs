@@ -214,10 +214,6 @@ impl Parser {
         Node::new_fors(for_keyword, tmp_ident, src_ident, statements)
     }
     fn func(&mut self) -> Node {
-        if !self.consume(TokenType::TkF) {
-            println!("invalid f {}", self.cur.literal);
-            return Node::new(NodeType::INVALID);
-        }
         let func_name: String = self.cur.literal.clone();
         self.expect(TokenType::TkLparen);
         let mut arguments: Vec<Node> = Vec::new();
@@ -239,7 +235,6 @@ impl Parser {
             statements.push(n);
         }
         self.consume(TokenType::TkRbrace);
-        self.consume(TokenType::TkEof);
         Node::new_func(func_name, arguments, ret, statements)
     }
 }
@@ -247,6 +242,10 @@ impl Parser {
 pub fn parse(lexer: lexing::Lexer) -> Vec<Node> {
     let mut parser: Parser = Parser::new(lexer);
     let mut nodes: Vec<Node> = Vec::new();
-    nodes.push(parser.func());
+    while parser.cur.ty == TokenType::TkF {
+        parser.next_token();
+        nodes.push(parser.func());
+    }
+    parser.consume(TokenType::TkEof);
     nodes
 }

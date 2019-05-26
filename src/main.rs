@@ -1,5 +1,5 @@
-extern crate yaml_rust;
 use std::collections::HashMap;
+extern crate yaml_rust;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::{BufReader, BufWriter, Write};
@@ -49,7 +49,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
             writeln!(out, "{}", n.ty.dump()).unwrap();
         }
     }
-    semantic::walk(&mut manager.nodes);
+    semantic::semantic(&mut manager.nodes);
     Ok(())
 }
 
@@ -83,7 +83,10 @@ fn parse_phase(matches: &clap::ArgMatches) -> Manager {
         .unwrap();
     }
     let nodes: Vec<node::Node> = parse::parser::parse(lexer);
-    Manager { nodes }
+    Manager {
+        nodes: nodes,
+        env: semantic::Environment::new(HashMap::new()),
+    }
 }
 
 fn get_yaml() -> Result<Vec<yaml_rust::Yaml>, yaml_rust::ScanError> {

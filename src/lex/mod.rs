@@ -105,8 +105,8 @@ mod tests {
             "type:INT-LITERAL\tinput:0b1000000\tval:64"
         );
         assert_eq!(
-            test_token("u64").dump(),
-            "type:UINT-LITERAL\tinput:64\tval:64"
+            test_token("u24").dump(),
+            "type:UINT-LITERAL\tinput:24\tval:24"
         );
         assert_eq!(
             test_token("u0x40").dump(),
