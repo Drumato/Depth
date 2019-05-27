@@ -1,4 +1,5 @@
 use super::super::lex::{lexing, token};
+use std::collections::HashMap;
 use token::{Token, TokenType, TokenVal};
 #[derive(Clone, Debug)]
 pub struct Node {
@@ -32,8 +33,13 @@ impl Node {
     pub fn new_lets(let_key: TokenType, ident: String, ty: TokenType, expr: Node) -> Self {
         Node::new(NodeType::LETS(let_key, ident, ty, Box::new(expr)))
     }
-    pub fn new_func(name: String, args: Vec<Node>, ret: TokenType, stmts: Vec<Node>) -> Self {
-        Node::new(NodeType::FUNC(name, Box::new(args), ret, Box::new(stmts)))
+    pub fn new_func(
+        name: String,
+        args: HashMap<String, TokenType>,
+        ret: TokenType,
+        stmts: Vec<Node>,
+    ) -> Self {
+        Node::new(NodeType::FUNC(name, args, ret, Box::new(stmts)))
     }
     pub fn new_loops(loop_key: TokenType, stmts: Vec<Node>) -> Self {
         Node::new(NodeType::LOOP(loop_key, Box::new(stmts)))
@@ -99,7 +105,12 @@ pub enum NodeType {
         TokenType,
         Box<Vec<Node>>,
     ), //if-else statement
-    FUNC(String, Box<Vec<Node>>, TokenType, Box<Vec<Node>>), //func-name,arguments,statements
+    FUNC(
+        String,
+        HashMap<String, TokenType>,
+        TokenType,
+        Box<Vec<Node>>,
+    ), //func-name,arguments,statements
     LOOP(TokenType, Box<Vec<Node>>),               //loop statement
     FOR(TokenType, String, String, Box<Vec<Node>>), //for statement
     INVALID,                                       //invalid ast-node

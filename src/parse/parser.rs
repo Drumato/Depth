@@ -1,5 +1,6 @@
 use super::super::lex::{lexing, token};
 use super::node::{Node, NodeType};
+use std::collections::HashMap;
 use token::{Token, TokenType, TokenVal};
 
 pub struct Parser {
@@ -233,7 +234,20 @@ impl Parser {
     fn func(&mut self) -> Node {
         let func_name: String = self.cur.literal.clone();
         self.expect(TokenType::TkLparen);
-        let mut arguments: Vec<Node> = Vec::new();
+        let mut arguments: HashMap<String, TokenType> = HashMap::new();
+        while self.next.ty != TokenType::TkRparen {
+            self.expect(TokenType::TkIdent);
+            let ident_name: String = self.cur.literal.clone();
+            self.expect(TokenType::TkColon);
+            self.next_token();
+            if !self.cur.ty.is_typename() {
+                println!("expected typename but got {}", self.cur.literal);
+            }
+            arguments.insert(ident_name, self.cur.ty.clone());
+            if self.next.ty == TokenType::TkComma {
+                self.expect(TokenType::TkComma);
+            }
+        }
         self.expect(TokenType::TkRparen);
 
         let mut ret: TokenType = if self.next.ty == TokenType::TkArrow {
