@@ -49,7 +49,13 @@ fn main() -> Result<(), Box<std::error::Error>> {
             writeln!(out, "{}", n.ty.dump()).unwrap();
         }
     }
-    semantic::semantic(&mut manager.nodes);
+    manager.env.semantic(manager.nodes);
+    if matches.is_present("dump-symbol") {
+        println!("{}", "--------symbol_tables--------".green().bold());
+        for (sym_name, symbol) in manager.env.sym_tables.iter() {
+            println!("name:{}\tsym:{:?}", sym_name, symbol);
+        }
+    }
     Ok(())
 }
 
@@ -85,7 +91,7 @@ fn parse_phase(matches: &clap::ArgMatches) -> Manager {
     let nodes: Vec<node::Node> = parse::parser::parse(lexer);
     Manager {
         nodes: nodes,
-        env: semantic::Environment::new(HashMap::new()),
+        env: semantic::Environment::new(),
     }
 }
 

@@ -22,6 +22,9 @@ args:
     - dump-ast:
         long: dump-ast
         help: dump ast nodes with parser
+    - dump-symbol:
+        long: dump-symbol
+        help: dump symbol-tables each environments
     - verbose:
         short: v
         multiple: true
