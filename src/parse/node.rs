@@ -66,6 +66,15 @@ impl Node {
             Box::new(alt),
         ))
     }
+    pub fn new_strary(ss: Vec<Token>) -> Self {
+        Node::new(NodeType::STRARY(Box::new(ss)))
+    }
+    pub fn new_intary(is: Vec<Token>) -> Self {
+        Node::new(NodeType::INTARY(Box::new(is)))
+    }
+    pub fn new_charary(cs: Vec<Token>) -> Self {
+        Node::new(NodeType::CHARARY(Box::new(cs)))
+    }
     pub fn string(&self) -> String {
         format!("{}\n", self.ty.dump())
     }
@@ -73,8 +82,11 @@ impl Node {
 
 #[derive(Clone, Debug)]
 pub enum NodeType {
-    INT(Token),                                    //intlit
-    UINT(Token),                                   //uintlit
+    INT(Token),  //intlit
+    UINT(Token), //uintlit
+    STRARY(Box<Vec<Token>>),
+    INTARY(Box<Vec<Token>>),
+    CHARARY(Box<Vec<Token>>),
     ID(String),                                    //identifier
     BINOP(TokenType, Box<Node>, Box<Node>),        //binary-operation
     EX(Box<Node>),                                 //expression

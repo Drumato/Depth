@@ -277,24 +277,24 @@ impl Lexer {
     fn judge_percent(&mut self) -> Token {
         let mut s = conv::u8_to_string(&mut self.ch);
         let p = self.pos;
-        if self.peak_char() == 's'{
+        if self.peak_char() == 's' {
             self.read_char();
             self.read_char();
             s = self.input[p..self.pos].to_string();
             return Token::new((TokenType::TkPerStr, s, TokenVal::InVal));
-    }
-        if self.peak_char() == 'i'{
+        }
+        if self.peak_char() == 'i' {
             self.read_char();
             self.read_char();
             s = self.input[p..self.pos].to_string();
             return Token::new((TokenType::TkPerInt, s, TokenVal::InVal));
-    }
-        if self.peak_char() == 'c'{
+        }
+        if self.peak_char() == 'c' {
             self.read_char();
             self.read_char();
             s = self.input[p..self.pos].to_string();
             return Token::new((TokenType::TkPerChar, s, TokenVal::InVal));
-    }
+        }
         if self.peak_char() == '=' {
             self.read_char();
             self.read_char();

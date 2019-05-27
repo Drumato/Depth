@@ -50,7 +50,24 @@ impl Parser {
         self.next_token();
         match t.ty {
             TokenType::TkIntlit | TokenType::TkUintlit => Node::new_num(t),
+            TokenType::TkPerStr | TokenType::TkPerChar | TokenType::TkPerInt => self.parse_array(t),
             TokenType::TkIdent => Node::new_ident(t.literal),
+            _ => Node::new(NodeType::INVALID),
+        }
+    }
+    fn parse_array(&mut self, ty: Token) -> Node {
+        self.consume(TokenType::TkLparen);
+        let mut elements: Vec<Token> = Vec::new();
+        while self.next.ty != TokenType::TkRparen {
+            elements.push(self.cur.clone());
+            self.next_token();
+        }
+        self.expect(TokenType::TkRparen);
+        self.next_token();
+        match ty.ty {
+            TokenType::TkPerStr => Node::new_strary(elements),
+            TokenType::TkPerChar => Node::new_charary(elements),
+            TokenType::TkPerInt => Node::new_intary(elements),
             _ => Node::new(NodeType::INVALID),
         }
     }
