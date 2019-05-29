@@ -22,6 +22,7 @@ mod parse;
 use parse::{node, parser};
 mod analysis;
 use analysis::semantic;
+
 pub struct Manager {
     nodes: Vec<node::Node>,
     env: semantic::Environment,
@@ -54,6 +55,9 @@ fn main() -> Result<(), Box<std::error::Error>> {
         println!("{}", "--------symbol_tables--------".green().bold());
         for (sym_name, symbol) in manager.env.sym_tables.iter() {
             println!("name:{}\tsym:{:?}", sym_name, symbol);
+        }
+        for (env_name, stmts) in manager.env.func_tables.iter() {
+            println!("name:{}\tstmts:{:?}", env_name, stmts);
         }
     }
     Ok(())

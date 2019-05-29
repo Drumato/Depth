@@ -1,4 +1,5 @@
 use super::super::lex::{lexing, token};
+use super::error::CompileError;
 use super::node::{Node, NodeType};
 use std::collections::HashMap;
 use token::{Token, TokenType, TokenVal};
@@ -7,6 +8,7 @@ pub struct Parser {
     pub l: lexing::Lexer,
     pub cur: Token,
     pub next: Token,
+    pub node_num: u64,
 }
 
 impl Parser {
@@ -17,7 +19,13 @@ impl Parser {
             l: lexer,
             cur: cur,
             next: next,
+            node_num: 1,
         }
+    }
+    pub fn getnum(&mut self) -> u64 {
+        let current: u64 = self.node_num;
+        self.node_num += 1;
+        current
     }
     pub fn next_token(&mut self) {
         self.cur = self.next.clone();
@@ -28,11 +36,12 @@ impl Parser {
             self.next_token();
             return true;
         }
-        println!(
-            "Error! {} expected but got {}",
+        CompileError::PARSE(format!(
+            "{} expected but got {}",
             ty.string(),
-            self.cur.ty.string()
-        );
+            self.cur.ty.string(),
+        ))
+        .found();
         false
     }
     pub fn expect(&mut self, ty: TokenType) {
@@ -40,20 +49,21 @@ impl Parser {
             self.next_token();
             return;
         }
-        println!(
-            "Error! {} expected but got {}",
+        CompileError::PARSE(format!(
+            "{} expected but got {}",
             ty.string(),
             self.next.ty.string()
-        );
+        ))
+        .found();
     }
     fn term(&mut self) -> Node {
         let t: Token = self.cur.clone();
         self.next_token();
         match t.ty {
-            TokenType::TkIntlit | TokenType::TkUintlit => Node::new_num(t),
+            TokenType::TkIntlit | TokenType::TkUintlit => Node::new_num(t, self.getnum()),
             TokenType::TkPerStr | TokenType::TkPerChar | TokenType::TkPerInt => self.parse_array(t),
-            TokenType::TkIdent => Node::new_ident(t.literal),
-            _ => Node::new(NodeType::INVALID),
+            TokenType::TkIdent => Node::new_ident(t.literal, self.getnum()),
+            _ => Node::new(NodeType::INVALID, 0),
         }
     }
     fn parse_array(&mut self, ty: Token) -> Node {
@@ -66,10 +76,10 @@ impl Parser {
         self.expect(TokenType::TkRparen);
         self.next_token();
         match ty.ty {
-            TokenType::TkPerStr => Node::new_strary(elements),
-            TokenType::TkPerChar => Node::new_charary(elements),
-            TokenType::TkPerInt => Node::new_intary(elements),
-            _ => Node::new(NodeType::INVALID),
+            TokenType::TkPerStr => Node::new_strary(elements, self.getnum()),
+            TokenType::TkPerChar => Node::new_charary(elements, self.getnum()),
+            TokenType::TkPerInt => Node::new_intary(elements, self.getnum()),
+            _ => Node::new(NodeType::INVALID, 0),
         }
     }
     fn equal(&mut self) -> Node {
@@ -80,7 +90,7 @@ impl Parser {
                 break;
             }
             self.next_token();
-            lchild = Node::new_binop(t.ty, lchild, self.cmp());
+            lchild = Node::new_binop(t.ty, lchild, self.cmp(), self.getnum());
         }
         lchild
     }
@@ -96,7 +106,7 @@ impl Parser {
                 break;
             }
             self.next_token();
-            lchild = Node::new_binop(t.ty, lchild, self.shift());
+            lchild = Node::new_binop(t.ty, lchild, self.shift(), self.getnum());
         }
         lchild
     }
@@ -108,7 +118,7 @@ impl Parser {
                 break;
             }
             self.next_token();
-            lchild = Node::new_binop(t.ty, lchild, self.adsub());
+            lchild = Node::new_binop(t.ty, lchild, self.adsub(), self.getnum());
         }
         lchild
     }
@@ -120,7 +130,7 @@ impl Parser {
                 break;
             }
             self.next_token();
-            lchild = Node::new_binop(t.ty, lchild, self.muldiv());
+            lchild = Node::new_binop(t.ty, lchild, self.muldiv(), self.getnum());
         }
         lchild
     }
@@ -135,7 +145,7 @@ impl Parser {
                 break;
             }
             self.next_token();
-            lchild = Node::new_binop(t.ty, lchild, self.term());
+            lchild = Node::new_binop(t.ty, lchild, self.term(), self.getnum());
         }
         lchild
     }
@@ -151,7 +161,7 @@ impl Parser {
             TokenType::TkLoop => self.parse_loop(),
             TokenType::TkFor => self.parse_for(),
             TokenType::TkIf => self.parse_if(),
-            _ => Node::new(NodeType::INVALID),
+            _ => Node::new(NodeType::INVALID, 0),
         }
     }
     fn parse_if(&mut self) -> Node {
@@ -180,12 +190,13 @@ impl Parser {
             statements,
             TokenType::TkElse,
             alternatives,
+            self.getnum(),
         )
     }
     fn parse_return(&mut self) -> Node {
         let ret_keyword: TokenType = self.cur.ty.clone();
         self.next_token();
-        Node::new_rets(ret_keyword, self.expr())
+        Node::new_rets(ret_keyword, self.expr(), self.getnum())
     }
     fn parse_let(&mut self) -> Node {
         let let_keyword: TokenType = self.cur.ty.clone();
@@ -194,13 +205,13 @@ impl Parser {
         self.expect(TokenType::TkColon);
         self.next_token();
         if !self.cur.ty.is_typename() {
-            println!("expected typename but got {}", self.cur.literal);
+            CompileError::PARSE(format!("expected typename but got {}", self.cur.literal)).found();
         }
         let typename: TokenType = self.cur.ty.clone();
         self.expect(TokenType::TkAssign);
         self.next_token();
         let expr: Node = self.expr();
-        Node::new_lets(let_keyword, ident_name, typename, expr)
+        Node::new_lets(let_keyword, ident_name, typename, expr, self.getnum())
     }
     fn parse_loop(&mut self) -> Node {
         let loop_keyword: TokenType = self.cur.ty.clone();
@@ -212,7 +223,7 @@ impl Parser {
             statements.push(n);
         }
         self.consume(TokenType::TkRbrace);
-        Node::new_loops(loop_keyword, statements)
+        Node::new_loops(loop_keyword, statements, self.getnum())
     }
     fn parse_for(&mut self) -> Node {
         let for_keyword: TokenType = self.cur.ty.clone();
@@ -229,7 +240,7 @@ impl Parser {
             statements.push(n);
         }
         self.consume(TokenType::TkRbrace);
-        Node::new_fors(for_keyword, tmp_ident, src_ident, statements)
+        Node::new_fors(for_keyword, tmp_ident, src_ident, statements, self.getnum())
     }
     fn func(&mut self) -> Node {
         let func_name: String = self.cur.literal.clone();
@@ -241,7 +252,8 @@ impl Parser {
             self.expect(TokenType::TkColon);
             self.next_token();
             if !self.cur.ty.is_typename() {
-                println!("expected typename but got {}", self.cur.literal);
+                CompileError::PARSE(format!("expected typename but got {}", self.cur.literal))
+                    .found();
             }
             arguments.insert(ident_name, self.cur.ty.clone());
             if self.next.ty == TokenType::TkComma {
@@ -266,7 +278,7 @@ impl Parser {
             statements.push(n);
         }
         self.consume(TokenType::TkRbrace);
-        Node::new_func(func_name, arguments, ret, statements)
+        Node::new_func(func_name, arguments, ret, statements, self.getnum())
     }
 }
 

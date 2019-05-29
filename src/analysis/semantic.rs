@@ -1,15 +1,20 @@
+extern crate drumatech;
 use super::super::lex::token;
-use super::super::parse::node;
+use super::super::parse::{error, node};
+use drumatech::conv;
 use std::collections::HashMap;
 use token::TokenType;
 pub struct Environment {
     pub sym_tables: HashMap<String, Symbol>,
+    pub func_tables: HashMap<String, Vec<u64>>,
 }
 impl Environment {
     pub fn new() -> Self {
         let sym_tables: HashMap<String, Symbol> = HashMap::new();
+        let func_tables: HashMap<String, Vec<u64>> = HashMap::new();
         Self {
             sym_tables: sym_tables,
+            func_tables: func_tables,
         }
     }
     pub fn semantic(&mut self, nodes: Vec<node::Node>) {
@@ -26,19 +31,41 @@ impl Environment {
             Symbol::new_ident(ident_name.clone(), type_name),
         );
     }
+    fn new_stmt(&mut self, env_name: String, stmt_num: u64) {
+        if !self.func_tables.contains_key(&env_name) {
+            self.func_tables.insert(env_name.clone(), vec![stmt_num]);
+        } else {
+            if let Some(vector) = self.func_tables.get_mut(&env_name) {
+                vector.push(stmt_num);
+            }
+        }
+    }
     fn analyze_func(&mut self, func_name: String, nodes: Box<Vec<node::Node>>) {
         for n in nodes.iter() {
+            self.new_stmt(func_name.clone(), n.id);
             match n.ty.clone() {
-                node::NodeType::LETS(_, ident_name, type_name, _) => {
-                    self.analyze_lets(func_name.clone(), ident_name.clone(), type_name.clone())
+                node::NodeType::LETS(_, ident_name, type_name, n) => {
+                    self.analyze_lets(func_name.clone(), ident_name.clone(), type_name.clone(), n)
                 }
                 _ => (),
             }
         }
     }
-    fn analyze_lets(&mut self, env_name: String, ident_name: String, type_name: TokenType) {
+    fn analyze_lets(
+        &mut self,
+        env_name: String,
+        ident_name: String,
+        type_name: TokenType,
+        n: Box<node::Node>,
+    ) {
+        let node: node::Node = conv::open_box(n);
+        match node.ty {
+            node::NodeType::BINOP(ty, lchild, rchild) => self.check_types(ty, lchild, rchild),
+            _ => (),
+        }
         self.new_ident(env_name, ident_name, type_name)
     }
+    fn check_types(&mut self, ty: TokenType, lchild: Box<node::Node>, rchild: Box<node::Node>) {}
     /*   pub fn merge<'a>(
         m1: &HashMap<String, HashMap<String, Symbol>>,
         m2: &HashMap<String, HashMap<String, Symbol>>,
@@ -78,10 +105,4 @@ impl Symbol {
 pub enum SymbolType {
     ID(String, TokenType),
     TYPE(String, TokenType),
-}
-
-pub fn walk(node: node::Node, syms: &mut Environment) {
-    match node.ty {
-        _ => println!(""),
-    }
 }
