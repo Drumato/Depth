@@ -90,7 +90,14 @@ impl Parser {
                 break;
             }
             self.next_token();
-            lchild = Node::new_binop(t.ty, lchild, self.cmp(), self.getnum());
+            let rchild = self.cmp();
+            lchild = Node::new_binop(
+                t.ty,
+                lchild.clone(),
+                rchild.clone(),
+                self.getnum(),
+                vec![lchild.id, rchild.id],
+            );
         }
         lchild
     }
@@ -106,7 +113,14 @@ impl Parser {
                 break;
             }
             self.next_token();
-            lchild = Node::new_binop(t.ty, lchild, self.shift(), self.getnum());
+            let rchild = self.shift();
+            lchild = Node::new_binop(
+                t.ty,
+                lchild.clone(),
+                rchild.clone(),
+                self.getnum(),
+                vec![lchild.id, rchild.id],
+            );
         }
         lchild
     }
@@ -118,7 +132,14 @@ impl Parser {
                 break;
             }
             self.next_token();
-            lchild = Node::new_binop(t.ty, lchild, self.adsub(), self.getnum());
+            let rchild = self.adsub();
+            lchild = Node::new_binop(
+                t.ty,
+                lchild.clone(),
+                rchild.clone(),
+                self.getnum(),
+                vec![lchild.id, rchild.id],
+            );
         }
         lchild
     }
@@ -130,7 +151,14 @@ impl Parser {
                 break;
             }
             self.next_token();
-            lchild = Node::new_binop(t.ty, lchild, self.muldiv(), self.getnum());
+            let rchild = self.muldiv();
+            lchild = Node::new_binop(
+                t.ty,
+                lchild.clone(),
+                rchild.clone(),
+                self.getnum(),
+                vec![lchild.id, rchild.id],
+            );
         }
         lchild
     }
@@ -145,7 +173,14 @@ impl Parser {
                 break;
             }
             self.next_token();
-            lchild = Node::new_binop(t.ty, lchild, self.term(), self.getnum());
+            let rchild = self.term();
+            lchild = Node::new_binop(
+                t.ty,
+                lchild.clone(),
+                rchild.clone(),
+                self.getnum(),
+                vec![lchild.id, rchild.id],
+            );
         }
         lchild
     }
@@ -176,12 +211,14 @@ impl Parser {
         }
         self.consume(TokenType::TkRbrace);
         let mut alternatives: Vec<Node> = Vec::new();
+        let mut ids: Vec<u64> = Vec::new();
         if self.cur.ty == TokenType::TkElse {
             self.consume(TokenType::TkElse);
             self.consume(TokenType::TkLbrace);
             while self.cur.ty != TokenType::TkRbrace {
                 let n: Node = self.stmt();
-                alternatives.push(n);
+                alternatives.push(n.clone());
+                ids.push(n.id);
             }
         }
         Node::new_ifs(
@@ -191,6 +228,7 @@ impl Parser {
             TokenType::TkElse,
             alternatives,
             self.getnum(),
+            ids,
         )
     }
     fn parse_return(&mut self) -> Node {
@@ -218,12 +256,14 @@ impl Parser {
         self.expect(TokenType::TkLbrace);
         self.next_token();
         let mut statements: Vec<Node> = Vec::new();
+        let mut ids: Vec<u64> = Vec::new();
         while self.cur.ty != TokenType::TkRbrace {
             let n: Node = self.stmt();
-            statements.push(n);
+            statements.push(n.clone());
+            ids.push(n.id);
         }
         self.consume(TokenType::TkRbrace);
-        Node::new_loops(loop_keyword, statements, self.getnum())
+        Node::new_loops(loop_keyword, statements, self.getnum(), ids)
     }
     fn parse_for(&mut self) -> Node {
         let for_keyword: TokenType = self.cur.ty.clone();
@@ -235,12 +275,21 @@ impl Parser {
         self.expect(TokenType::TkLbrace);
         self.next_token();
         let mut statements: Vec<Node> = Vec::new();
+        let mut ids: Vec<u64> = Vec::new();
         while self.cur.ty != TokenType::TkRbrace {
             let n: Node = self.stmt();
-            statements.push(n);
+            statements.push(n.clone());
+            ids.push(n.id);
         }
         self.consume(TokenType::TkRbrace);
-        Node::new_fors(for_keyword, tmp_ident, src_ident, statements, self.getnum())
+        Node::new_fors(
+            for_keyword,
+            tmp_ident,
+            src_ident,
+            statements,
+            self.getnum(),
+            ids,
+        )
     }
     fn func(&mut self) -> Node {
         let func_name: String = self.cur.literal.clone();
@@ -273,12 +322,14 @@ impl Parser {
         self.expect(TokenType::TkLbrace);
         self.next_token();
         let mut statements: Vec<Node> = Vec::new();
+        let mut ids: Vec<u64> = Vec::new();
         while self.cur.ty != TokenType::TkRbrace {
             let n: Node = self.stmt();
-            statements.push(n);
+            statements.push(n.clone());
+            ids.push(n.id);
         }
         self.consume(TokenType::TkRbrace);
-        Node::new_func(func_name, arguments, ret, statements, self.getnum())
+        Node::new_func(func_name, arguments, ret, statements, self.getnum(), ids)
     }
 }
 

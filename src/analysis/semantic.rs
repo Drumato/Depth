@@ -20,7 +20,9 @@ impl Environment {
     pub fn semantic(&mut self, nodes: Vec<node::Node>) {
         for n in nodes.iter() {
             match n.ty.clone() {
-                node::NodeType::FUNC(func_name, _, _, nodes) => self.analyze_func(func_name, nodes),
+                node::NodeType::FUNC(func_name, _, _, nodes, _) => {
+                    self.analyze_func(func_name, nodes)
+                }
                 _ => (),
             }
         }
@@ -60,7 +62,7 @@ impl Environment {
     ) {
         let node: node::Node = conv::open_box(n);
         match node.ty {
-            node::NodeType::BINOP(ty, lchild, rchild) => self.check_types(ty, lchild, rchild),
+            node::NodeType::BINOP(ty, lchild, rchild, _) => self.check_types(ty, lchild, rchild),
             _ => (),
         }
         self.new_ident(env_name, ident_name, type_name)

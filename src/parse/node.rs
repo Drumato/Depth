@@ -15,8 +15,11 @@ impl Node {
             id: id,
         }
     }
-    pub fn new_binop(ty: TokenType, lchild: Node, rchild: Node, id: u64) -> Self {
-        Node::new(NodeType::BINOP(ty, Box::new(lchild), Box::new(rchild)), id)
+    pub fn new_binop(ty: TokenType, lchild: Node, rchild: Node, id: u64, ids: Vec<u64>) -> Self {
+        Node::new(
+            NodeType::BINOP(ty, Box::new(lchild), Box::new(rchild), ids),
+            id,
+        )
     }
 
     pub fn new_num(num: Token, id: u64) -> Self {
@@ -41,11 +44,12 @@ impl Node {
         ret: TokenType,
         stmts: Vec<Node>,
         id: u64,
+        ids: Vec<u64>,
     ) -> Self {
-        Node::new(NodeType::FUNC(name, args, ret, Box::new(stmts)), id)
+        Node::new(NodeType::FUNC(name, args, ret, Box::new(stmts), ids), id)
     }
-    pub fn new_loops(loop_key: TokenType, stmts: Vec<Node>, id: u64) -> Self {
-        Node::new(NodeType::LOOP(loop_key, Box::new(stmts)), id)
+    pub fn new_loops(loop_key: TokenType, stmts: Vec<Node>, id: u64, ids: Vec<u64>) -> Self {
+        Node::new(NodeType::LOOP(loop_key, Box::new(stmts), ids), id)
     }
     pub fn new_fors(
         for_key: TokenType,
@@ -53,9 +57,10 @@ impl Node {
         src_ident: String,
         stmts: Vec<Node>,
         id: u64,
+        ids: Vec<u64>,
     ) -> Self {
         Node::new(
-            NodeType::FOR(for_key, loop_ident, src_ident, Box::new(stmts)),
+            NodeType::FOR(for_key, loop_ident, src_ident, Box::new(stmts), ids),
             id,
         )
     }
@@ -66,6 +71,7 @@ impl Node {
         else_key: TokenType,
         alt: Vec<Node>,
         id: u64,
+        ids: Vec<u64>,
     ) -> Self {
         Node::new(
             NodeType::IFS(
@@ -74,6 +80,7 @@ impl Node {
                 Box::new(stmts),
                 else_key,
                 Box::new(alt),
+                ids,
             ),
             id,
         )
@@ -99,27 +106,29 @@ pub enum NodeType {
     STRARY(Box<Vec<Token>>),
     INTARY(Box<Vec<Token>>),
     CHARARY(Box<Vec<Token>>),
-    ID(String),                                    //identifier
-    BINOP(TokenType, Box<Node>, Box<Node>),        //binary-operation
-    EX(Box<Node>),                                 //expression
-    RETS(TokenType, Box<Node>),                    //return statement
-    LETS(TokenType, String, TokenType, Box<Node>), //let statement
+    ID(String),                                       //identifier
+    BINOP(TokenType, Box<Node>, Box<Node>, Vec<u64>), //binary-operation
+    EX(Box<Node>),                                    //expression
+    RETS(TokenType, Box<Node>),                       //return statement
+    LETS(TokenType, String, TokenType, Box<Node>),    //let statement
     IFS(
         TokenType,
         Box<Node>,
         Box<Vec<Node>>,
         TokenType,
         Box<Vec<Node>>,
+        Vec<u64>,
     ), //if-else statement
     FUNC(
         String,
         HashMap<String, TokenType>,
         TokenType,
         Box<Vec<Node>>,
+        Vec<u64>,
     ), //func-name,arguments,statements
-    LOOP(TokenType, Box<Vec<Node>>),               //loop statement
-    FOR(TokenType, String, String, Box<Vec<Node>>), //for statement
-    INVALID,                                       //invalid ast-node
+    LOOP(TokenType, Box<Vec<Node>>, Vec<u64>),        //loop statement
+    FOR(TokenType, String, String, Box<Vec<Node>>, Vec<u64>), //for statement
+    INVALID,                                          //invalid ast-node
 }
 
 impl NodeType {
@@ -127,7 +136,7 @@ impl NodeType {
         match self {
             NodeType::INT(v) => v.dump(),
             NodeType::ID(s) => s.to_string(),
-            NodeType::BINOP(ty, l, r) => format!(
+            NodeType::BINOP(ty, l, r, _) => format!(
                 "type:{}\tlchild:{:?}\trchild:{:?}",
                 String::from(ty.string()),
                 l.ty,
@@ -135,7 +144,7 @@ impl NodeType {
             ),
             NodeType::EX(n) => n.string().to_string(),
             NodeType::RETS(ty, n) => format!("type:{:?}\texpression:{:?}", ty, n.string()),
-            NodeType::FUNC(name, args, ret, stmts) => format!(
+            NodeType::FUNC(name, args, ret, stmts, _) => format!(
                 "name:{}\nargs:{:?}\nreturn:{}\nstmts:{:?}",
                 name,
                 args,
