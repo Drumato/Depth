@@ -56,9 +56,6 @@ fn main() -> Result<(), Box<std::error::Error>> {
         for (sym_name, symbol) in manager.env.sym_tables.iter() {
             println!("name:{}\tsym:{:?}", sym_name, symbol);
         }
-        for (env_name, stmts) in manager.env.func_tables.iter() {
-            println!("name:{}\tstmts:{:?}", env_name, stmts);
-        }
     }
     Ok(())
 }

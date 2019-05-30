@@ -6,21 +6,20 @@ use std::collections::HashMap;
 use token::TokenType;
 pub struct Environment {
     pub sym_tables: HashMap<String, Symbol>,
-    pub func_tables: HashMap<String, Vec<u64>>,
 }
 impl Environment {
     pub fn new() -> Self {
         let sym_tables: HashMap<String, Symbol> = HashMap::new();
-        let func_tables: HashMap<String, Vec<u64>> = HashMap::new();
         Self {
             sym_tables: sym_tables,
-            func_tables: func_tables,
         }
     }
     pub fn semantic(&mut self, nodes: Vec<node::Node>) {
         for n in nodes.iter() {
             match n.ty.clone() {
-                node::NodeType::FUNC(func_name, _, _, nodes) => self.analyze_func(func_name, nodes),
+                node::NodeType::FUNC(func_name, _, _, nodes, _) => {
+                    self.analyze_func(func_name, nodes)
+                }
                 _ => (),
             }
         }
@@ -31,18 +30,8 @@ impl Environment {
             Symbol::new_ident(ident_name.clone(), type_name),
         );
     }
-    fn new_stmt(&mut self, env_name: String, stmt_num: u64) {
-        if !self.func_tables.contains_key(&env_name) {
-            self.func_tables.insert(env_name.clone(), vec![stmt_num]);
-        } else {
-            if let Some(vector) = self.func_tables.get_mut(&env_name) {
-                vector.push(stmt_num);
-            }
-        }
-    }
     fn analyze_func(&mut self, func_name: String, nodes: Box<Vec<node::Node>>) {
         for n in nodes.iter() {
-            self.new_stmt(func_name.clone(), n.id);
             match n.ty.clone() {
                 node::NodeType::LETS(_, ident_name, type_name, n) => {
                     self.analyze_lets(func_name.clone(), ident_name.clone(), type_name.clone(), n)
@@ -60,7 +49,7 @@ impl Environment {
     ) {
         let node: node::Node = conv::open_box(n);
         match node.ty {
-            node::NodeType::BINOP(ty, lchild, rchild) => self.check_types(ty, lchild, rchild),
+            node::NodeType::BINOP(ty, lchild, rchild, _) => self.check_types(ty, lchild, rchild),
             _ => (),
         }
         self.new_ident(env_name, ident_name, type_name)
