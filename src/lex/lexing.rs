@@ -72,18 +72,22 @@ impl Lexer {
     pub fn read_number(&mut self) -> String {
         let p: usize = self.pos;
         if self.ch as char == '0' {
+            //whether decimal or not
             self.read_char();
             if self.ch as char == 'b' {
+                //is_binary
                 self.read_char();
                 while (self.ch as char).is_digit(2) {
                     self.read_char();
                 }
             } else if self.ch as char == 'o' {
+                //is_octal
                 self.read_char();
                 while (self.ch as char).is_digit(8) {
                     self.read_char();
                 }
             } else if self.ch as char == 'x' {
+                //is_hexdecimal
                 self.read_char();
                 while (self.ch as char).is_digit(16) {
                     self.read_char();

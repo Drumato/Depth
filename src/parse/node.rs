@@ -29,6 +29,9 @@ impl Node {
             _ => Node::new(NodeType::INVALID, 0),
         }
     }
+    pub fn new_call(ident: String, nodes: Vec<Node>, id: u64) -> Self {
+        Node::new(NodeType::CALL(ident, Box::new(nodes)), id)
+    }
     pub fn new_ident(ident: String, id: u64) -> Self {
         Node::new(NodeType::ID(ident), id)
     }
@@ -109,6 +112,7 @@ pub enum NodeType {
     ID(String),                                       //identifier
     BINOP(TokenType, Box<Node>, Box<Node>, Vec<u64>), //binary-operation
     EX(Box<Node>),                                    //expression
+    CALL(String, Box<Vec<Node>>),                     //call-expression
     RETS(TokenType, Box<Node>),                       //return statement
     LETS(TokenType, String, TokenType, Box<Node>),    //let statement
     IFS(
