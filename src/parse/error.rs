@@ -1,3 +1,5 @@
+extern crate colored;
+use colored::*;
 pub enum CompileError {
     PARSE(String),
     TYPE(String),
@@ -7,9 +9,10 @@ pub enum CompileError {
 impl CompileError {
     pub fn found(&self) {
         match self {
-            CompileError::PARSE(msg) => eprintln!("Parse Error:{}", msg),
-            CompileError::TYPE(msg) => eprintln!("Type Error:{}", msg),
-            CompileError::IO(msg) => eprintln!("I/O Error:{}", msg),
+            CompileError::PARSE(msg) => eprintln!("{} {}", "Parse Error:".red().bold(), msg),
+            CompileError::TYPE(msg) => eprintln!("{} {}", "Type Error:".red().bold(), msg),
+            CompileError::IO(msg) => eprintln!("{} {}", "I/O Error:".red().bold(), msg),
         }
+        std::process::exit(1);
     }
 }

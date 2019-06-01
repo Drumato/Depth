@@ -30,7 +30,7 @@ impl Environment {
             Symbol::new_ident(ident_name.clone(), type_name),
         );
     }
-    fn analyze_func(&mut self, func_name: String, nodes: Box<Vec<node::Node>>) {
+    fn analyze_func(&mut self, func_name: String, nodes: Vec<node::Node>) {
         for n in nodes.iter() {
             match n.ty.clone() {
                 node::NodeType::LETS(_, ident_name, type_name, n) => {
@@ -45,16 +45,81 @@ impl Environment {
         env_name: String,
         ident_name: String,
         type_name: TokenType,
-        n: Box<node::Node>,
+        n: Vec<node::Node>,
     ) {
-        let node: node::Node = conv::open_box(n);
+        let node: node::Node = n[0].clone();
         match node.ty {
-            node::NodeType::BINOP(ty, lchild, rchild, _) => self.check_types(ty, lchild, rchild),
+            node::NodeType::BINOP(_, _, _, _) => self.analyze_binop(node),
             _ => (),
         }
         self.new_ident(env_name, ident_name, type_name)
     }
-    fn check_types(&mut self, ty: TokenType, lchild: Box<node::Node>, rchild: Box<node::Node>) {}
+    fn walk(&mut self, n: node::Node) -> node::Node {
+        if let node::NodeType::INT(val) = n.ty.clone() {
+            return n;
+        }
+        if let node::NodeType::BINOP(ty, lchild, rchild, _) = n.ty.clone() {
+            if ty == TokenType::TkPlus {
+                let lch: node::Node = self.walk(lchild[0].clone());
+                let rch: node::Node = self.walk(rchild[0].clone());
+                if !self.checklchild_valid_plus(lch.clone()) {
+                    error::CompileError::TYPE(format!(
+                        "operator '+' doesn't implement for left-operand '{}'",
+                        lch.string(),
+                    ))
+                    .found();
+                }
+                if let node::NodeType::INT(val) = lch.ty.clone() {
+                    if !self.check_number(rch.clone()) {
+                        error::CompileError::TYPE(format!(
+                            "operator '+' doesn't implement for '{}' and '{}'",
+                            lch.string(),
+                            rch.string(),
+                        ))
+                        .found();
+                    }
+                } else if let node::NodeType::STRING(val) = lch.ty.clone() {
+                    if !self.check_string(rch.clone()) {
+                        error::CompileError::TYPE(format!(
+                            "operator '+' doesn't implement for '{}' and '{}'",
+                            lch.string(),
+                            rch.string(),
+                        ))
+                        .found();
+                    }
+                }
+            }
+        }
+        n
+    }
+    fn analyze_binop(&mut self, node: node::Node) {
+        self.walk(node);
+    }
+    fn checklchild_valid_plus(&mut self, lchild: node::Node) -> bool {
+        match lchild.ty {
+            node::NodeType::INT(t) | node::NodeType::UINT(t) | node::NodeType::STRING(t) => true,
+            node::NodeType::ID(s) => true,
+            _ => false,
+        }
+    }
+    fn check_number(&mut self, n: node::Node) -> bool {
+        match n.ty {
+            node::NodeType::INT(t) | node::NodeType::UINT(t) => true,
+            _ => false,
+        }
+    }
+    fn check_string(&mut self, n: node::Node) -> bool {
+        match n.ty {
+            node::NodeType::STRING(t) => true,
+            _ => false,
+        }
+    }
+    fn check_ident(&mut self, n: node::Node) -> bool {
+        match n.ty {
+            node::NodeType::ID(t) => true,
+            _ => false,
+        }
+    }
     /*   pub fn merge<'a>(
         m1: &HashMap<String, HashMap<String, Symbol>>,
         m2: &HashMap<String, HashMap<String, Symbol>>,

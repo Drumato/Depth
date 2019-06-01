@@ -64,6 +64,8 @@ impl Parser {
         match t.ty {
             TokenType::TkMinus => self.parse_minus(),
             TokenType::TkIntlit | TokenType::TkUintlit => Node::new_num(t, self.getnum()),
+            TokenType::TkStrlit => Node::new_string(t, self.getnum()),
+            TokenType::TkCharlit => Node::new_char(t, self.getnum()),
             TokenType::TkPerStr | TokenType::TkPerChar | TokenType::TkPerInt => self.parse_array(t),
             TokenType::TkIdent => self.parse_ident(t),
             _ => Node::new(NodeType::INVALID, 0),

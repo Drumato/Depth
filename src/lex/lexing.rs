@@ -5,6 +5,7 @@ pub struct Lexer {
     pub ch: u8,
 }
 
+use super::super::parse::error;
 use super::token;
 use token::{Token, TokenType, TokenVal};
 extern crate drumatech;
@@ -197,8 +198,25 @@ impl Lexer {
             '[' => self.judge_lbracket(),
             ']' => self.judge_rbracket(),
             '\\' => self.judge_backslash(),
+            '\'' => self.judge_char(),
             _ => Token::new((TokenType::TkIllegal, s, TokenVal::InVal)),
         }
+    }
+    fn judge_char(&mut self) -> Token {
+        self.read_char(); //ignore "
+        let p: usize = self.pos;
+        if (self.input.bytes().nth(self.pos).unwrap() as char) == '\'' {
+            error::CompileError::PARSE(format!("empty constant of char '{}'", self.peak_char()))
+                .found();
+        }
+        self.read_char();
+        self.read_char();
+        let c = self.input.bytes().nth(p).unwrap();
+        Token::new((
+            TokenType::TkCharlit,
+            (c as char).to_string(),
+            TokenVal::CharVal(c as char),
+        ))
     }
     fn judge_plus(&mut self) -> Token {
         let mut s = conv::u8_to_string(&mut self.ch);

@@ -1,5 +1,3 @@
 f main() -> i8 {
-  let x : i8 = 20
-  let y : i8 = 40
-  return x + y
-  }
+  let x : i8 =  'c' + 3
+ }
