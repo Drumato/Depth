@@ -26,8 +26,8 @@ impl Environment {
     }
     fn new_ident(&mut self, env_name: String, ident_name: String, type_name: TokenType) {
         self.sym_tables.insert(
-            ident_name.clone(),
-            Symbol::new_ident(ident_name.clone(), type_name),
+            ident_name.to_string(),
+            Symbol::new_ident(ident_name.to_string(), type_name),
         );
     }
     fn analyze_func(&mut self, func_name: String, nodes: Vec<node::Node>) {
@@ -62,15 +62,16 @@ impl Environment {
             if ty == TokenType::TkPlus {
                 let lch: node::Node = self.walk(lchild[0].clone());
                 let rch: node::Node = self.walk(rchild[0].clone());
-                if !self.checklchild_valid_plus(lch.clone()) {
+                if !self.checklchild_valid_plus(&lch) {
                     error::CompileError::TYPE(format!(
                         "operator '+' doesn't implement for left-operand '{}'",
                         lch.string(),
                     ))
                     .found();
                 }
+                //if !self.checkrchild_valid_plus();
                 if let node::NodeType::INT(val) = lch.ty.clone() {
-                    if !self.check_number(rch.clone()) {
+                    if !self.check_number(&rch) {
                         error::CompileError::TYPE(format!(
                             "operator '+' doesn't implement for '{}' and '{}'",
                             lch.string(),
@@ -79,7 +80,7 @@ impl Environment {
                         .found();
                     }
                 } else if let node::NodeType::STRING(val) = lch.ty.clone() {
-                    if !self.check_string(rch.clone()) {
+                    if !self.check_string(&rch) {
                         error::CompileError::TYPE(format!(
                             "operator '+' doesn't implement for '{}' and '{}'",
                             lch.string(),
@@ -95,27 +96,27 @@ impl Environment {
     fn analyze_binop(&mut self, node: node::Node) {
         self.walk(node);
     }
-    fn checklchild_valid_plus(&mut self, lchild: node::Node) -> bool {
-        match lchild.ty {
+    fn checklchild_valid_plus(&mut self, lchild: &node::Node) -> bool {
+        match &lchild.ty {
             node::NodeType::INT(t) | node::NodeType::UINT(t) | node::NodeType::STRING(t) => true,
             node::NodeType::ID(s) => true,
             _ => false,
         }
     }
-    fn check_number(&mut self, n: node::Node) -> bool {
-        match n.ty {
+    fn check_number(&mut self, n: &node::Node) -> bool {
+        match &n.ty {
             node::NodeType::INT(t) | node::NodeType::UINT(t) => true,
             _ => false,
         }
     }
-    fn check_string(&mut self, n: node::Node) -> bool {
-        match n.ty {
+    fn check_string(&mut self, n: &node::Node) -> bool {
+        match &n.ty {
             node::NodeType::STRING(t) => true,
             _ => false,
         }
     }
-    fn check_ident(&mut self, n: node::Node) -> bool {
-        match n.ty {
+    fn check_ident(&mut self, n: &node::Node) -> bool {
+        match &n.ty {
             node::NodeType::ID(t) => true,
             _ => false,
         }

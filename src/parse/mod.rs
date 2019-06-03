@@ -29,7 +29,6 @@ mod tests {
         let input_str: &str = "f main(){}";
         let lexer = Lexer::new(input_str.to_string()).unwrap();
         let mut parser: Parser = Parser::new(lexer);
-        assert_eq!(true, parser.consume(TokenType::TkF));
-        assert_eq!(false, parser.consume(TokenType::TkIntlit));
+        assert_eq!(true, parser.consume(&TokenType::TkF));
     }
 }

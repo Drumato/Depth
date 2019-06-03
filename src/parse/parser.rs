@@ -32,8 +32,8 @@ impl Parser {
         self.cur = self.next.clone();
         self.next = self.l.next_token();
     }
-    pub fn consume(&mut self, ty: TokenType) -> bool {
-        if self.cur.ty == ty {
+    pub fn consume(&mut self, ty: &TokenType) -> bool {
+        if &self.cur.ty == ty {
             self.next_token();
             return true;
         }
@@ -45,8 +45,8 @@ impl Parser {
         .found();
         false
     }
-    pub fn expect(&mut self, ty: TokenType) {
-        if self.next.ty == ty {
+    pub fn expect(&mut self, ty: &TokenType) {
+        if &self.next.ty == ty {
             self.next_token();
             return;
         }
@@ -82,7 +82,7 @@ impl Parser {
                 self.next_token();
             }
         }
-        self.expect(TokenType::TkRparen);
+        self.expect(&TokenType::TkRparen);
         self.next_token();
         Node::new_call(t.literal, arguments, self.getnum())
     }
@@ -94,13 +94,13 @@ impl Parser {
     }
     fn parse_array(&mut self, ty: Token) -> Node {
         //%s(abc def ghi)
-        self.consume(TokenType::TkLparen); //( -> abc
+        self.consume(&TokenType::TkLparen); //( -> abc
         let mut elements: Vec<Token> = Vec::new();
         while self.next.ty != TokenType::TkRparen {
             elements.push(self.cur.clone());
             self.next_token();
         }
-        self.expect(TokenType::TkRparen);
+        self.expect(&TokenType::TkRparen);
         self.next_token();
         match ty.ty {
             TokenType::TkPerStr => Node::new_strary(elements, self.getnum()),
@@ -276,18 +276,18 @@ impl Parser {
         let if_keyword: TokenType = self.cur.ty.clone();
         self.next_token(); //if -> the start of expr
         let condition: Node = self.expr();
-        self.consume(TokenType::TkLbrace);
+        self.consume(&TokenType::TkLbrace);
         let mut statements: Vec<Node> = Vec::new();
         while self.cur.ty != TokenType::TkRbrace {
             let n: Node = self.stmt();
             statements.push(n);
         }
-        self.consume(TokenType::TkRbrace);
+        self.consume(&TokenType::TkRbrace);
         let mut alternatives: Vec<Node> = Vec::new();
         let mut ids: Vec<u64> = Vec::new();
         if self.cur.ty == TokenType::TkElse {
-            self.consume(TokenType::TkElse);
-            self.consume(TokenType::TkLbrace);
+            self.consume(&TokenType::TkElse);
+            self.consume(&TokenType::TkLbrace);
             while self.cur.ty != TokenType::TkRbrace {
                 let n: Node = self.stmt();
                 alternatives.push(n.clone());
@@ -313,20 +313,20 @@ impl Parser {
         let let_keyword: TokenType = self.cur.ty.clone();
         self.next_token(); // let -> identifier
         let ident_name: String = self.cur.literal.clone();
-        self.expect(TokenType::TkColon);
+        self.expect(&TokenType::TkColon);
         self.next_token(); // : -> typename
         if !self.cur.ty.is_typename() {
             CompileError::PARSE(format!("expected typename but got {}", self.cur.literal)).found();
         }
         let typename: TokenType = self.cur.ty.clone();
-        self.expect(TokenType::TkAssign);
+        self.expect(&TokenType::TkAssign);
         self.next_token(); // = -> the start of expr
         let expr: Node = self.expr();
         Node::new_lets(let_keyword, ident_name, typename, expr, self.getnum())
     }
     fn parse_loop(&mut self) -> Node {
         let loop_keyword: TokenType = self.cur.ty.clone();
-        self.expect(TokenType::TkLbrace);
+        self.expect(&TokenType::TkLbrace);
         self.next_token(); // { -> first of statements
         let mut statements: Vec<Node> = Vec::new();
         let mut ids: Vec<u64> = Vec::new();
@@ -335,17 +335,17 @@ impl Parser {
             statements.push(n.clone());
             ids.push(n.id);
         }
-        self.consume(TokenType::TkRbrace);
+        self.consume(&TokenType::TkRbrace);
         Node::new_loops(loop_keyword, statements, self.getnum(), ids)
     }
     fn parse_for(&mut self) -> Node {
         let for_keyword: TokenType = self.cur.ty.clone();
         self.next_token(); //for -> identifier
         let tmp_ident: String = self.cur.literal.clone();
-        self.expect(TokenType::TkIn);
+        self.expect(&TokenType::TkIn);
         self.next_token(); // in -> identifier
         let src_ident: String = self.cur.literal.clone();
-        self.expect(TokenType::TkLbrace);
+        self.expect(&TokenType::TkLbrace);
         self.next_token(); // { -> first of statements
         let mut statements: Vec<Node> = Vec::new();
         let mut ids: Vec<u64> = Vec::new();
@@ -354,7 +354,7 @@ impl Parser {
             statements.push(n.clone());
             ids.push(n.id);
         }
-        self.consume(TokenType::TkRbrace);
+        self.consume(&TokenType::TkRbrace);
         Node::new_fors(
             for_keyword,
             tmp_ident,
@@ -366,12 +366,12 @@ impl Parser {
     }
     fn func(&mut self) -> Node {
         let func_name: String = self.cur.literal.clone();
-        self.expect(TokenType::TkLparen);
+        self.expect(&TokenType::TkLparen);
         let mut arguments: HashMap<String, TokenType> = HashMap::new();
         while self.next.ty != TokenType::TkRparen {
-            self.expect(TokenType::TkIdent);
+            self.expect(&TokenType::TkIdent);
             let ident_name: String = self.cur.literal.clone();
-            self.expect(TokenType::TkColon);
+            self.expect(&TokenType::TkColon);
             self.next_token(); // : -> typename
             if !self.cur.ty.is_typename() {
                 CompileError::PARSE(format!("expected typename but got {}", self.cur.literal))
@@ -379,10 +379,10 @@ impl Parser {
             }
             arguments.insert(ident_name, self.cur.ty.clone());
             if self.next.ty == TokenType::TkComma {
-                self.expect(TokenType::TkComma);
+                self.expect(&TokenType::TkComma);
             }
         }
-        self.expect(TokenType::TkRparen);
+        self.expect(&TokenType::TkRparen);
 
         let mut ret: TokenType = if self.next.ty == TokenType::TkArrow {
             self.next_token();
@@ -392,7 +392,7 @@ impl Parser {
             TokenType::TkIllegal
         };
 
-        self.expect(TokenType::TkLbrace);
+        self.expect(&TokenType::TkLbrace);
         self.next_token();
         let mut statements: Vec<Node> = Vec::new();
         let mut ids: Vec<u64> = Vec::new();
@@ -401,7 +401,7 @@ impl Parser {
             statements.push(n.clone());
             ids.push(n.id);
         }
-        self.consume(TokenType::TkRbrace);
+        self.consume(&TokenType::TkRbrace);
         Node::new_func(func_name, arguments, ret, statements, self.getnum(), ids)
     }
 }
@@ -413,6 +413,6 @@ pub fn parse(lexer: lexing::Lexer) -> Vec<Node> {
         parser.next_token();
         nodes.push(parser.func());
     }
-    parser.consume(TokenType::TkEof);
+    parser.consume(&TokenType::TkEof);
     nodes
 }
