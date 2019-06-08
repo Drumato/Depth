@@ -136,14 +136,14 @@ pub enum NodeType {
 impl NodeType {
     pub fn dump(&self) -> String {
         match self {
-            NodeType::INT(v) => v.dump(),
-            NodeType::ID(s) => s.to_string(),
-            NodeType::BINOP(ty, l, r, _) => format!("{}", String::from(ty.string()),),
-            NodeType::STRING(Token) => format!("{}", Token.literal), //strlit
-            NodeType::CHAR(Token) => format!("{}", Token.literal),   //charlit
+            NodeType::INT(v) => "INTLIT".to_string(),
+            NodeType::ID(s) => "IDENT".to_string(),
+            NodeType::BINOP(ty, _, _, _) => ty.string().to_string(),
+            NodeType::STRING(_) => "STRING".to_string(), //strlit
+            NodeType::CHAR(_) => "CHAR".to_string(),     //charlit
             NodeType::EX(n) => n[0].string().to_string(),
-            NodeType::RETS(_, _) => format!("return statement"),
-            NodeType::FUNC(_, _, _, _, _) => format!("declaration function"),
+            NodeType::RETS(_, _) => "RETURN".to_string(),
+            NodeType::FUNC(_, _, _, _, _) => "FUNC".to_string(),
             _ => "Invalid Node".to_string(),
         }
     }

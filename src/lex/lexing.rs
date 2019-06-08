@@ -60,15 +60,16 @@ impl Lexer {
         }
         self.input[p..self.pos].to_string()
     }
-    pub fn read_string(&mut self) -> String {
+    pub fn judge_string(&mut self) -> Token {
         self.read_char(); //ignore "
         let p: usize = self.pos;
         while self.peak_char() != '"' {
             self.read_char();
         }
-        self.read_char(); //ignore "
         self.read_char();
-        self.input[p..self.pos].to_string()
+        let s: String = self.input[p..self.pos].to_string();
+        self.read_char();
+        Token::new((TokenType::TkStrlit, s, TokenVal::InVal))
     }
     pub fn read_number(&mut self) -> String {
         let p: usize = self.pos;
@@ -111,6 +112,7 @@ impl Lexer {
         let s = conv::u8_to_string(&mut self.ch);
         match self.ch as char {
             '\0' => Token::new((TokenType::TkEof, s, TokenVal::InVal)),
+            c if c == '"' => self.judge_string(),
             c if (c == 'u' && self.peak_char().is_ascii_digit()) => self.judge_unumber(),
             c if c.is_ascii_digit() => self.judge_number(),
             c if c.is_alphabetic() => self.judge_keyword(),

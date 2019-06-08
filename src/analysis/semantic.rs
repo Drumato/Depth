@@ -54,51 +54,95 @@ impl Environment {
         }
         self.new_ident(env_name, ident_name, type_name)
     }
+    fn checktype_binop(&mut self, ty: TokenType, lchild: Vec<node::Node>, rchild: Vec<node::Node>) {
+        if ty == TokenType::TkPlus || ty == TokenType::TkStar {
+            let lch: node::Node = self.walk(lchild[0].clone());
+            let rch: node::Node = self.walk(rchild[0].clone());
+            if !self.checklchild_valid_admul(&lch) {
+                error::CompileError::TYPE(format!(
+                    "operator '{}' doesn't implement for left-operand '{}'",
+                    ty.string(),
+                    lch.string(),
+                ))
+                .found();
+            }
+            if let node::NodeType::INT(val) = lch.ty.clone() {
+                if !self.check_number(&rch) {
+                    error::CompileError::TYPE(format!(
+                        "operator '{}' doesn't implement for '{}' and '{}'",
+                        ty.string(),
+                        lch.string(),
+                        rch.string(),
+                    ))
+                    .found();
+                }
+            } else if let node::NodeType::STRING(val) = lch.ty.clone() {
+                if !self.check_string(&rch) {
+                    error::CompileError::TYPE(format!(
+                        "operator '{}' doesn't implement for '{}' and '{}'",
+                        ty.string(),
+                        lch.string(),
+                        rch.string(),
+                    ))
+                    .found();
+                }
+            }
+        } else if ty == TokenType::TkMinus || ty == TokenType::TkSlash {
+            let lch: node::Node = self.walk(lchild[0].clone());
+            let rch: node::Node = self.walk(rchild[0].clone());
+            if !self.checklchild_valid_subdiv(&lch) {
+                error::CompileError::TYPE(format!(
+                    "operator '{}' doesn't implement for left-operand '{}'",
+                    ty.string(),
+                    lch.string(),
+                ))
+                .found();
+            }
+            if let node::NodeType::INT(val) = lch.ty.clone() {
+                if !self.check_number(&rch) {
+                    error::CompileError::TYPE(format!(
+                        "operator '{}' doesn't implement for '{}' and '{}'",
+                        ty.string(),
+                        lch.string(),
+                        rch.string(),
+                    ))
+                    .found();
+                }
+            } else if let node::NodeType::STRING(val) = lch.ty.clone() {
+                if !self.check_string(&rch) {
+                    error::CompileError::TYPE(format!(
+                        "operator '{}' doesn't implement for '{}' and '{}'",
+                        ty.string(),
+                        lch.string(),
+                        rch.string(),
+                    ))
+                    .found();
+                }
+            }
+        }
+    }
     fn walk(&mut self, n: node::Node) -> node::Node {
         if let node::NodeType::INT(val) = n.ty.clone() {
             return n;
         }
         if let node::NodeType::BINOP(ty, lchild, rchild, _) = n.ty.clone() {
-            if ty == TokenType::TkPlus {
-                let lch: node::Node = self.walk(lchild[0].clone());
-                let rch: node::Node = self.walk(rchild[0].clone());
-                if !self.checklchild_valid_plus(&lch) {
-                    error::CompileError::TYPE(format!(
-                        "operator '+' doesn't implement for left-operand '{}'",
-                        lch.string(),
-                    ))
-                    .found();
-                }
-                //if !self.checkrchild_valid_plus();
-                if let node::NodeType::INT(val) = lch.ty.clone() {
-                    if !self.check_number(&rch) {
-                        error::CompileError::TYPE(format!(
-                            "operator '+' doesn't implement for '{}' and '{}'",
-                            lch.string(),
-                            rch.string(),
-                        ))
-                        .found();
-                    }
-                } else if let node::NodeType::STRING(val) = lch.ty.clone() {
-                    if !self.check_string(&rch) {
-                        error::CompileError::TYPE(format!(
-                            "operator '+' doesn't implement for '{}' and '{}'",
-                            lch.string(),
-                            rch.string(),
-                        ))
-                        .found();
-                    }
-                }
-            }
+            self.checktype_binop(ty, lchild, rchild);
         }
         n
     }
     fn analyze_binop(&mut self, node: node::Node) {
         self.walk(node);
     }
-    fn checklchild_valid_plus(&mut self, lchild: &node::Node) -> bool {
+    fn checklchild_valid_admul(&mut self, lchild: &node::Node) -> bool {
         match &lchild.ty {
             node::NodeType::INT(t) | node::NodeType::UINT(t) | node::NodeType::STRING(t) => true,
+            node::NodeType::ID(s) => true,
+            _ => false,
+        }
+    }
+    fn checklchild_valid_subdiv(&mut self, lchild: &node::Node) -> bool {
+        match &lchild.ty {
+            node::NodeType::INT(t) | node::NodeType::UINT(t) => true,
             node::NodeType::ID(s) => true,
             _ => false,
         }
