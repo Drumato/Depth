@@ -151,8 +151,3 @@ mod tests {
         assert_eq!(lexer.next_token().dump(), "type:EOF\tinput:\u{0}\tval:");
     }
 }
-
-fn test_token(s: &str) -> token::Token {
-    let mut lexer = lexing::Lexer::new(s.to_string()).unwrap();
-    lexer.next_token()
-}

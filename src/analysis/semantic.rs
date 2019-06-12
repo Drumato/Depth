@@ -1,7 +1,6 @@
 extern crate drumatech;
 use super::super::lex::token;
 use super::super::parse::{error, node};
-use drumatech::conv;
 use std::collections::HashMap;
 use token::TokenType;
 pub struct Environment {
@@ -17,18 +16,19 @@ impl Environment {
     pub fn semantic(&mut self, nodes: Vec<node::Node>) {
         for n in nodes.iter() {
             match n.ty.clone() {
-                node::NodeType::FUNC(func_name, _, _, nodes, _) => {
-                    self.analyze_func(func_name, nodes)
-                }
+                node::NodeType::FUNC(func_name, _, _, nodes) => self.analyze_func(func_name, nodes),
                 _ => (),
             }
         }
     }
-    fn new_ident(&mut self, env_name: String, ident_name: String, type_name: TokenType) {
-        self.sym_tables.insert(
-            ident_name.to_string(),
-            Symbol::new_ident(ident_name.to_string(), type_name),
-        );
+    fn new_ident(&mut self, _env_name: String, ident_name: Vec<node::Node>, type_name: TokenType) {
+        let stacksize: u8 = type_name.stacksize();
+        if let node::NodeType::ID(name) = &ident_name[0].ty {
+            self.sym_tables.insert(
+                name.to_string(),
+                Symbol::new_ident(name.to_string(), type_name, stacksize),
+            );
+        }
     }
     fn analyze_func(&mut self, func_name: String, nodes: Vec<node::Node>) {
         for n in nodes.iter() {
@@ -43,13 +43,13 @@ impl Environment {
     fn analyze_lets(
         &mut self,
         env_name: String,
-        ident_name: String,
+        ident_name: Vec<node::Node>,
         type_name: TokenType,
         n: Vec<node::Node>,
     ) {
         let node: node::Node = n[0].clone();
         match node.ty {
-            node::NodeType::BINOP(_, _, _, _) => self.analyze_binop(node),
+            node::NodeType::BINOP(_, _, _) => self.analyze_binop(node),
             _ => (),
         }
         self.new_ident(env_name, ident_name, type_name)
@@ -66,7 +66,7 @@ impl Environment {
                 ))
                 .found();
             }
-            if let node::NodeType::INT(val) = lch.ty.clone() {
+            if let node::NodeType::INT(_) = lch.ty.clone() {
                 if !self.check_number(&rch) {
                     error::CompileError::TYPE(format!(
                         "operator '{}' doesn't implement for '{}' and '{}'",
@@ -76,7 +76,7 @@ impl Environment {
                     ))
                     .found();
                 }
-            } else if let node::NodeType::STRING(val) = lch.ty.clone() {
+            } else if let node::NodeType::STRING(_) = lch.ty.clone() {
                 if !self.check_string(&rch) {
                     error::CompileError::TYPE(format!(
                         "operator '{}' doesn't implement for '{}' and '{}'",
@@ -98,7 +98,7 @@ impl Environment {
                 ))
                 .found();
             }
-            if let node::NodeType::INT(val) = lch.ty.clone() {
+            if let node::NodeType::INT(_) = lch.ty.clone() {
                 if !self.check_number(&rch) {
                     error::CompileError::TYPE(format!(
                         "operator '{}' doesn't implement for '{}' and '{}'",
@@ -108,7 +108,7 @@ impl Environment {
                     ))
                     .found();
                 }
-            } else if let node::NodeType::STRING(val) = lch.ty.clone() {
+            } else if let node::NodeType::STRING(_) = lch.ty.clone() {
                 if !self.check_string(&rch) {
                     error::CompileError::TYPE(format!(
                         "operator '{}' doesn't implement for '{}' and '{}'",
@@ -122,10 +122,10 @@ impl Environment {
         }
     }
     fn walk(&mut self, n: node::Node) -> node::Node {
-        if let node::NodeType::INT(val) = n.ty.clone() {
+        if let node::NodeType::INT(_) = n.ty.clone() {
             return n;
         }
-        if let node::NodeType::BINOP(ty, lchild, rchild, _) = n.ty.clone() {
+        if let node::NodeType::BINOP(ty, lchild, rchild) = n.ty.clone() {
             self.checktype_binop(ty, lchild, rchild);
         }
         n
@@ -135,33 +135,27 @@ impl Environment {
     }
     fn checklchild_valid_admul(&mut self, lchild: &node::Node) -> bool {
         match &lchild.ty {
-            node::NodeType::INT(t) | node::NodeType::UINT(t) | node::NodeType::STRING(t) => true,
-            node::NodeType::ID(s) => true,
+            node::NodeType::INT(_) | node::NodeType::UINT(_) | node::NodeType::STRING(_) => true,
+            node::NodeType::ID(_) => true,
             _ => false,
         }
     }
     fn checklchild_valid_subdiv(&mut self, lchild: &node::Node) -> bool {
         match &lchild.ty {
-            node::NodeType::INT(t) | node::NodeType::UINT(t) => true,
-            node::NodeType::ID(s) => true,
+            node::NodeType::INT(_) | node::NodeType::UINT(_) => true,
+            node::NodeType::ID(_) => true,
             _ => false,
         }
     }
     fn check_number(&mut self, n: &node::Node) -> bool {
         match &n.ty {
-            node::NodeType::INT(t) | node::NodeType::UINT(t) => true,
+            node::NodeType::INT(_) | node::NodeType::UINT(_) => true,
             _ => false,
         }
     }
     fn check_string(&mut self, n: &node::Node) -> bool {
         match &n.ty {
-            node::NodeType::STRING(t) => true,
-            _ => false,
-        }
-    }
-    fn check_ident(&mut self, n: &node::Node) -> bool {
-        match &n.ty {
-            node::NodeType::ID(t) => true,
+            node::NodeType::STRING(_) => true,
             _ => false,
         }
     }
@@ -183,25 +177,31 @@ impl Environment {
     */
 }
 
-#[derive(Debug)]
 pub struct Symbol {
     ty: SymbolType,
 }
 
 impl Symbol {
+    pub fn string(&self) -> String {
+        match &self.ty {
+            SymbolType::ID(name, ty, stacksize) => {
+                format!("name:{}   type:{}   size:{}", name, ty.string(), stacksize)
+            }
+            SymbolType::TYPE(name, ty) => format!("name:{}   type:{}", name, ty.string()),
+        }
+    }
     pub fn new(ty: SymbolType) -> Self {
         Self { ty: ty }
     }
-    pub fn new_ident(name: String, ty: TokenType) -> Self {
-        Symbol::new(SymbolType::ID(name, ty))
+    pub fn new_ident(name: String, ty: TokenType, stacksize: u8) -> Self {
+        Symbol::new(SymbolType::ID(name, ty, stacksize))
     }
     pub fn new_type(name: String, ty: TokenType) -> Self {
         Symbol::new(SymbolType::TYPE(name, ty))
     }
 }
 
-#[derive(Debug)]
 pub enum SymbolType {
-    ID(String, TokenType),
+    ID(String, TokenType, u8),
     TYPE(String, TokenType),
 }

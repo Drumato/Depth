@@ -43,16 +43,6 @@ impl Lexer {
             }
         }
     }
-    pub fn peak_byte(self) -> u8 {
-        if self.npos >= self.input.len() {
-            return 0;
-        } else {
-            match self.input.bytes().nth(self.npos) {
-                Some(c) => c,
-                None => panic!("Error found between calling read_char() function"),
-            }
-        }
-    }
     pub fn read_ident(&mut self) -> String {
         let p: usize = self.pos;
         while self.ch.is_ascii_alphabetic() || self.ch.is_ascii_digit() || self.ch == 0x5f {

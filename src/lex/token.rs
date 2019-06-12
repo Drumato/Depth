@@ -1,3 +1,4 @@
+use super::super::parse::error;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub ty: TokenType,
@@ -7,9 +8,9 @@ pub struct Token {
 
 pub fn lookup(s: &str) -> bool {
     match s {
-        "mut" | "f" | "true" | "false" | "loop" | "for" | "in" | "let" | "const" | "if"
-        | "else" | "return" | "struct" | "bool" | "str" | "u8" | "u16" | "u32" | "u64" | "u128"
-        | "ch" | "i8" | "i16" | "i32" | "i64" | "i128" | "f32" | "f64" => true,
+        "typedef" | "mut" | "f" | "true" | "false" | "loop" | "for" | "in" | "let" | "const"
+        | "if" | "else" | "return" | "struct" | "bool" | "str" | "u8" | "u16" | "u32" | "u64"
+        | "u128" | "ch" | "i8" | "i16" | "i32" | "i64" | "i128" | "f32" | "f64" => true,
         _ => false,
     }
 }
@@ -29,6 +30,7 @@ pub fn get_keyword(s: &str) -> TokenType {
         "else" => TokenType::TkElse,
         "return" => TokenType::TkReturn,
         "struct" => TokenType::TkStruct,
+        "typedef" => TokenType::TkTypedef,
         "bool" => TokenType::TkBool,
         "ch" => TokenType::TkChar,
         "str" => TokenType::TkString,
@@ -70,9 +72,8 @@ impl Token {
 pub enum TokenVal {
     IntVal(i128),
     UintVal(u128),
-    RealVal(f64),
+    //RealVal(f64),
     CharVal(char), //change u32 after
-    StrVal(String),
     InVal,
 }
 
@@ -81,14 +82,14 @@ impl TokenVal {
         match self {
             TokenVal::IntVal(d) => format!("{}", d),
             TokenVal::UintVal(d) => format!("{}", d),
-            TokenVal::RealVal(r) => format!("{}", r),
+            //TokenVal::RealVal(r) => format!("{}", r),
             TokenVal::CharVal(c) => format!("{}", c),
-            TokenVal::StrVal(s) => format!("{}", s),
             _ => "".to_string(),
         }
     }
 }
 
+/*
 pub enum IntType {
     I8,
     I16,
@@ -130,18 +131,18 @@ impl UintType {
         }
     }
 }
+*/
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
     /* for identifying Type */
     TkIllegal,
     TkIdent,
     TkEof,
-    TkFunction,
     TkCharlit,
     TkIntlit,
     TkUintlit,
     TkStrlit,
-    TkReallit,
+    //TkReallit,
 
     /* keywords */
     TkMutable, //mut
@@ -157,6 +158,7 @@ pub enum TokenType {
     TkElse,    //else
     TkReturn,  //return
     TkStruct,  //struct
+    TkTypedef, //typedef
 
     /* types */
     TkBool,   //bool
@@ -218,23 +220,41 @@ pub enum TokenType {
     TkRbrace,
     TkLbracket,
     TkRbracket,
-    TkExp,
-    TkTerm,
-    TkAtom,
 }
 
 impl TokenType {
+    pub fn stacksize(&self) -> u8 {
+        match self {
+            TokenType::TkI8 => 8,
+            TokenType::TkI16 => 16,
+            TokenType::TkI32 => 32,
+            TokenType::TkI64 => 64,
+            TokenType::TkI128 => 128,
+            TokenType::TkU8 => 8,
+            TokenType::TkU16 => 16,
+            TokenType::TkU32 => 32,
+            TokenType::TkU64 => 64,
+            TokenType::TkU128 => 128,
+            _ => {
+                error::CompileError::TYPE(format!(
+                    "'{}' is not known at compile-time",
+                    self.string(),
+                ))
+                .found();
+                8
+            }
+        }
+    }
     pub fn string(&self) -> &str {
         match self {
             TokenType::TkIllegal => "ILLEGAL",
             TokenType::TkIdent => "IDENTIFIER",
             TokenType::TkEof => "EOF",
-            TokenType::TkFunction => "FUNCTION",
             TokenType::TkIntlit => "INT-LITERAL",
             TokenType::TkUintlit => "UINT-LITERAL",
             TokenType::TkCharlit => "CHAR-LITERAL",
             TokenType::TkStrlit => "STRING-LITERAL",
-            TokenType::TkReallit => "REAL-LITERAL",
+            //TokenType::TkReallit => "REAL-LITERAL",
             TokenType::TkMutable => "MUTABLE",
             TokenType::TkF => "F",
             TokenType::TkTrue => "TRUE",
@@ -245,9 +265,10 @@ impl TokenType {
             TokenType::TkLet => "LET",
             TokenType::TkConst => "CONST",
             TokenType::TkIf => "IF",
-            TokenType::TkElse => "ELSE",     //else
-            TokenType::TkReturn => "RETURN", //return
-            TokenType::TkStruct => "STRUCT", //struct
+            TokenType::TkElse => "ELSE",       //else
+            TokenType::TkReturn => "RETURN",   //return
+            TokenType::TkStruct => "STRUCT",   //struct
+            TokenType::TkTypedef => "TYPEDEF", //typedef
 
             /* types */
             TokenType::TkBool => "BOOL",     //bool
@@ -308,9 +329,6 @@ impl TokenType {
             TokenType::TkRbrace => "RBRACE",
             TokenType::TkLbracket => "LBRACKET",
             TokenType::TkRbracket => "RBRACKET",
-            TokenType::TkExp => "EXP",
-            TokenType::TkTerm => "TERM",
-            TokenType::TkAtom => "ATOM",
         }
     }
     pub fn is_typename(&self) -> bool {

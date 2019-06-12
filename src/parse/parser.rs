@@ -2,7 +2,7 @@ use super::super::lex::{lexing, token};
 use super::error::CompileError;
 use super::node::{Node, NodeType};
 use std::collections::HashMap;
-use token::{Token, TokenType, TokenVal};
+use token::{Token, TokenType};
 
 pub struct Parser {
     pub l: lexing::Lexer,
@@ -21,12 +21,6 @@ impl Parser {
             next: next,
             node_num: 1,
         }
-    }
-    pub fn getnum(&mut self) -> u64 {
-        //get node_number for identifying
-        let current: u64 = self.node_num;
-        self.node_num += 1;
-        current
     }
     pub fn next_token(&mut self) {
         self.cur = self.next.clone();
@@ -63,12 +57,12 @@ impl Parser {
         self.next_token();
         match t.ty {
             TokenType::TkMinus => self.parse_minus(),
-            TokenType::TkIntlit | TokenType::TkUintlit => Node::new_num(t, self.getnum()),
-            TokenType::TkStrlit => Node::new_string(t, self.getnum()),
-            TokenType::TkCharlit => Node::new_char(t, self.getnum()),
+            TokenType::TkIntlit | TokenType::TkUintlit => Node::new_num(t),
+            TokenType::TkStrlit => Node::new_string(t),
+            TokenType::TkCharlit => Node::new_char(t),
             TokenType::TkPerStr | TokenType::TkPerChar | TokenType::TkPerInt => self.parse_array(t),
             TokenType::TkIdent => self.parse_ident(t),
-            _ => Node::new(NodeType::INVALID, 0),
+            _ => Node::new(NodeType::INVALID),
         }
     }
     fn parse_ident(&mut self, t: Token) -> Node {
@@ -84,13 +78,13 @@ impl Parser {
         }
         self.expect(&TokenType::TkRparen);
         self.next_token();
-        Node::new_call(t.literal, arguments, self.getnum())
+        Node::new_call(t.literal, arguments)
     }
     fn parse_minus(&mut self) -> Node {
         let mut token: Token = self.cur.clone();
         self.next_token();
         token.literal = String::from("-") + &token.literal;
-        Node::new_num(token, self.getnum())
+        Node::new_num(token)
     }
     fn parse_array(&mut self, ty: Token) -> Node {
         //%s(abc def ghi)
@@ -103,10 +97,10 @@ impl Parser {
         self.expect(&TokenType::TkRparen);
         self.next_token();
         match ty.ty {
-            TokenType::TkPerStr => Node::new_strary(elements, self.getnum()),
-            TokenType::TkPerChar => Node::new_charary(elements, self.getnum()),
-            TokenType::TkPerInt => Node::new_intary(elements, self.getnum()),
-            _ => Node::new(NodeType::INVALID, 0),
+            TokenType::TkPerStr => Node::new_strary(elements),
+            TokenType::TkPerChar => Node::new_charary(elements),
+            TokenType::TkPerInt => Node::new_intary(elements),
+            _ => Node::new(NodeType::INVALID),
         }
     }
     fn logor(&mut self) -> Node {
@@ -119,13 +113,7 @@ impl Parser {
             }
             self.next_token();
             let rchild = self.logand();
-            lchild = Node::new_binop(
-                t.ty,
-                lchild.clone(),
-                rchild.clone(),
-                self.getnum(),
-                vec![lchild.id, rchild.id],
-            );
+            lchild = Node::new_binop(t.ty, lchild.clone(), rchild.clone());
         }
         lchild
     }
@@ -139,13 +127,7 @@ impl Parser {
             }
             self.next_token();
             let rchild = self.equal();
-            lchild = Node::new_binop(
-                t.ty,
-                lchild.clone(),
-                rchild.clone(),
-                self.getnum(),
-                vec![lchild.id, rchild.id],
-            );
+            lchild = Node::new_binop(t.ty, lchild.clone(), rchild.clone());
         }
         lchild
     }
@@ -159,13 +141,7 @@ impl Parser {
             }
             self.next_token();
             let rchild = self.cmp();
-            lchild = Node::new_binop(
-                t.ty,
-                lchild.clone(),
-                rchild.clone(),
-                self.getnum(),
-                vec![lchild.id, rchild.id],
-            );
+            lchild = Node::new_binop(t.ty, lchild.clone(), rchild.clone());
         }
         lchild
     }
@@ -183,13 +159,7 @@ impl Parser {
             }
             self.next_token();
             let rchild = self.shift();
-            lchild = Node::new_binop(
-                t.ty,
-                lchild.clone(),
-                rchild.clone(),
-                self.getnum(),
-                vec![lchild.id, rchild.id],
-            );
+            lchild = Node::new_binop(t.ty, lchild.clone(), rchild.clone());
         }
         lchild
     }
@@ -203,13 +173,7 @@ impl Parser {
             }
             self.next_token();
             let rchild = self.adsub();
-            lchild = Node::new_binop(
-                t.ty,
-                lchild.clone(),
-                rchild.clone(),
-                self.getnum(),
-                vec![lchild.id, rchild.id],
-            );
+            lchild = Node::new_binop(t.ty, lchild.clone(), rchild.clone());
         }
         lchild
     }
@@ -223,13 +187,7 @@ impl Parser {
             }
             self.next_token();
             let rchild = self.muldiv();
-            lchild = Node::new_binop(
-                t.ty,
-                lchild.clone(),
-                rchild.clone(),
-                self.getnum(),
-                vec![lchild.id, rchild.id],
-            );
+            lchild = Node::new_binop(t.ty, lchild.clone(), rchild.clone());
         }
         lchild
     }
@@ -246,13 +204,7 @@ impl Parser {
             }
             self.next_token();
             let rchild = self.term();
-            lchild = Node::new_binop(
-                t.ty,
-                lchild.clone(),
-                rchild.clone(),
-                self.getnum(),
-                vec![lchild.id, rchild.id],
-            );
+            lchild = Node::new_binop(t.ty, lchild.clone(), rchild.clone());
         }
         lchild
     }
@@ -268,7 +220,7 @@ impl Parser {
             TokenType::TkLoop => self.parse_loop(),
             TokenType::TkFor => self.parse_for(),
             TokenType::TkIf => self.parse_if(),
-            _ => Node::new(NodeType::INVALID, 0),
+            _ => Node::new(NodeType::INVALID),
         }
     }
     fn parse_if(&mut self) -> Node {
@@ -284,14 +236,12 @@ impl Parser {
         }
         self.consume(&TokenType::TkRbrace);
         let mut alternatives: Vec<Node> = Vec::new();
-        let mut ids: Vec<u64> = Vec::new();
         if self.cur.ty == TokenType::TkElse {
             self.consume(&TokenType::TkElse);
             self.consume(&TokenType::TkLbrace);
             while self.cur.ty != TokenType::TkRbrace {
                 let n: Node = self.stmt();
                 alternatives.push(n.clone());
-                ids.push(n.id);
             }
         }
         Node::new_ifs(
@@ -300,19 +250,17 @@ impl Parser {
             statements,
             TokenType::TkElse,
             alternatives,
-            self.getnum(),
-            ids,
         )
     }
     fn parse_return(&mut self) -> Node {
         let ret_keyword: TokenType = self.cur.ty.clone();
         self.next_token(); // return -> the start of expr
-        Node::new_rets(ret_keyword, self.expr(), self.getnum())
+        Node::new_rets(ret_keyword, self.expr())
     }
     fn parse_let(&mut self) -> Node {
         let let_keyword: TokenType = self.cur.ty.clone();
         self.next_token(); // let -> identifier
-        let ident_name: String = self.cur.literal.clone();
+        let ident_name: Vec<Node> = vec![Node::new_ident(self.cur.literal.clone())];
         self.expect(&TokenType::TkColon);
         self.next_token(); // : -> typename
         if !self.cur.ty.is_typename() {
@@ -322,21 +270,19 @@ impl Parser {
         self.expect(&TokenType::TkAssign);
         self.next_token(); // = -> the start of expr
         let expr: Node = self.expr();
-        Node::new_lets(let_keyword, ident_name, typename, expr, self.getnum())
+        Node::new_lets(let_keyword, ident_name, typename, expr)
     }
     fn parse_loop(&mut self) -> Node {
         let loop_keyword: TokenType = self.cur.ty.clone();
         self.expect(&TokenType::TkLbrace);
         self.next_token(); // { -> first of statements
         let mut statements: Vec<Node> = Vec::new();
-        let mut ids: Vec<u64> = Vec::new();
         while self.cur.ty != TokenType::TkRbrace {
             let n: Node = self.stmt();
             statements.push(n.clone());
-            ids.push(n.id);
         }
         self.consume(&TokenType::TkRbrace);
-        Node::new_loops(loop_keyword, statements, self.getnum(), ids)
+        Node::new_loops(loop_keyword, statements)
     }
     fn parse_for(&mut self) -> Node {
         let for_keyword: TokenType = self.cur.ty.clone();
@@ -348,21 +294,12 @@ impl Parser {
         self.expect(&TokenType::TkLbrace);
         self.next_token(); // { -> first of statements
         let mut statements: Vec<Node> = Vec::new();
-        let mut ids: Vec<u64> = Vec::new();
         while self.cur.ty != TokenType::TkRbrace {
             let n: Node = self.stmt();
             statements.push(n.clone());
-            ids.push(n.id);
         }
         self.consume(&TokenType::TkRbrace);
-        Node::new_fors(
-            for_keyword,
-            tmp_ident,
-            src_ident,
-            statements,
-            self.getnum(),
-            ids,
-        )
+        Node::new_fors(for_keyword, tmp_ident, src_ident, statements)
     }
     fn func(&mut self) -> Node {
         let func_name: String = self.cur.literal.clone();
@@ -384,7 +321,7 @@ impl Parser {
         }
         self.expect(&TokenType::TkRparen);
 
-        let mut ret: TokenType = if self.next.ty == TokenType::TkArrow {
+        let ret: TokenType = if self.next.ty == TokenType::TkArrow {
             self.next_token();
             self.next_token();
             self.cur.ty.clone()
@@ -395,14 +332,12 @@ impl Parser {
         self.expect(&TokenType::TkLbrace);
         self.next_token();
         let mut statements: Vec<Node> = Vec::new();
-        let mut ids: Vec<u64> = Vec::new();
         while self.cur.ty != TokenType::TkRbrace {
             let n: Node = self.stmt();
             statements.push(n.clone());
-            ids.push(n.id);
         }
         self.consume(&TokenType::TkRbrace);
-        Node::new_func(func_name, arguments, ret, statements, self.getnum(), ids)
+        Node::new_func(func_name, arguments, ret, statements)
     }
 }
 

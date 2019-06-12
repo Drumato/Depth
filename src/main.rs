@@ -1,9 +1,5 @@
-use std::collections::HashMap;
 extern crate yaml_rust;
-use std::fs::File;
-use std::io::prelude::*;
-use std::io::{BufReader, BufWriter, Write};
-use yaml_rust::{YamlEmitter, YamlLoader};
+use std::io::{BufWriter, Write};
 
 #[macro_use]
 extern crate clap;
@@ -19,7 +15,7 @@ extern crate colored;
 use colored::*;
 
 mod parse;
-use parse::{node, parser};
+use parse::node;
 mod analysis;
 use analysis::semantic;
 
@@ -31,7 +27,6 @@ pub struct Manager {
 fn main() -> Result<(), Box<std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
-    let cfg = &get_yaml()?[0];
     /*
     let mut out_str = String::new();
     {
@@ -54,7 +49,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
     if matches.is_present("dump-symbol") {
         println!("{}", "--------symbol_tables--------".green().bold());
         for (sym_name, symbol) in manager.env.sym_tables.iter() {
-            println!("name:{}\tsym:{:?}", sym_name, symbol);
+            println!("name:{}\tsym:{}", sym_name, symbol.string());
         }
     }
     Ok(())
@@ -95,178 +90,3 @@ fn parse_phase(matches: &clap::ArgMatches) -> Manager {
         env: semantic::Environment::new(),
     }
 }
-
-fn get_yaml() -> Result<Vec<yaml_rust::Yaml>, yaml_rust::ScanError> {
-    let mut f = File::open("elf.yaml").expect("file not found");
-    let mut fstr = String::new();
-    f.read_to_string(&mut fstr)
-        .expect("something went wront reading the file");
-    YamlLoader::load_from_str(&fstr)
-}
-
-/*
-#[macro_use]
-extern crate lazy_static;
-mod syntax {
-    use super::parse::lr::SyntaxDefinition;
-    use super::token;
-    lazy_static! {
-        pub static ref SYNTAXDEFINITIONS: [SyntaxDefinition; 8] = [SyntaxDefinition {
-            /* E -> E + T */
-            ltoken: token::Token::new((
-                token::TokenType::TkExp,
-                String::from("EXP"),
-                token::TokenVal::InVal
-            )),
-            pattern: vec![
-                token::Token::new((
-                    token::TokenType::TkExp,
-                    String::from("EXP"),
-                    token::TokenVal::InVal
-                )),
-                token::Token::new((
-                    token::TokenType::TkPlus,
-                    String::from("+"),
-                    token::TokenVal::InVal
-                )),
-                token::Token::new((
-                    token::TokenType::TkTerm,
-                    String::new(),
-                    token::TokenVal::InVal
-                )),
-            ],
-        },
-        SyntaxDefinition{
-            /* E -> E - T */
-            ltoken: token::Token::new((
-                token::TokenType::TkExp,
-                String::from("EXP"),
-                token::TokenVal::InVal
-            )),
-            pattern: vec![
-                token::Token::new((
-                    token::TokenType::TkExp,
-                    String::from("EXP"),
-                    token::TokenVal::InVal
-                )),
-                token::Token::new((
-                    token::TokenType::TkMinus,
-                    String::from("-"),
-                    token::TokenVal::InVal
-                )),
-                token::Token::new((
-                    token::TokenType::TkTerm,
-                    String::new(),
-                    token::TokenVal::InVal
-                )),
-            ],
-
-        },
-        SyntaxDefinition{
-            /* E -> T */
-            ltoken: token::Token::new((
-                token::TokenType::TkExp,
-                String::from("EXP"),
-                token::TokenVal::InVal
-            )),
-            pattern: vec![
-                token::Token::new((
-                token::TokenType::TkTerm,
-                    String::new(),
-                    token::TokenVal::InVal
-                )),
-            ],
-        },
-        SyntaxDefinition{
-            /* T -> A */
-            ltoken: token::Token::new((
-                token::TokenType::TkTerm,
-                String::from("TERM"),
-                token::TokenVal::InVal
-            )),
-            pattern: vec![
-                token::Token::new((
-                token::TokenType::TkAtom,
-                    String::new(),
-                    token::TokenVal::InVal,
-                )),
-            ],
-        },
-        SyntaxDefinition{
-            /* T -> T * Num */
-            ltoken: token::Token::new((
-                token::TokenType::TkTerm,
-                String::from("TERM"),
-                token::TokenVal::InVal
-            )),
-            pattern: vec![
-             token::Token::new((
-                token::TokenType::TkTerm,
-                String::from("TERM"),
-                token::TokenVal::InVal
-            )),
-            token::Token::new((token::TokenType::TkStar,String::from("*"),token::TokenVal::InVal)),
-                token::Token::new((
-                token::TokenType::TkAtom,
-                    String::new(),
-                    token::TokenVal::InVal,
-                )),
-            ],
-        },
-        SyntaxDefinition{
-            /* T -> T / Num */
-            ltoken: token::Token::new((
-                token::TokenType::TkTerm,
-                String::from("TERM"),
-                token::TokenVal::InVal
-            )),
-            pattern: vec![
-             token::Token::new((
-                token::TokenType::TkTerm,
-                String::from("TERM"),
-                token::TokenVal::InVal
-            )),
-            token::Token::new((token::TokenType::TkSlash,String::from("/"),token::TokenVal::InVal)),
-                token::Token::new((
-                token::TokenType::TkAtom,
-                    String::new(),
-                    token::TokenVal::InVal,
-                )),
-            ],
-        },
-        SyntaxDefinition{
-            /* A -> Num */
-            ltoken: token::Token::new((
-                token::TokenType::TkAtom,
-                String::from("ATOM"),
-                token::TokenVal::InVal
-            )),
-            pattern: vec![
-                token::Token::new((
-                token::TokenType::TkIntlit,
-                    String::new(),
-                    token::TokenVal::IntVal(0),
-                )),
-            ],
-        },
-        SyntaxDefinition{
-            /* A -> ( E )  */
-            ltoken: token::Token::new((
-                token::TokenType::TkAtom,
-                String::from("ATOM"),
-                token::TokenVal::InVal
-            )),
-            pattern: vec![
-                token::Token::new((token::TokenType::TkLparen,String::from("("),token::TokenVal::InVal)),
-                token::Token::new((
-                token::TokenType::TkExp,
-                    String::new(),
-                    token::TokenVal::InVal,
-                )),
-                token::Token::new((token::TokenType::TkRparen,String::from(")"),token::TokenVal::InVal)),
-            ],
-        },
-        ];
-    }
-}
-*/
