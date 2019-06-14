@@ -5,14 +5,16 @@ use std::collections::HashMap;
 use token::{Token, TokenType};
 
 struct Parser {
-    tokens: Vec<Token>,
-    cur: Token,
-    next: Token,
+    /* 構文解析用の構造体 */
+    tokens: Vec<Token>, //字句解析により得られるトークン列
+    cur: Token, //現在見ているトークン
+    next: Token, //一つ次のトークン
     pos: usize,
 }
 
 impl Parser {
     fn new(tokens: Vec<Token>) -> Parser {
+        /* Constructor */
         let cur: Token = tokens[0].clone();
         let next: Token = tokens[1].clone();
         Parser {
@@ -23,6 +25,7 @@ impl Parser {
         }
     }
     fn next_token(&mut self) {
+        /* オフセットを進める */
         self.cur = self.next.clone();
         if self.pos == self.tokens.len() {
             return;
@@ -60,18 +63,19 @@ impl Parser {
         let t: Token = self.cur.clone();
         self.next_token();
         match t.ty {
-            TokenType::TkMinus => self.parse_minus(),
-            TokenType::TkIntlit | TokenType::TkUintlit => Node::new_num(t),
-            TokenType::TkStrlit => Node::new_string(t),
-            TokenType::TkCharlit => Node::new_char(t),
-            TokenType::TkPerStr | TokenType::TkPerChar | TokenType::TkPerInt => self.parse_array(t),
-            TokenType::TkIdent => self.parse_ident(t),
+            TokenType::TkMinus => self.parse_minus(), //負数の解析
+            TokenType::TkIntlit | TokenType::TkUintlit => Node::new_num(t), //数値リテラル
+            TokenType::TkStrlit => Node::new_string(t), //文字列リテラル
+            TokenType::TkCharlit => Node::new_char(t), //文字リテラル
+            TokenType::TkPerStr | TokenType::TkPerChar | TokenType::TkPerInt => self.parse_array(t), //%記法
+            TokenType::TkIdent => self.parse_ident(t), //変数解析
             _ => Node::new(NodeType::INVALID),
         }
     }
+    /* 変数の解析を行う関数 */
     fn parse_ident(&mut self, t: Token) -> Node {
         let mut arguments: Vec<Node> = Vec::new();
-        if self.cur.ty == TokenType::TkLparen {
+        if self.cur.ty == TokenType::TkLparen { //もし呼び出し式なら
             loop {
                 if self.next.ty == TokenType::TkRparen {
                     break;
