@@ -63,7 +63,8 @@ fn main() -> Result<(), Box<std::error::Error>> {
     manager.env.semantic(manager.nodes);
     if matches.is_present("dump-symbol") {
         println!("{}", "--------symbol_tables--------".green().bold());
-        for (sym_name, symbol) in manager.env.sym_tables.iter() {
+        println!("{}", "variables".green().bold());
+        for (sym_name, symbol) in manager.env.var_tables.iter() {
             println!("name:{}\tsym:{}", sym_name, symbol.string());
         }
     }

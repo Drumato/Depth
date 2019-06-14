@@ -4,13 +4,19 @@ use super::super::parse::{error, node};
 use std::collections::HashMap;
 use token::TokenType;
 pub struct Environment {
-    pub sym_tables: HashMap<String, Symbol>,
+    pub type_tables: HashMap<String, Symbol>,
+    pub func_tables: HashMap<String, Symbol>,
+    pub var_tables: HashMap<String, Symbol>,
 }
 impl Environment {
     pub fn new() -> Self {
-        let sym_tables: HashMap<String, Symbol> = HashMap::new();
+        let type_tables: HashMap<String, Symbol> = HashMap::new();
+        let func_tables: HashMap<String, Symbol> = HashMap::new();
+        let var_tables: HashMap<String, Symbol> = HashMap::new();
         Self {
-            sym_tables: sym_tables,
+            func_tables: func_tables,
+            type_tables: type_tables,
+            var_tables: var_tables,
         }
     }
     pub fn semantic(&mut self, nodes: Vec<node::Node>) {
@@ -24,9 +30,9 @@ impl Environment {
     fn new_ident(&mut self, _env_name: String, ident_name: Vec<node::Node>, type_name: TokenType) {
         let stacksize: u8 = type_name.stacksize();
         if let node::NodeType::ID(name) = &ident_name[0].ty {
-            self.sym_tables.insert(
+            self.var_tables.insert(
                 name.to_string(),
-                Symbol::new_ident(name.to_string(), type_name, stacksize),
+                Symbol::new_ident(name.to_string(), type_name, stacksize, VarType::AUTO),
             );
         }
     }
@@ -39,6 +45,8 @@ impl Environment {
                 _ => (),
             }
         }
+        self.func_tables
+            .insert(func_name.to_string(), Symbol::new_func(func_name));
     }
     fn analyze_lets(
         &mut self,
@@ -184,24 +192,48 @@ pub struct Symbol {
 impl Symbol {
     pub fn string(&self) -> String {
         match &self.ty {
-            SymbolType::ID(name, ty, stacksize) => {
-                format!("name:{}   type:{}   size:{}", name, ty.string(), stacksize)
-            }
+            SymbolType::ID(name, ty, stacksize, vty) => format!(
+                "name:{}   type:{}   size:{} vty:{}",
+                name,
+                ty.string(),
+                stacksize,
+                vty.string(),
+            ),
             SymbolType::TYPE(name, ty) => format!("name:{}   type:{}", name, ty.string()),
+            SymbolType::FUNC(name) => format!("name:{}", name),
         }
     }
     pub fn new(ty: SymbolType) -> Self {
         Self { ty: ty }
     }
-    pub fn new_ident(name: String, ty: TokenType, stacksize: u8) -> Self {
-        Symbol::new(SymbolType::ID(name, ty, stacksize))
+    pub fn new_ident(name: String, ty: TokenType, stacksize: u8, vty: VarType) -> Self {
+        Symbol::new(SymbolType::ID(name, ty, stacksize, vty))
     }
     pub fn new_type(name: String, ty: TokenType) -> Self {
         Symbol::new(SymbolType::TYPE(name, ty))
     }
+    pub fn new_func(name: String) -> Self {
+        Symbol::new(SymbolType::FUNC(name))
+    }
 }
 
+pub enum VarType {
+    AUTO,
+    GLOBAL,
+    LOCAL,
+}
+
+impl VarType {
+    fn string(&self) -> &'static str {
+        match self {
+            VarType::AUTO => "AUTO",
+            VarType::GLOBAL => "GLOBAL",
+            VarType::LOCAL => "LOCAL",
+        }
+    }
+}
 pub enum SymbolType {
-    ID(String, TokenType, u8),
+    ID(String, TokenType, u8, VarType),
     TYPE(String, TokenType),
+    FUNC(String),
 }

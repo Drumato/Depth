@@ -114,6 +114,7 @@ impl NodeType {
             NodeType::STRING(_) => "STRING".to_string(), //strlit
             NodeType::CHAR(_) => "CHAR".to_string(),     //charlit
             NodeType::RETS(_, _) => "RETURN".to_string(),
+            NodeType::LETS(_, _, _, _) => "LET".to_string(),
             NodeType::FUNC(_, _, _, _) => "FUNC".to_string(),
             _ => "Invalid Node".to_string(),
         }
