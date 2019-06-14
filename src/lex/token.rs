@@ -1,4 +1,5 @@
 use super::super::parse::error;
+use colored::*;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub ty: TokenType,
@@ -53,10 +54,10 @@ pub fn get_keyword(s: &str) -> TokenType {
 impl Token {
     pub fn dump(&self) -> String {
         format!(
-            "type:{}\tinput:{}\tval:{}",
-            self.ty.string(),
-            self.literal,
-            self.val.string()
+            "type:{}  input:{}  val:{}",
+            self.ty.string().blue().bold(),
+            self.literal.blue().bold(),
+            self.val.string().blue().bold()
         )
     }
     pub fn new(param: (TokenType, String, TokenVal)) -> Token {
