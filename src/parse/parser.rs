@@ -5,26 +5,30 @@ use std::collections::HashMap;
 use token::{Token, TokenType};
 
 pub struct Parser {
-    pub l: lexing::Lexer,
+    pub tokens: Vec<Token>,
     pub cur: Token,
     pub next: Token,
-    pub node_num: u64,
+    pos: usize,
 }
 
 impl Parser {
-    pub fn new(mut lexer: lexing::Lexer) -> Parser {
-        let cur: Token = lexer.next_token();
-        let next: Token = lexer.next_token();
+    pub fn new(tokens: Vec<Token>) -> Parser {
+        let cur: Token = tokens[0].clone();
+        let next: Token = tokens[1].clone();
         Parser {
-            l: lexer,
+            tokens: tokens,
             cur: cur,
             next: next,
-            node_num: 1,
+            pos: 2,
         }
     }
     pub fn next_token(&mut self) {
         self.cur = self.next.clone();
-        self.next = self.l.next_token();
+        if self.pos == self.tokens.len() {
+            return;
+        }
+        self.next = self.tokens[self.pos].clone();
+        self.pos += 1;
     }
     pub fn consume(&mut self, ty: &TokenType) -> bool {
         if &self.cur.ty == ty {
@@ -341,8 +345,8 @@ impl Parser {
     }
 }
 
-pub fn parse(lexer: lexing::Lexer) -> Vec<Node> {
-    let mut parser: Parser = Parser::new(lexer);
+pub fn parse(tokens: Vec<Token>) -> Vec<Node> {
+    let mut parser: Parser = Parser::new(tokens);
     let mut nodes: Vec<Node> = Vec::new();
     while parser.cur.ty == TokenType::TkF {
         parser.next_token();

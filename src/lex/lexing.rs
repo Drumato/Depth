@@ -11,6 +11,19 @@ use token::{Token, TokenType, TokenVal};
 extern crate drumatech;
 use drumatech::conv;
 
+pub fn lex_phase(input_str: String) -> Vec<Token> {
+    let mut tokens: Vec<Token> = Vec::new();
+    let mut lexer: Lexer = Lexer::new(input_str).unwrap();
+    while let Some(t) = lexer.next_token() {
+        let ty: TokenType = t.ty.clone();
+        tokens.push(t);
+        if ty == TokenType::TkEof {
+            break;
+        }
+    }
+    tokens
+}
+
 impl Lexer {
     pub fn new(input_str: String) -> Option<Lexer> {
         let ch: u8 = input_str.bytes().nth(0)?;
@@ -97,17 +110,17 @@ impl Lexer {
             self.read_char();
         }
     }
-    pub fn next_token(&mut self) -> Token {
+    pub fn next_token(&mut self) -> Option<Token> {
         self.skip_whitespace();
         let s = conv::u8_to_string(&mut self.ch);
         match self.ch as char {
-            '\0' => Token::new((TokenType::TkEof, s, TokenVal::InVal)),
-            c if c == '"' => self.judge_string(),
-            c if (c == 'u' && self.peak_char().is_ascii_digit()) => self.judge_unumber(),
-            c if c.is_ascii_digit() => self.judge_number(),
-            c if c.is_alphabetic() => self.judge_keyword(),
-            c if c.is_ascii_punctuation() => self.judge_mark(),
-            _ => Token::new((TokenType::TkIllegal, s, TokenVal::InVal)),
+            '\0' => Some(Token::new((TokenType::TkEof, s, TokenVal::InVal))),
+            c if c == '"' => Some(self.judge_string()),
+            c if (c == 'u' && self.peak_char().is_ascii_digit()) => Some(self.judge_unumber()),
+            c if c.is_ascii_digit() => Some(self.judge_number()),
+            c if c.is_alphabetic() => Some(self.judge_keyword()),
+            c if c.is_ascii_punctuation() => Some(self.judge_mark()),
+            _ => None,
         }
     }
     fn judge_keyword(&mut self) -> Token {
