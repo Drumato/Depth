@@ -42,7 +42,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
         let mut out = BufWriter::new(out.lock());
         writeln!(out, "{}", &filecontent).unwrap();
     }
-    let mut tokens: Vec<token::Token> = lexing::lex_phase(filecontent);
+    let tokens: Vec<token::Token> = lexing::lex_phase(filecontent);
     if matches.is_present("dump-token") {
         println!("{}", "--------tokens--------".green().bold());
         let out = std::io::stdout();
@@ -51,7 +51,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
             writeln!(out, "{}", t.dump()).unwrap();
         }
     }
-    let mut manager: Manager = parse_phase(&matches, tokens);
+    let mut manager: Manager = parse_phase(tokens);
     if matches.is_present("dump-ast") {
         println!("{}", "--------AST--------".green().bold());
         let out = std::io::stdout();
@@ -71,7 +71,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
     Ok(())
 }
 
-fn parse_phase(matches: &clap::ArgMatches, tokens: Vec<token::Token>) -> Manager {
+fn parse_phase(tokens: Vec<token::Token>) -> Manager {
     let nodes: Vec<node::Node> = parse::parser::parse(tokens);
     Manager {
         nodes: nodes,

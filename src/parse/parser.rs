@@ -1,18 +1,18 @@
-use super::super::lex::{lexing, token};
+use super::super::lex::token;
 use super::error::CompileError;
 use super::node::{Node, NodeType};
 use std::collections::HashMap;
 use token::{Token, TokenType};
 
-pub struct Parser {
-    pub tokens: Vec<Token>,
-    pub cur: Token,
-    pub next: Token,
+struct Parser {
+    tokens: Vec<Token>,
+    cur: Token,
+    next: Token,
     pos: usize,
 }
 
 impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Parser {
+    fn new(tokens: Vec<Token>) -> Parser {
         let cur: Token = tokens[0].clone();
         let next: Token = tokens[1].clone();
         Parser {
@@ -22,7 +22,7 @@ impl Parser {
             pos: 2,
         }
     }
-    pub fn next_token(&mut self) {
+    fn next_token(&mut self) {
         self.cur = self.next.clone();
         if self.pos == self.tokens.len() {
             return;
@@ -30,7 +30,7 @@ impl Parser {
         self.next = self.tokens[self.pos].clone();
         self.pos += 1;
     }
-    pub fn consume(&mut self, ty: &TokenType) -> bool {
+    fn consume(&mut self, ty: &TokenType) -> bool {
         if &self.cur.ty == ty {
             self.next_token();
             return true;
@@ -224,8 +224,39 @@ impl Parser {
             TokenType::TkLoop => self.parse_loop(),
             TokenType::TkFor => self.parse_for(),
             TokenType::TkIf => self.parse_if(),
+            TokenType::TkStruct => self.parse_struct(),
             _ => Node::new(NodeType::INVALID),
         }
+    }
+    fn parse_struct(&mut self) -> Node {
+        self.consume(&TokenType::TkStruct);
+        if self.cur.ty != TokenType::TkIdent {
+            CompileError::PARSE(format!("expected identifier but got {}", self.cur.literal))
+                .found();
+        }
+        let struct_name: String = self.cur.literal.clone();
+        self.consume(&TokenType::TkIdent);
+        self.consume(&TokenType::TkLbrace);
+        let mut members: Vec<Node> = Vec::new();
+        while self.next.ty != TokenType::TkRbrace {
+            if self.cur.ty != TokenType::TkIdent {
+                CompileError::PARSE(format!("expected identifier but got {}", self.cur.literal))
+                    .found();
+            }
+            let member_name: String = self.cur.literal.clone();
+            self.consume(&TokenType::TkIdent);
+            self.consume(&TokenType::TkColon);
+            if !self.cur.ty.is_typename() {
+                CompileError::PARSE(format!("expected typename but got {}", self.cur.literal))
+                    .found();
+            }
+            let typename: TokenType = self.cur.ty.clone();
+            self.next_token();
+            members.push(Node::new_member(member_name, typename));
+            self.consume(&TokenType::TkComma);
+        }
+        self.consume(&TokenType::TkRbrace);
+        Node::new_structs(struct_name, members)
     }
     fn parse_if(&mut self) -> Node {
         //if expr {} else {}

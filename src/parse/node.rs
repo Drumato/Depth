@@ -39,6 +39,12 @@ impl Node {
     pub fn new_rets(ret: TokenType, expr: Node) -> Self {
         Node::new(NodeType::RETS(ret, vec![expr]))
     }
+    pub fn new_member(member_name: String, type_name: TokenType) -> Self {
+        Node::new(NodeType::MEMBER(member_name, type_name))
+    }
+    pub fn new_structs(st: String, members: Vec<Node>) -> Self {
+        Node::new(NodeType::STRUCTS(st, members))
+    }
     pub fn new_lets(let_key: TokenType, ident: Vec<Node>, ty: TokenType, expr: Node) -> Self {
         Node::new(NodeType::LETS(let_key, ident, ty, vec![expr]))
     }
@@ -94,9 +100,11 @@ pub enum NodeType {
     INTARY(Vec<Token>),
     CHARARY(Vec<Token>),
     ID(String),                                                     //identifier
+    MEMBER(String, TokenType),                                      //define-member
     BINOP(TokenType, Vec<Node>, Vec<Node>),                         //binary-operation
     CALL(String, Vec<Node>),                                        //call-expression
     RETS(TokenType, Vec<Node>),                                     //return statement
+    STRUCTS(String, Vec<Node>),                                     //define-struct statement
     LETS(TokenType, Vec<Node>, TokenType, Vec<Node>),               //let statement
     IFS(TokenType, Vec<Node>, Vec<Node>, TokenType, Vec<Node>),     //if-else statement
     FUNC(String, HashMap<String, TokenType>, TokenType, Vec<Node>), //func-name,arguments,statements
@@ -114,6 +122,8 @@ impl NodeType {
             NodeType::STRING(_) => "STRING".to_string(), //strlit
             NodeType::CHAR(_) => "CHAR".to_string(),     //charlit
             NodeType::RETS(_, _) => "RETURN".to_string(),
+            NodeType::MEMBER(_, _) => "MEMBER".to_string(),
+            NodeType::STRUCTS(_, _) => "STRUCT".to_string(),
             NodeType::LETS(_, _, _, _) => "LET".to_string(),
             NodeType::FUNC(_, _, _, _) => "FUNC".to_string(),
             _ => "Invalid Node".to_string(),

@@ -1,4 +1,6 @@
 f main() -> i8 {
-  let x : i8 =  3 + 340
-  let y : i16 =  3 + 340
+  struct A{
+    x : i8,
+    y : i16,
+    }
  }
