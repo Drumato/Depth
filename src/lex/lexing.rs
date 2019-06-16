@@ -1,8 +1,9 @@
+/* 字句解析に用いる構造体 */
 pub struct Lexer {
-    pub input: String,
-    pub pos: usize,
-    pub npos: usize,
-    pub ch: u8,
+    pub input: String, /* 入力文字 */
+    pub pos: usize, /* 現在見ている文字 */
+    pub npos: usize, /* 次見る文字 */
+    pub ch: u8, /* 現在見ている文字 */
 }
 
 use super::super::parse::error;
@@ -11,6 +12,7 @@ use token::{Token, TokenType, TokenVal};
 extern crate drumatech;
 use drumatech::conv;
 
+/* 字句解析を行う関数(トップレベル) */
 pub fn lex_phase(input_str: String) -> Vec<Token> {
     let mut tokens: Vec<Token> = Vec::new();
     let mut lexer: Lexer = Lexer::new(input_str).unwrap();
@@ -25,6 +27,7 @@ pub fn lex_phase(input_str: String) -> Vec<Token> {
 }
 
 impl Lexer {
+    /* Constructor */
     pub fn new(input_str: String) -> Option<Lexer> {
         let ch: u8 = input_str.bytes().nth(0)?;
         Some(Lexer {
@@ -34,6 +37,7 @@ impl Lexer {
             ch: ch,
         })
     }
+    /* オフセットを1進める */
     pub fn read_char(&mut self) {
         if self.npos >= self.input.len() {
             self.ch = 0; //null termination
@@ -46,6 +50,7 @@ impl Lexer {
         self.pos = self.npos;
         self.npos += 1;
     }
+    /* 次の文字をchar型で渡す */
     pub fn peak_char(&self) -> char {
         if self.npos >= self.input.len() {
             return '\0';
@@ -56,6 +61,7 @@ impl Lexer {
             }
         }
     }
+    /* 識別子である間オフセットを進め､部分文字列を返す */
     pub fn read_ident(&mut self) -> String {
         let p: usize = self.pos;
         while self.ch.is_ascii_alphabetic() || self.ch.is_ascii_digit() || self.ch == 0x5f {
@@ -63,6 +69,7 @@ impl Lexer {
         }
         self.input[p..self.pos].to_string()
     }
+    /* 文字列リテラルを受け付けてトークンを返す */
     pub fn judge_string(&mut self) -> Token {
         self.read_char(); //ignore "
         let p: usize = self.pos;
@@ -74,55 +81,59 @@ impl Lexer {
         self.read_char();
         Token::new((TokenType::TkStrlit, s, TokenVal::InVal))
     }
+    /* 数値である間オフセットを進め､部分文字列を返す */
     pub fn read_number(&mut self) -> String {
         let p: usize = self.pos;
         if self.ch as char == '0' {
-            //whether decimal or not
+            //10進数かどうか?
             self.read_char();
             if self.ch as char == 'b' {
-                //is_binary
                 self.read_char();
+                //2進数解析
                 while (self.ch as char).is_digit(2) {
                     self.read_char();
                 }
             } else if self.ch as char == 'o' {
-                //is_octal
+                //8進数解析
                 self.read_char();
                 while (self.ch as char).is_digit(8) {
                     self.read_char();
                 }
             } else if self.ch as char == 'x' {
-                //is_hexdecimal
+                //16進数解析
                 self.read_char();
                 while (self.ch as char).is_digit(16) {
                     self.read_char();
                 }
             }
-        } else {
+        } else { //10進数解析
             while (self.ch as char).is_digit(10) {
                 self.read_char();
             }
         }
         self.input[p..self.pos].to_string()
     }
+    /* 空白の間進める(これにはタブ文字･改行文字等が含まれる) */
     pub fn skip_whitespace(&mut self) {
         while self.ch.is_ascii_whitespace() {
             self.read_char();
         }
     }
+    /* 初期状態から規則に従って解析関数にシフトする(DFA的) */
     pub fn next_token(&mut self) -> Option<Token> {
         self.skip_whitespace();
         let s = conv::u8_to_string(&mut self.ch);
         match self.ch as char {
             '\0' => Some(Token::new((TokenType::TkEof, s, TokenVal::InVal))),
-            c if c == '"' => Some(self.judge_string()),
-            c if (c == 'u' && self.peak_char().is_ascii_digit()) => Some(self.judge_unumber()),
-            c if c.is_ascii_digit() => Some(self.judge_number()),
-            c if c.is_alphabetic() => Some(self.judge_keyword()),
-            c if c.is_ascii_punctuation() => Some(self.judge_mark()),
+            c if c == '"' => Some(self.judge_string()), //文字列リテラル
+            c if (c == 'u' && self.peak_char().is_ascii_digit()) => Some(self.judge_unumber()), //uint
+            c if c.is_ascii_digit() => Some(self.judge_number()), //signed nint
+            c if c.is_alphabetic() => Some(self.judge_keyword()), //予約語or識別子
+            c if c.is_ascii_punctuation() => Some(self.judge_mark()), //その他記号
             _ => None,
         }
     }
+    /* 予約後or識別子*/
     fn judge_keyword(&mut self) -> Token {
         let s: String = self.read_ident();
         if token::lookup(&s) {
@@ -135,15 +146,19 @@ impl Lexer {
         let ns: &str;
         let base: u32;
         if s.starts_with("0x") {
+            /* 16進数 */
             base = 16;
             ns = &s[2..];
         } else if s.starts_with("0o") {
+            /* 8進数 */
             base = 8;
             ns = &s[2..];
         } else if s.starts_with("0b") {
+            /* 2進数 */
             base = 2;
             ns = &s[2..];
         } else {
+            /* 10進数 */
             ns = &s;
             base = 10;
         }

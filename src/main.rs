@@ -19,6 +19,7 @@ use parse::node;
 mod analysis;
 use analysis::{ir, semantic};
 
+//ファイル単位で存在させる(予定の)構造体
 pub struct Manager {
     nodes: Vec<node::Node>,
     irs: Vec<ir::IR>,
@@ -33,15 +34,15 @@ impl Manager {
 
 fn main() -> Result<(), Box<std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
-    let matches = App::from_yaml(yaml).get_matches();
-    /*
-    let mut out_str = String::new();
-    {
-        let mut emitter = YamlEmitter::new(&mut out_str);
-        emitter.dump(cfg).unwrap(); // dump the YAML object to a String
-    }
-    println!("{}", out_str);
-    */
+    let matches = App::from_yaml(yaml).get_matches(); //フラグ･オプション引数等の利用はこのオブジェクトから
+                                                      /*
+                                                      let mut out_str = String::new();
+                                                      {
+                                                          let mut emitter = YamlEmitter::new(&mut out_str);
+                                                          emitter.dump(cfg).unwrap(); // dump the YAML object to a String
+                                                      }
+                                                      println!("{}", out_str);
+                                                      */
     let tokens: Vec<token::Token> = lex_phase(&matches);
     let mut manager: Manager = parse_phase(&matches, tokens);
     manager.env.semantic(manager.nodes);
@@ -59,17 +60,17 @@ fn lex_phase(matches: &clap::ArgMatches) -> Vec<token::Token> {
     let filecontent: String = drumatech::fileu::content_or_raw(matches.value_of("source").unwrap());
     if matches.is_present("dump-source") {
         println!("{}", "--------source--------".green().bold());
-        let out = std::io::stdout();
+        let out = std::io::stdout(); //バッファリング
         let mut out = BufWriter::new(out.lock());
         writeln!(out, "{}", &filecontent).unwrap();
     }
-    let tokens: Vec<token::Token> = lexing::lex_phase(filecontent);
+    let tokens: Vec<token::Token> = lexing::lex_phase(filecontent); //字句解析結果のトークン列
     if matches.is_present("dump-token") {
         println!("{}", "--------tokens--------".green().bold());
         let out = std::io::stdout();
         let mut out = BufWriter::new(out.lock());
         for t in &tokens {
-            writeln!(out, "{}", t.dump()).unwrap();
+            writeln!(out, "{}", t.dump()).unwrap(); //トークン列ダンプ(デバッグ用)
         }
     }
     tokens

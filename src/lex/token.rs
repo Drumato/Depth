@@ -2,11 +2,11 @@ use super::super::parse::error;
 use colored::*;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
-    pub ty: TokenType,
-    pub literal: String,
-    pub val: TokenVal,
+    pub ty: TokenType, //enumで定義されたTokenの種類を識別するメンバ
+    pub literal: String, //Tokenの入力時文字列
+    pub val: TokenVal, //意味値
 }
-
+/* 予約語かどうかチェックする関数*/
 pub fn lookup(s: &str) -> bool {
     match s {
         "typedef" | "mut" | "f" | "true" | "false" | "loop" | "for" | "in" | "let" | "const"
@@ -16,6 +16,7 @@ pub fn lookup(s: &str) -> bool {
     }
 }
 
+/* 予約語の内容を取得する関数 */
 pub fn get_keyword(s: &str) -> TokenType {
     match s {
         "mut" => TokenType::TkMutable,
@@ -52,6 +53,7 @@ pub fn get_keyword(s: &str) -> TokenType {
 }
 
 impl Token {
+    /* デバッグ用関数 */
     pub fn dump(&self) -> String {
         format!(
             "type:{}  input:{}  val:{}",
@@ -60,6 +62,7 @@ impl Token {
             self.val.string().blue().bold()
         )
     }
+    /* Constructor */
     pub fn new(param: (TokenType, String, TokenVal)) -> Token {
         Token {
             ty: param.0,
@@ -69,6 +72,7 @@ impl Token {
     }
 }
 
+/* 意味値を格納するenum */
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenVal {
     IntVal(i128),
@@ -79,6 +83,7 @@ pub enum TokenVal {
 }
 
 impl TokenVal {
+    /* デバッグ用メソッド */
     pub fn string(&self) -> String {
         match self {
             TokenVal::IntVal(d) => format!("{}", d),
@@ -216,6 +221,7 @@ pub enum TokenType {
 }
 
 impl TokenType {
+    /* トークンについてスタックサイズが取得可能であれば返す */
     pub fn stacksize(&self) -> u8 {
         match self {
             TokenType::TkI8 => 8,
@@ -228,6 +234,7 @@ impl TokenType {
             TokenType::TkU32 => 32,
             TokenType::TkU64 => 64,
             TokenType::TkU128 => 128,
+            TokenType::TkChar => 32,
             _ => {
                 error::CompileError::TYPE(format!(
                     "'{}' is not known at compile-time",
