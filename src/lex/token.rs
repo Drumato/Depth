@@ -90,13 +90,17 @@ impl TokenVal {
     }
 }
 
-/*
 pub enum IntType {
     I8,
     I16,
     I32,
     I64,
     I128,
+    U8,
+    U16,
+    U32,
+    U64,
+    U128,
     INVALID,
 }
 
@@ -110,29 +114,17 @@ impl IntType {
             _ => IntType::I128,
         }
     }
-}
-
-pub enum UintType {
-    U8,
-    U16,
-    U32,
-    U64,
-    U128,
-    INVALID,
-}
-
-impl UintType {
-    pub fn judge(sem_val: u128) -> UintType {
+    pub fn judgeu(sem_val: u128) -> IntType {
         match sem_val {
-            n if (255 >= n) => UintType::U8,
-            n if (65535 >= n) => UintType::U16,
-            n if (4294967295 >= n) => UintType::U32,
-            n if (18446744073709551615 >= n) => UintType::U64,
-            _ => UintType::U128,
+            n if (255 >= n) => IntType::U8,
+            n if (65535 >= n) => IntType::U16,
+            n if (4294967295 >= n) => IntType::U32,
+            n if (18446744073709551615 >= n) => IntType::U64,
+            _ => IntType::U128,
         }
     }
 }
-*/
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
     /* for identifying Type */

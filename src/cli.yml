@@ -25,6 +25,9 @@ args:
     - dump-symbol:
         long: dump-symbol
         help: dump symbol-tables each environments
+    - dump-ir:
+        long: dump-ir
+        help: dump ir-tree
     - verbose:
         short: v
         multiple: true
