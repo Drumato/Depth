@@ -19,6 +19,19 @@ impl Register {
             name: reg_name,
         }
     }
+    pub fn new_rbp() -> Register {
+        Register {
+            bits: 64,
+            vnum: BP64,
+            name: REG64[BP64 as usize],
+        }
+    }
+    fn invalid() -> Register{
+        Register {
+            bits: 0,
+            vnum: 0,
+            name: "invalid",
+    }
 }
 enum IMMType {
     IMM8(i8),
@@ -72,6 +85,59 @@ impl Immediate {
 }
 pub struct IRS {
     pub irs: Vec<IR>,
+    nreg:usize,
+}
+impl IRS {
+    pub fn new(is: Vec<IR>,nreg:usize) -> IRS {
+        IRS { irs: is,nreg:nreg}
+    }
+    fn gen_func(
+        &mut self,
+        func_name: String,
+        args: HashMap<String, TokenType>,
+        ret_type: TokenType,
+        stmts: Vec<node::Node>,
+    ) {
+        self.irs.push(IR::new_label(func_name));
+        self.irs.push(IR::new(IRType::PROLOGUE));
+        for st in stmts {
+            self.gen_stmt(st);
+        }
+        self.irs.push(IR::new(IRType::EPILOGUE));
+    }
+    fn gen_stmt(&mut self, n: node::Node) {
+        match n.ty {
+            node::NodeType::RETS(_, ex) => {
+                self.gen_expr(n);
+            }
+            //STRUCTS(String, Vec<Node>) => {},
+            //LETS(TokenType, Vec<Node>, TokenType, Vec<Node>)=>{},
+            //IFS(TokenType, Vec<Node>, Vec<Node>, TokenType, Vec<Node>)=>{},
+            //LOOP(TokenType, Vec<Node>)=>{},
+            //FOR(TokenType, String, String, Vec<Node>)=>{},
+            _ => {
+                error::CompileError::SEMA(format!("unable to generate ir")).found();
+            }
+        }
+    }
+    fn gen_expr(&mut self, n: node::Node) -> Option<Register> {
+        match n.ty {
+            node::NodeType::BINOP(operator, lop, rop) => {
+                Some(self.gen_binop(operator, lop[0], rop[0]))
+            }
+            _ => None,
+        }
+    }
+    fn gen_binop(&mut self, op: TokenType, lop: node::Node, rop: node::Node) ->Register{
+        match op{
+    TokenType::TkPlus | TokenType::TkMinus =>{
+        let lch = gen_expr(lop);
+        let rch = gen_expr(rop);
+        Register::new_acc(op,lch,rch)
+    },
+    _ =>Register::invalid(),
+        }
+    }
 }
 pub struct IR {
     pub ty: IRType,
@@ -87,6 +153,12 @@ impl IR {
     fn new_push64(reg_num: u8) -> IR {
         IR::new(IRType::PUSH64(Register::new64(reg_num)))
     }
+    fn new_retreg(reg_num: u8) -> IR {
+        IR::new(IRType::RETURNREG(
+            Register::new_rbp(),
+            Register::new64(reg_num),
+        ))
+    }
 }
 
 pub enum IRType {
@@ -101,29 +173,20 @@ pub enum IRType {
 
     /* Stack */
     PUSH64(Register),
+
     /* prologue-epilogue */
     PROLOGUE,
     EPILOGUE,
+    RETURNREG(Register, Register),
+    RETURNIMM(Register, Immediate),
 }
 
-pub fn generate_ir(nodes: Vec<node::Node>) -> Vec<IR> {
-    let mut irs: Vec<IR> = Vec::new();
+pub fn generate_ir(nodes: Vec<node::Node>) -> IRS {
+    let mut irs: IRS = IRS::new(Vec::new(),1);
     for func in nodes {
         if let node::NodeType::FUNC(func_name, args, ret_type, stmts) = func.ty {
-            gen_func(func_name, args, ret_type, stmts, &mut irs);
+            irs.gen_func(func_name, args, ret_type, stmts);
         }
     }
     irs
-}
-
-fn gen_func(
-    func_name: String,
-    args: HashMap<String, TokenType>,
-    ret_type: TokenType,
-    stmts: Vec<node::Node>,
-    irs: &mut Vec<IR>,
-) {
-    irs.push(IR::new_label(func_name));
-    irs.push(IR::new(IRType::PROLOGUE));
-    irs.push(IR::new(IRType::EPILOGUE));
 }

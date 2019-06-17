@@ -22,7 +22,7 @@ use analysis::{ir, semantic};
 //ファイル単位で存在させる(予定の)構造体
 pub struct Manager {
     nodes: Vec<node::Node>,
-    irs: Vec<ir::IR>,
+    irs: ir::IRS,
     env: semantic::Environment,
 }
 
@@ -81,7 +81,7 @@ fn parse_phase(matches: &clap::ArgMatches, tokens: Vec<token::Token>) -> Manager
     let manager: Manager = Manager {
         nodes: nodes,
         env: semantic::Environment::new(),
-        irs: Vec::new(),
+        irs: ir::IRS::new(Vec::new(), 1),
     };
     if matches.is_present("dump-ast") {
         println!("{}", "--------AST--------".green().bold());
