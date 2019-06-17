@@ -19,7 +19,7 @@ impl Environment {
             var_tables: var_tables,
         }
     }
-    pub fn semantic(&mut self, nodes: Vec<node::Node>) {
+    pub fn semantic(&mut self, nodes: &Vec<node::Node>) {
         for n in nodes.iter() {
             match n.ty.clone() {
                 node::NodeType::FUNC(func_name, _, _, nodes) => self.analyze_func(func_name, nodes),

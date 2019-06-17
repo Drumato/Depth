@@ -45,13 +45,18 @@ fn main() -> Result<(), Box<std::error::Error>> {
                                                       */
     let tokens: Vec<token::Token> = lex_phase(&matches);
     let mut manager: Manager = parse_phase(&matches, tokens);
-    manager.env.semantic(manager.nodes);
+    manager.env.semantic(&manager.nodes);
     if matches.is_present("dump-symbol") {
         println!("{}", "--------symbol_tables--------".green().bold());
         println!("{}", "variables".green().bold());
         for (sym_name, symbol) in manager.env.var_tables.iter() {
             println!("name:{}\tsym:{}", sym_name, symbol.string());
         }
+    }
+    manager.gen_ir(&matches);
+    if matches.is_present("dump-ir") {
+        println!("{}", "--------IR--------".green().bold());
+        //for i in &self.irs {}
     }
     Ok(())
 }
