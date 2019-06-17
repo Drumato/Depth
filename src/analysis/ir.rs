@@ -1,6 +1,10 @@
 use super::super::parse::{error, node};
-use super::super::token::IntType;
+use super::super::token::{IntType, TokenType};
+use std::collections::HashMap;
 
+const REG64: [&str; 8] = ["rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp"];
+const XREG64: [&str; 8] = ["r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"];
+const BP64: u8 = 7;
 pub struct Register {
     pub bits: u8, //8,16,32,64
     pub vnum: u8,
@@ -8,8 +12,7 @@ pub struct Register {
 }
 impl Register {
     pub fn new64(vnum: u8) -> Register {
-        let register64: [&str; 7] = ["rbx", "r10", "r11", "r12", "r13", "r14", "r15"];
-        let reg_name: &'static str = register64[vnum as usize];
+        let reg_name: &'static str = REG64[vnum as usize];
         Register {
             bits: 64,
             vnum: vnum,
@@ -17,52 +20,110 @@ impl Register {
         }
     }
 }
+enum IMMType {
+    IMM8(i8),
+    IMM16(i16),
+    IMM32(i32),
+    IMM64(i64),
+    IMM128(i128),
+    UIMM8(u8),
+    UIMM16(u16),
+    UIMM32(u32),
+    UIMM64(u64),
+    UIMM128(u128),
+}
+struct Immediate {
+    bits: u8,
+    ty: IMMType,
+}
+impl Immediate {
+    fn new_imm(sem_val: i128) -> Immediate {
+        match IntType::judge(sem_val) {
+            IntType::I8 => Immediate {
+                bits: 8,
+                ty: IMMType::IMM8(sem_val as i8),
+            },
+            IntType::I16 => Immediate {
+                bits: 16,
+                ty: IMMType::IMM16(sem_val as i16),
+            },
+            IntType::I32 => Immediate {
+                bits: 32,
+                ty: IMMType::IMM32(sem_val as i32),
+            },
+            IntType::I64 => Immediate {
+                bits: 64,
+                ty: IMMType::IMM64(sem_val as i64),
+            },
+            _ => Immediate {
+                bits: 128,
+                ty: IMMType::IMM128(sem_val),
+            },
+        }
+    }
+    fn new_uimm(sem_val: u128) -> Immediate {
+        match IntType::judgeu(sem_val) {
+            _ => Immediate {
+                bits: 128,
+                ty: IMMType::UIMM128(sem_val),
+            },
+        }
+    }
+}
+pub struct IRS {
+    pub irs: Vec<IR>,
+}
 pub struct IR {
     pub ty: IRType,
 }
 
 impl IR {
-    pub fn new(ty: IRType) -> IR {
+    fn new(ty: IRType) -> IR {
         IR { ty: ty }
     }
-    pub fn new_intimm(reg_num: u8, sem_val: i128) -> IR {
-        match IntType::judge(sem_val) {
-            IntType::I8 => IR::new(IRType::IMM8(vec![Register::new64(reg_num)], sem_val as i8)),
-            IntType::I16 => IR::new(IRType::IMM16(
-                vec![Register::new64(reg_num)],
-                sem_val as i16,
-            )),
-            IntType::I32 => IR::new(IRType::IMM32(
-                vec![Register::new64(reg_num)],
-                sem_val as i32,
-            )),
-            IntType::I64 => IR::new(IRType::IMM64(
-                vec![Register::new64(reg_num)],
-                sem_val as i64,
-            )),
-            _ => IR::new(IRType::IMM128(
-                vec![Register::new64(reg_num)],
-                sem_val as i128,
-            )),
-        }
+    fn new_label(name: String) -> IR {
+        IR::new(IRType::LABEL(name))
+    }
+    fn new_push64(reg_num: u8) -> IR {
+        IR::new(IRType::PUSH64(Register::new64(reg_num)))
     }
 }
 
 pub enum IRType {
-    IMM8(Vec<Register>, i8),
-    IMM16(Vec<Register>, i16),
-    IMM32(Vec<Register>, i32),
-    IMM64(Vec<Register>, i64),
-    IMM128(Vec<Register>, i128),
-    UIMM8(Vec<Register>, u8),
-    UIMM16(Vec<Register>, u16),
-    UIMM32(Vec<Register>, u32),
-    UIMM64(Vec<Register>, u64),
-    UIMM128(Vec<Register>, u128),
+    /* label*/
+    LABEL(String),
+
+    /* immediate */
+    IMM(Register, Immediate),
+    UIMM(Register, Immediate),
+
+    MOVIMM(Register),
+
+    /* Stack */
+    PUSH64(Register),
+    /* prologue-epilogue */
+    PROLOGUE,
+    EPILOGUE,
 }
 
-pub fn generate_ir(n: Vec<node::Node>) -> Vec<IR> {
+pub fn generate_ir(nodes: Vec<node::Node>) -> Vec<IR> {
     let mut irs: Vec<IR> = Vec::new();
-    irs.push(IR::new_intimm(1, 30));
+    for func in nodes {
+        if let node::NodeType::FUNC(func_name, args, ret_type, stmts) = func.ty {
+            gen_func(func_name, args, ret_type, stmts, &mut irs);
+        }
+    }
     irs
+}
+
+fn gen_func(
+    func_name: String,
+    args: HashMap<String, TokenType>,
+    ret_type: TokenType,
+    stmts: Vec<node::Node>,
+    irs: &mut Vec<IR>,
+) {
+    irs.push(IR::new_label(func_name));
+    irs.push(IR::new(IRType::PROLOGUE));
+    irs.push(IR::new(IRType::EPILOGUE));
 }

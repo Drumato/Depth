@@ -107,7 +107,7 @@ pub enum NodeType {
     STRUCTS(String, Vec<Node>),                                     //define-struct statement
     LETS(TokenType, Vec<Node>, TokenType, Vec<Node>),               //let statement
     IFS(TokenType, Vec<Node>, Vec<Node>, TokenType, Vec<Node>),     //if-else statement
-    FUNC(String, HashMap<String, TokenType>, TokenType, Vec<Node>), //func-name,arguments,statements
+    FUNC(String, HashMap<String, TokenType>, TokenType, Vec<Node>), //func-name,arguments,ret-type,statements
     LOOP(TokenType, Vec<Node>),                                     //loop statement
     FOR(TokenType, String, String, Vec<Node>),                      //for statement
     INVALID,                                                        //invalid ast-node
