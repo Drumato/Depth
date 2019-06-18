@@ -122,6 +122,7 @@ impl IRS {
         }
     }
     fn new_reg(&mut self) -> Register {
+        println!("{}", self.nreg);
         let reg: Register = Register::new64(self.nreg as u8);
         self.nreg += 1;
         reg
@@ -182,13 +183,13 @@ impl IRS {
         let reg: Register = self.new_reg();
         match tk.val {
             TokenVal::IntVal(integer) => {
-                let reg: Register = Register::new64(self.nreg as u8);
+                let reg: Register = Register::new64(reg.vnum as u8);
                 self.irs
                     .push(IR::new_imm(Immediate::new_imm(integer), reg.clone()));
                 reg
             }
             TokenVal::UintVal(unsigned) => {
-                let reg: Register = Register::new64(self.nreg as u8);
+                let reg: Register = Register::new64(reg.vnum as u8);
                 self.irs
                     .push(IR::new_uimm(Immediate::new_uimm(unsigned), reg.clone()));
                 reg
