@@ -27,8 +27,8 @@ pub struct Manager {
 }
 
 impl Manager {
-    fn gen_ir(mut self, matches: &clap::ArgMatches) {
-        self.irs = ir::generate_ir(self.nodes);
+    fn gen_ir(&mut self, matches: &clap::ArgMatches) {
+        self.irs = ir::generate_ir(&self.nodes);
     }
 }
 
@@ -56,7 +56,9 @@ fn main() -> Result<(), Box<std::error::Error>> {
     manager.gen_ir(&matches);
     if matches.is_present("dump-ir") {
         println!("{}", "--------IR--------".green().bold());
-        //for i in &self.irs {}
+        for i in &manager.irs.irs {
+            i.dump();
+        }
     }
     Ok(())
 }

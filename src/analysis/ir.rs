@@ -1,11 +1,13 @@
 use super::super::parse::{error, node};
 use super::super::token::{IntType, Token, TokenType, TokenVal};
+use colored::*;
 use std::collections::HashMap;
 
 const REG64: [&str; 8] = ["rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp"];
 const XREG64: [&str; 8] = ["r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"];
 const BP64: u8 = 7;
 const AX64: u8 = 0;
+#[derive(Clone)]
 pub struct Register {
     pub bits: u8, //8,16,32,64
     pub vnum: u8,
@@ -127,8 +129,8 @@ impl IRS {
     fn gen_func(
         &mut self,
         func_name: String,
-        args: HashMap<String, TokenType>,
-        ret_type: TokenType,
+        args: &HashMap<String, TokenType>,
+        ret_type: &TokenType,
         stmts: Vec<node::Node>,
     ) {
         self.irs.push(IR::new_label(func_name));
@@ -141,8 +143,8 @@ impl IRS {
     fn gen_stmt(&mut self, n: node::Node) {
         match &n.ty {
             node::NodeType::RETS(_, ex) => {
-                let ret_reg: Register = self.gen_expr(&n).unwrap();
-                IR::new_ret(ret_reg.vnum);
+                let ret_reg: Register = self.gen_expr(&ex[0]).unwrap();
+                self.irs.push(IR::new_ret(ret_reg.vnum));
             }
             //STRUCTS(String, Vec<Node>) => {},
             //LETS(TokenType, Vec<Node>, TokenType, Vec<Node>)=>{},
@@ -165,12 +167,14 @@ impl IRS {
     }
 
     fn gen_binop(&mut self, op: &TokenType, lop: &node::Node, rop: &node::Node) -> Register {
-        let reg: Register = self.new_reg();
         let lreg = self.gen_expr(lop).unwrap();
         let rreg = self.gen_expr(rop).unwrap();
         match op {
-            TokenType::TkPlus => reg,
-            TokenType::TkMinus => reg,
+            TokenType::TkPlus => {
+                self.irs.push(IR::new_addreg(lreg.clone(), rreg));
+                lreg
+            }
+            TokenType::TkMinus => lreg,
             _ => Register::invalid(),
         }
     }
@@ -178,12 +182,16 @@ impl IRS {
         let reg: Register = self.new_reg();
         match tk.val {
             TokenVal::IntVal(integer) => {
-                let imm: IR = IR::new_imm(integer, self.nreg);
-                self.new_reg()
+                let reg: Register = Register::new64(self.nreg as u8);
+                self.irs
+                    .push(IR::new_imm(Immediate::new_imm(integer), reg.clone()));
+                reg
             }
             TokenVal::UintVal(unsigned) => {
-                let imm: IR = IR::new_uimm(unsigned, self.nreg);
-                self.new_reg()
+                let reg: Register = Register::new64(self.nreg as u8);
+                self.irs
+                    .push(IR::new_uimm(Immediate::new_uimm(unsigned), reg.clone()));
+                reg
             }
             //RealVal(f64),
             //CharVal(char),
@@ -211,40 +219,48 @@ impl IR {
             Register::new64(reg_num),
         ))
     }
-    fn new_imm(semval: i128, nreg: usize) -> IR {
-        let reg: Register = Register::new64(nreg as u8);
-        let imm: Immediate = Immediate::new_imm(semval);
+    fn new_addreg(reg1: Register, reg2: Register) -> IR {
+        IR::new(IRType::ADDREG(reg1, reg2))
+    }
+    fn new_imm(imm: Immediate, reg: Register) -> IR {
         IR::new(IRType::IMM(reg, imm))
     }
-    fn new_uimm(semval: u128, nreg: usize) -> IR {
-        let reg: Register = Register::new64(nreg as u8);
-        let imm: Immediate = Immediate::new_uimm(semval);
+    fn new_uimm(imm: Immediate, reg: Register) -> IR {
         IR::new(IRType::UIMM(reg, imm))
     }
-    fn dump(&self) {
-        match &self.ty{
-    /* label*/
-    IRType::LABEL(label_name)=>println!("label {}:",label_name),
+    pub fn dump(&self) {
+        match &self.ty {
+            IRType::LABEL(label_name) => println!("label {}:", label_name.blue().bold()),
 
-    /* immediate */
-    IRType::IMM(reg, imm)=>println!("immediate reg:{} imm",reg.name),
-    IRType::UIMM(reg, imm)=>println!("u-immediate reg:{} imm",reg.name),
+            IRType::IMM(reg, imm) => println!("immediate reg:{} imm", reg.name.blue().bold()),
+            IRType::UIMM(reg, imm) => println!("u-immediate reg:{} imm", reg.name.blue().bold()),
 
-    /* Stack */
-    IRType::PUSH64(reg) => println!("push-reg:{}",reg.name),
+            IRType::PUSH64(reg) => println!("push-reg:{}", reg.name.blue().bold()),
 
-    /* accumulate */
-    IRType::ADDREG(reg1, reg2) => println!("add reg-reg:{} + {}",reg1.name,reg2.name),
-    IRType::ADDIMM(reg, imm)=> println!("add reg-imm:{} + imm",reg.name),
-    IRType::SUBREG(reg1, reg2) => println!("sub reg-reg:{} - {}",reg1.name,reg2.name),
-    IRType::SUBIMM(reg, imm) => println!("sub reg-imm:{} - imm",reg.name),
+            IRType::ADDREG(reg1, reg2) => println!(
+                "add reg-reg:{} + {}",
+                reg1.name.blue().bold(),
+                reg2.name.blue().bold()
+            ),
+            IRType::ADDIMM(reg, imm) => println!("add reg-imm:{} + imm", reg.name.blue().bold()),
+            IRType::SUBREG(reg1, reg2) => println!(
+                "sub reg-reg:{} - {}",
+                reg1.name.blue().bold(),
+                reg2.name.blue().bold()
+            ),
+            IRType::SUBIMM(reg, imm) => println!("sub reg-imm:{} - imm", reg.name.blue().bold()),
 
-    /* prologue-epilogue */
-    //PROLOGUE => println!(""),
-    //EPILOGUE,
-    IRType::RETURNREG(reg1, reg2)=>println!("return reg-reg:{} <- {}",reg1.name,reg2.name),
-    IRType::RETURNIMM(reg, imm) => println!("return reg-immL{} <- imm",reg.name),
-    _ => (),
+            //PROLOGUE => println!(""),
+            //EPILOGUE,
+            IRType::RETURNREG(reg1, reg2) => println!(
+                "return reg-reg:{} <- {}",
+                reg1.name.blue().bold(),
+                reg2.name.blue().bold()
+            ),
+            IRType::RETURNIMM(reg, imm) => {
+                println!("return reg-immL{} <- imm", reg.name.blue().bold())
+            }
+            _ => (),
         }
     }
 }
@@ -275,11 +291,11 @@ pub enum IRType {
     RETURNIMM(Register, Immediate),
 }
 
-pub fn generate_ir(nodes: Vec<node::Node>) -> IRS {
+pub fn generate_ir(nodes: &Vec<node::Node>) -> IRS {
     let mut irs: IRS = IRS::new(Vec::new(), 1);
     for func in nodes {
-        if let node::NodeType::FUNC(func_name, args, ret_type, stmts) = func.ty {
-            irs.gen_func(func_name, args, ret_type, stmts);
+        if let node::NodeType::FUNC(func_name, args, ret_type, stmts) = &func.ty {
+            irs.gen_func(func_name.to_string(), args, ret_type, stmts.to_vec());
         }
     }
     irs
