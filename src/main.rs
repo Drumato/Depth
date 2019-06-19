@@ -18,31 +18,12 @@ mod parse;
 use parse::node;
 mod analysis;
 use analysis::{ir, semantic};
-
-//ファイル単位で存在させる(予定の)構造体
-pub struct Manager {
-    nodes: Vec<node::Node>,
-    irs: ir::IRS,
-    env: semantic::Environment,
-}
-
-impl Manager {
-    fn gen_ir(&mut self, matches: &clap::ArgMatches) {
-        self.irs = ir::generate_ir(&self.nodes);
-    }
-}
+mod manager;
+use manager::manager::Manager;
 
 fn main() -> Result<(), Box<std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches(); //フラグ･オプション引数等の利用はこのオブジェクトから
-                                                      /*
-                                                      let mut out_str = String::new();
-                                                      {
-                                                          let mut emitter = YamlEmitter::new(&mut out_str);
-                                                          emitter.dump(cfg).unwrap(); // dump the YAML object to a String
-                                                      }
-                                                      println!("{}", out_str);
-                                                      */
     let tokens: Vec<token::Token> = lex_phase(&matches);
     let mut manager: Manager = parse_phase(&matches, tokens);
     manager.env.semantic(&manager.nodes);
@@ -56,7 +37,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
     manager.gen_ir(&matches);
     if matches.is_present("dump-ir") {
         println!("{}", "--------IR--------".green().bold());
-        for i in &manager.irs.irs {
+        for i in &manager.irs {
             i.dump();
         }
     }
@@ -88,7 +69,8 @@ fn parse_phase(matches: &clap::ArgMatches, tokens: Vec<token::Token>) -> Manager
     let manager: Manager = Manager {
         nodes: nodes,
         env: semantic::Environment::new(),
-        irs: ir::IRS::new(Vec::new(), 1),
+        irs: Vec::new(),
+        nreg: 1,
     };
     if matches.is_present("dump-ast") {
         println!("{}", "--------AST--------".green().bold());

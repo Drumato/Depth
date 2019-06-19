@@ -7,8 +7,8 @@ use token::{Token, TokenType};
 struct Parser {
     /* 構文解析用の構造体 */
     tokens: Vec<Token>, //字句解析により得られるトークン列
-    cur: Token, //現在見ているトークン
-    next: Token, //一つ次のトークン
+    cur: Token,         //現在見ているトークン
+    next: Token,        //一つ次のトークン
     pos: usize,
 }
 
@@ -75,7 +75,8 @@ impl Parser {
     /* 変数の解析を行う関数 */
     fn parse_ident(&mut self, t: Token) -> Node {
         let mut arguments: Vec<Node> = Vec::new();
-        if self.cur.ty == TokenType::TkLparen { //もし呼び出し式なら
+        if self.cur.ty == TokenType::TkLparen {
+            //もし呼び出し式なら
             loop {
                 if self.next.ty == TokenType::TkRparen {
                     break;

@@ -186,7 +186,7 @@ impl Environment {
 }
 
 pub struct Symbol {
-    ty: SymbolType,
+    pub ty: SymbolType,
 }
 
 impl Symbol {
