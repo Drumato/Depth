@@ -9,6 +9,7 @@ pub struct Manager {
     pub irs: Vec<ir::IR>,
     pub env: semantic::Environment,
     pub nreg: usize,
+    //pub stacksize: u8,
 }
 
 impl Manager {
@@ -68,6 +69,7 @@ impl Manager {
     }
     fn gen_expr(&mut self, n: &node::Node) -> Option<Register> {
         match &n.ty {
+            node::NodeType::ID(ident_name) => Some(self.gen_ident(&ident_name)),
             node::NodeType::INT(tk) => Some(self.gen_imm(&tk)),
             node::NodeType::BINOP(operator, lop, rop) => {
                 Some(self.gen_binop(operator, &lop[0], &rop[0]))
@@ -102,6 +104,15 @@ impl Manager {
             }
             _ => Register::invalid(),
         }
+    }
+    fn gen_ident(&mut self, ident_name: &String) -> Register {
+        let reg: Register = self.new_reg();
+        if let semantic::SymbolType::ID(_, _, stacksize, _) =
+            self.env.var_tables.get(ident_name).unwrap().ty
+        {
+            self.irs.push(IR::new_ident(reg.clone(), stacksize));
+        }
+        reg
     }
     fn gen_imm(&mut self, tk: &Token) -> Register {
         let reg: Register = self.new_reg();

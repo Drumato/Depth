@@ -75,15 +75,16 @@ impl Parser {
     /* 変数の解析を行う関数 */
     fn parse_ident(&mut self, t: Token) -> Node {
         let mut arguments: Vec<Node> = Vec::new();
-        if self.cur.ty == TokenType::TkLparen {
-            //もし呼び出し式なら
-            loop {
-                if self.next.ty == TokenType::TkRparen {
-                    break;
-                }
-                arguments.push(self.expr().clone());
-                self.next_token();
+        if self.cur.ty != TokenType::TkLparen {
+            return Node::new_ident(t.literal);
+        }
+        //もし呼び出し式なら
+        loop {
+            if self.next.ty == TokenType::TkRparen {
+                break;
             }
+            arguments.push(self.expr().clone());
+            self.next_token();
         }
         self.expect(&TokenType::TkRparen);
         self.next_token();

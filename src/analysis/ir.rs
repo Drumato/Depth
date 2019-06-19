@@ -146,13 +146,21 @@ impl IR {
     pub fn new_uimm(imm: Immediate, reg: Register) -> IR {
         IR::new(IRType::UIMM(reg, imm))
     }
+    pub fn new_ident(reg: Register, stacksize: u8) -> IR {
+        IR::new(IRType::ID(reg, stacksize))
+    }
     pub fn new_letreg(ident: Register, stacksize: u8) -> IR {
         IR::new(IRType::LETREG(ident, stacksize))
     }
     pub fn dump(&self) {
         match &self.ty {
             IRType::LABEL(label_name) => println!("label {}:", label_name.blue().bold()),
-
+            IRType::ID(reg, stacksize) => println!(
+                "ident reg:{} <- {}:{}",
+                reg.name.blue().bold(),
+                "stack-offset".blue().bold(),
+                stacksize
+            ),
             IRType::IMM(reg, imm) => println!("immediate reg:{} imm", reg.name.blue().bold()),
             IRType::UIMM(reg, imm) => println!("u-immediate reg:{} imm", reg.name.blue().bold()),
 
@@ -184,14 +192,16 @@ impl IR {
             IRType::DIVIMM(reg, imm) => println!("div reg-imm:{} - imm", reg.name.blue().bold()),
 
             IRType::LETREG(reg1, stacksize) => println!(
-                "let ident:{} stacksize:{}",
-                reg1.name.blue().bold(),
-                stacksize
+                "let : {}:{} <- {}",
+                "stack-offset".blue().bold(),
+                stacksize,
+                reg1.name.blue().bold()
             ),
             IRType::LETIMM(reg1, stacksize) => println!(
-                "let ident:{} src:imm stacksize:{}",
-                reg1.name.blue().bold(),
-                stacksize
+                "let : {}:{} <- {}",
+                "stack-offset".blue().bold(),
+                stacksize,
+                reg1.name.blue().bold()
             ),
             //PROLOGUE => println!(""),
             //EPILOGUE,
@@ -215,6 +225,7 @@ pub enum IRType {
     /* immediate */
     IMM(Register, Immediate),
     UIMM(Register, Immediate),
+    ID(Register, u8), // u8 => stacksize
 
     MOVIMM(Register),
 
