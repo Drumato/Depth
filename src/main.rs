@@ -71,6 +71,7 @@ fn parse_phase(matches: &clap::ArgMatches, tokens: Vec<token::Token>) -> Manager
         env: semantic::Environment::new(),
         irs: Vec::new(),
         nreg: 1,
+        offset: 0,
     };
     if matches.is_present("dump-ast") {
         println!("{}", "--------AST--------".green().bold());

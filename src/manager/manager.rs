@@ -9,7 +9,7 @@ pub struct Manager {
     pub irs: Vec<ir::IR>,
     pub env: semantic::Environment,
     pub nreg: usize,
-    //pub stacksize: u8,
+    pub offset: u8,
 }
 
 impl Manager {
@@ -52,12 +52,16 @@ impl Manager {
             node::NodeType::LETS(_, ident, _, ex) => {
                 let assign_reg: Register = self.gen_expr(&ex[0]).unwrap();
                 if let node::NodeType::ID(ident_name) = &ident[0].ty {
-                    if let semantic::SymbolType::ID(_, _, stacksize, _) =
-                        self.env.var_tables.get(ident_name).unwrap().ty
+                    if let semantic::SymbolType::ID(_, _, ref mut stacksize, _) =
+                        self.env.var_tables.get_mut(ident_name).unwrap().ty
                     {
-                        self.irs.push(IR::new_letreg(assign_reg, stacksize.clone()));
+                        /* consider auto-var all variables now.*/
+                        self.offset += *stacksize;
+                        *stacksize = self.offset;
+                        self.irs.push(IR::new_letreg(assign_reg, self.offset));
                     }
                 }
+                self.kill();
             }
             //IFS(TokenType, Vec<Node>, Vec<Node>, TokenType, Vec<Node>)=>{},
             //LOOP(TokenType, Vec<Node>)=>{},

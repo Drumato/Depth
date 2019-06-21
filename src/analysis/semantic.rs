@@ -27,12 +27,18 @@ impl Environment {
             }
         }
     }
-    fn new_ident(&mut self, _env_name: String, ident_name: Vec<node::Node>, type_name: TokenType) {
+    fn new_ident(
+        &mut self,
+        _env_name: String,
+        ident_name: Vec<node::Node>,
+        type_name: TokenType,
+        vty: VarType,
+    ) {
         let stacksize: u8 = type_name.stacksize();
         if let node::NodeType::ID(name) = &ident_name[0].ty {
             self.var_tables.insert(
                 name.to_string(),
-                Symbol::new_ident(name.to_string(), type_name, stacksize, VarType::AUTO),
+                Symbol::new_ident(name.to_string(), type_name, stacksize, vty),
             );
         }
     }
@@ -60,7 +66,7 @@ impl Environment {
             node::NodeType::BINOP(_, _, _) => self.analyze_binop(node),
             _ => (),
         }
-        self.new_ident(env_name, ident_name, type_name)
+        self.new_ident(env_name, ident_name, type_name, VarType::AUTO)
     }
     fn checktype_binop(&mut self, ty: TokenType, lchild: Vec<node::Node>, rchild: Vec<node::Node>) {
         if ty == TokenType::TkPlus || ty == TokenType::TkStar {

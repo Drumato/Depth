@@ -1,4 +1,5 @@
 f main() -> i8 {
-  let x : i8 = 30 + 30
-  return x
- }
+  let x : i8 = 30
+  let y : i16 = 30
+  return x+y
+}
