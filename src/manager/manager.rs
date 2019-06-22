@@ -4,6 +4,7 @@ use super::super::parse::{error, node};
 use ir::{IMMType, IRType, Immediate, Register, IR};
 use std::collections::HashMap;
 use std::io::{BufWriter, Write};
+use std::str;
 //ファイル単位で存在させる(予定の)構造体
 pub struct Manager {
     pub nodes: Vec<node::Node>,
@@ -29,7 +30,7 @@ impl Manager {
         for ir in self.irs.iter() {
             match &ir.ty {
                 IRType::LETREG(reg1, stacksize) => {
-                    println!("    mov QWORD PTR -{}[rbp], {}", stacksize, reg1.name)
+                    println!("    mov QWORD PTR -{}[rbp], {}", stacksize / 8, reg1.name) //bits -> bytes
                 }
                 IRType::ADDREG(reg1, reg2) => println!("    add {}, {}", reg1.name, reg2.name),
                 IRType::SUBREG(reg1, reg2) => println!("    sub {}, {}", reg1.name, reg2.name),
@@ -43,7 +44,7 @@ impl Manager {
                     println!("    div {}", reg2.name);
                     println!("    mov {}, rax", reg1.name)
                 }
-                IRType::IMM(reg, imm) => match imm.ty {
+                IRType::IMM(reg, imm) => match &imm.ty {
                     IMMType::IMM8(v) => println!("    mov {}, {}", reg.name, v),
                     IMMType::IMM16(v) => println!("    mov {}, {}", reg.name, v),
                     IMMType::IMM32(v) => println!("    mov {}, {}", reg.name, v),
@@ -54,6 +55,11 @@ impl Manager {
                     IMMType::UIMM32(v) => println!("    mov {}, {}", reg.name, v),
                     IMMType::UIMM64(v) => println!("    mov {}, {}", reg.name, v),
                     IMMType::UIMM128(v) => println!("    mov {}, {}", reg.name, v),
+
+                    IMMType::IMMSTR(v) => {
+                        let lit: String = str::from_utf8(v.as_bytes()).unwrap().to_string();
+                        println!("    movabs {}, {}", reg.name, lit)
+                    }
                 },
                 IRType::RETURNREG(reg1, reg2) => {
                     println!("    mov {}, {}", reg1.name, reg2.name);
@@ -72,7 +78,7 @@ impl Manager {
                 }
                 IRType::LABEL(label_name) => println!("{}:", label_name),
                 IRType::ID(reg, stacksize) => {
-                    println!("    mov {}, QWORd PTR -{}[rbp]", reg.name, stacksize)
+                    println!("    mov {}, QWORd PTR -{}[rbp]", reg.name, stacksize / 8) // bits->bytes
                 }
                 _ => (),
             }
@@ -133,6 +139,7 @@ impl Manager {
         match &n.ty {
             node::NodeType::ID(ident_name) => Some(self.gen_ident(&ident_name)),
             node::NodeType::INT(tk) => Some(self.gen_imm(&tk)),
+            node::NodeType::STRING(tk) => Some(self.gen_imm(&tk)),
             node::NodeType::BINOP(operator, lop, rop) => {
                 Some(self.gen_binop(operator, &lop[0], &rop[0]))
             }
@@ -178,6 +185,14 @@ impl Manager {
     }
     fn gen_imm(&mut self, tk: &Token) -> Register {
         let reg: Register = self.new_reg();
+        if let TokenType::TkStrlit = tk.ty {
+            let reg: Register = Register::new64(reg.vnum as u8);
+            self.irs.push(IR::new_imm(
+                Immediate::new_str(tk.literal.clone()),
+                reg.clone(),
+            ));
+            return reg;
+        }
         match tk.val {
             TokenVal::IntVal(integer) => {
                 let reg: Register = Register::new64(reg.vnum as u8);

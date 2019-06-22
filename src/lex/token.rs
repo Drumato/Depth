@@ -2,9 +2,9 @@ use super::super::parse::error;
 use colored::*;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
-    pub ty: TokenType, //enumで定義されたTokenの種類を識別するメンバ
+    pub ty: TokenType,   //enumで定義されたTokenの種類を識別するメンバ
     pub literal: String, //Tokenの入力時文字列
-    pub val: TokenVal, //意味値
+    pub val: TokenVal,   //意味値
 }
 /* 予約語かどうかチェックする関数*/
 pub fn lookup(s: &str) -> bool {
@@ -235,6 +235,7 @@ impl TokenType {
             TokenType::TkU64 => 64,
             TokenType::TkU128 => 128,
             TokenType::TkChar => 32,
+            TokenType::TkString => 16,
             _ => {
                 error::CompileError::TYPE(format!(
                     "'{}' is not known at compile-time",
@@ -244,6 +245,10 @@ impl TokenType {
                 8
             }
         }
+    }
+    pub fn str_stacksize(s: &String) -> u8 {
+        let length: u8 = s.len() as u8;
+        length / 8
     }
     pub fn string(&self) -> &str {
         match self {

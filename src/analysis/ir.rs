@@ -53,6 +53,7 @@ pub enum IMMType {
     UIMM32(u32),
     UIMM64(u64),
     UIMM128(u128),
+    IMMSTR(String),
 }
 pub struct Immediate {
     pub bits: u8,
@@ -105,6 +106,12 @@ impl Immediate {
                 bits: 128,
                 ty: IMMType::UIMM128(sem_val),
             },
+        }
+    }
+    pub fn new_str(sem_val: String) -> Immediate {
+        Immediate {
+            bits: 128,
+            ty: IMMType::IMMSTR(sem_val),
         }
     }
 }

@@ -34,8 +34,11 @@ impl Environment {
         type_name: TokenType,
         vty: VarType,
     ) {
-        let stacksize: u8 = type_name.stacksize();
+        let mut stacksize: u8 = type_name.stacksize();
         if let node::NodeType::ID(name) = &ident_name[0].ty {
+            if let TokenType::TkString = &type_name {
+                stacksize += (16 * TokenType::str_stacksize(name));
+            }
             self.var_tables.insert(
                 name.to_string(),
                 Symbol::new_ident(name.to_string(), type_name, stacksize, vty),
