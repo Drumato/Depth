@@ -1,5 +1,0 @@
-f main(){
-  let x : i8 = 30
-  let y : i8 = 50
-  return x + y
-}

@@ -1,6 +1,0 @@
-f main(){
-  let x : i8 = 30
-  if x > 0{
-    return x * 2
-  }
-}
