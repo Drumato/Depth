@@ -55,8 +55,8 @@ pub enum IMMType {
     UIMM128(u128),
 }
 pub struct Immediate {
-    bits: u8,
-    ty: IMMType,
+    pub bits: u8,
+    pub ty: IMMType,
 }
 impl Immediate {
     pub fn new_imm(sem_val: i128) -> Immediate {
@@ -211,8 +211,10 @@ impl IR {
                 reg2.name.blue().bold()
             ),
             IRType::RETURNIMM(reg, imm) => {
-                println!("return reg-immL{} <- imm", reg.name.blue().bold())
+                println!("return reg-imm{} <- imm", reg.name.blue().bold())
             }
+            IRType::PROLOGUE => println!("func-progolue"),
+            IRType::EPILOGUE => println!("func-epilogue"),
             _ => (),
         }
     }

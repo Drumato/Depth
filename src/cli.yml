@@ -32,6 +32,10 @@ args:
         short: v
         multiple: true
         help: Sets the level of verbosity
+    - intel:
+        short: i
+        long: intel
+        help: append prefix when generating assembly-code
 subcommands:
     - test:
         about: controls testing features

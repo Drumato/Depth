@@ -26,6 +26,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
     let matches = App::from_yaml(yaml).get_matches(); //フラグ･オプション引数等の利用はこのオブジェクトから
     let tokens: Vec<token::Token> = lex_phase(&matches);
     let mut manager: Manager = parse_phase(&matches, tokens);
+    /* semantic phase */
     manager.env.semantic(&manager.nodes);
     if matches.is_present("dump-symbol") {
         println!("{}", "--------symbol_tables--------".green().bold());
@@ -34,6 +35,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
             println!("name:{}\tsym:{}", sym_name, symbol.string());
         }
     }
+    /* generate-ir phase */
     manager.gen_ir(&matches);
     if matches.is_present("dump-ir") {
         println!("{}", "--------IR--------".green().bold());
@@ -41,6 +43,8 @@ fn main() -> Result<(), Box<std::error::Error>> {
             i.dump();
         }
     }
+    /* generate-code phase */
+    manager.gen_code(&matches);
     Ok(())
 }
 

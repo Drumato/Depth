@@ -1,8 +1,9 @@
 use super::super::analysis::{ir, semantic};
 use super::super::lex::token::{Token, TokenType, TokenVal};
 use super::super::parse::{error, node};
-use ir::{IRType, Immediate, Register, IR};
+use ir::{IMMType, IRType, Immediate, Register, IR};
 use std::collections::HashMap;
+use std::io::{BufWriter, Write};
 //ファイル単位で存在させる(予定の)構造体
 pub struct Manager {
     pub nodes: Vec<node::Node>,
@@ -17,6 +18,63 @@ impl Manager {
         for func in self.nodes.to_vec() {
             if let node::NodeType::FUNC(func_name, args, ret_type, stmts) = &func.ty {
                 self.gen_func(func_name.to_string(), args, ret_type, stmts.to_vec());
+            }
+        }
+    }
+    pub fn gen_code(&mut self, matches: &clap::ArgMatches) {
+        if matches.is_present("intel") {
+            println!(".intel_syntax noprefix");
+            println!(".globl main");
+        }
+        for ir in self.irs.iter() {
+            match &ir.ty {
+                IRType::LETREG(reg1, stacksize) => {
+                    println!("    mov QWORD PTR -{}[rbp], {}", stacksize, reg1.name)
+                }
+                IRType::ADDREG(reg1, reg2) => println!("    add {}, {}", reg1.name, reg2.name),
+                IRType::SUBREG(reg1, reg2) => println!("    sub {}, {}", reg1.name, reg2.name),
+                IRType::MULREG(reg1, reg2) => {
+                    println!("    mov rax, {}", reg1.name);
+                    println!("    mul {}", reg2.name);
+                    println!("    mov {}, rax", reg1.name)
+                }
+                IRType::DIVREG(reg1, reg2) => {
+                    println!("    mov rax, {}", reg1.name);
+                    println!("    div {}", reg2.name);
+                    println!("    mov {}, rax", reg1.name)
+                }
+                IRType::IMM(reg, imm) => match imm.ty {
+                    IMMType::IMM8(v) => println!("    mov {}, {}", reg.name, v),
+                    IMMType::IMM16(v) => println!("    mov {}, {}", reg.name, v),
+                    IMMType::IMM32(v) => println!("    mov {}, {}", reg.name, v),
+                    IMMType::IMM64(v) => println!("    mov {}, {}", reg.name, v),
+                    IMMType::IMM128(v) => println!("    mov {}, {}", reg.name, v),
+                    IMMType::UIMM8(v) => println!("    mov {}, {}", reg.name, v),
+                    IMMType::UIMM16(v) => println!("    mov {}, {}", reg.name, v),
+                    IMMType::UIMM32(v) => println!("    mov {}, {}", reg.name, v),
+                    IMMType::UIMM64(v) => println!("    mov {}, {}", reg.name, v),
+                    IMMType::UIMM128(v) => println!("    mov {}, {}", reg.name, v),
+                },
+                IRType::RETURNREG(reg1, reg2) => {
+                    println!("    mov {}, {}", reg1.name, reg2.name);
+                }
+                IRType::PROLOGUE => {
+                    println!("    push rbp");
+                    println!("    mov rbp,rsp");
+                    if self.offset > 0 {
+                        println!("    sub rsp, {}", self.offset);
+                    }
+                }
+                IRType::EPILOGUE => {
+                    println!("    mov rsp,rbp");
+                    println!("    pop rbp");
+                    println!("    ret");
+                }
+                IRType::LABEL(label_name) => println!("{}:", label_name),
+                IRType::ID(reg, stacksize) => {
+                    println!("    mov {}, QWORd PTR -{}[rbp]", reg.name, stacksize)
+                }
+                _ => (),
             }
         }
     }

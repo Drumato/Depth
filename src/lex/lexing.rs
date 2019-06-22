@@ -1,16 +1,16 @@
-/* 字句解析に用いる構造体 */
-pub struct Lexer {
-    pub input: String, /* 入力文字 */
-    pub pos: usize, /* 現在見ている文字 */
-    pub npos: usize, /* 次見る文字 */
-    pub ch: u8, /* 現在見ている文字 */
-}
-
 use super::super::parse::error;
 use super::token;
 use token::{Token, TokenType, TokenVal};
 extern crate drumatech;
 use drumatech::conv;
+
+/* 字句解析に用いる構造体 */
+pub struct Lexer {
+    pub input: String, /* 入力文字 */
+    pub pos: usize,    /* 現在見ている文字 */
+    pub npos: usize,   /* 次見る文字 */
+    pub ch: u8,        /* 現在見ている文字 */
+}
 
 /* 字句解析を行う関数(トップレベル) */
 pub fn lex_phase(input_str: String) -> Vec<Token> {
@@ -37,37 +37,19 @@ impl Lexer {
             ch: ch,
         })
     }
-    /* オフセットを1進める */
-    pub fn read_char(&mut self) {
-        if self.npos >= self.input.len() {
-            self.ch = 0; //null termination
-        } else {
-            match self.input.bytes().nth(self.npos) {
-                Some(c) => self.ch = c,
-                None => panic!("Error found between calling read_char() function"),
-            }
+    /* 初期状態から規則に従って解析関数にシフトする(DFA的) */
+    pub fn next_token(&mut self) -> Option<Token> {
+        self.skip_whitespace();
+        let s = conv::u8_to_string(&mut self.ch);
+        match self.ch as char {
+            '\0' => Some(Token::new((TokenType::TkEof, s, TokenVal::InVal))),
+            c if c == '"' => Some(self.judge_string()), //文字列リテラル
+            c if (c == 'u' && self.peak_char().is_ascii_digit()) => Some(self.judge_unumber()), //uint
+            c if c.is_ascii_digit() => Some(self.judge_number()), //signed nint
+            c if c.is_alphabetic() => Some(self.judge_keyword()), //予約語or識別子
+            c if c.is_ascii_punctuation() => Some(self.judge_mark()), //その他記号
+            _ => None,
         }
-        self.pos = self.npos;
-        self.npos += 1;
-    }
-    /* 次の文字をchar型で渡す */
-    pub fn peak_char(&self) -> char {
-        if self.npos >= self.input.len() {
-            return '\0';
-        } else {
-            match self.input.bytes().nth(self.npos) {
-                Some(c) => c as char,
-                None => panic!("Error found between calling read_char() function"),
-            }
-        }
-    }
-    /* 識別子である間オフセットを進め､部分文字列を返す */
-    pub fn read_ident(&mut self) -> String {
-        let p: usize = self.pos;
-        while self.ch.is_ascii_alphabetic() || self.ch.is_ascii_digit() || self.ch == 0x5f {
-            self.read_char();
-        }
-        self.input[p..self.pos].to_string()
     }
     /* 文字列リテラルを受け付けてトークンを返す */
     pub fn judge_string(&mut self) -> Token {
@@ -80,6 +62,51 @@ impl Lexer {
         let s: String = self.input[p..self.pos].to_string();
         self.read_char();
         Token::new((TokenType::TkStrlit, s, TokenVal::InVal))
+    }
+    /* 予約後or識別子*/
+    fn judge_keyword(&mut self) -> Token {
+        let s: String = self.read_ident();
+        if token::lookup(&s) {
+            return Token::new((token::get_keyword(&s), s, TokenVal::InVal));
+        }
+        Token::new((TokenType::TkIdent, s, TokenVal::InVal))
+    }
+    fn judge_mark(&mut self) -> Token {
+        let s = conv::u8_to_string(&mut self.ch);
+        match self.ch as char {
+            '+' => self.judge_plus(),
+            '-' => self.judge_minus(),
+            '*' => self.judge_star(),
+            '/' => self.judge_slash(),
+            '%' => self.judge_percent(),
+            '=' => self.judge_assign(),
+            '&' => self.judge_ampersand(),
+            '|' => self.judge_pipe(),
+            '!' => self.judge_bang(),
+            '<' => self.judge_lt(),
+            '>' => self.judge_gt(),
+            '.' => self.judge_dot(),
+            ',' => self.judge_comma(),
+            ':' => self.judge_colon(),
+            ';' => self.judge_semicolon(),
+            '(' => self.judge_lparen(),
+            ')' => self.judge_rparen(),
+            '{' => self.judge_lbrace(),
+            '}' => self.judge_rbrace(),
+            '[' => self.judge_lbracket(),
+            ']' => self.judge_rbracket(),
+            '\\' => self.judge_backslash(),
+            '\'' => self.judge_char(),
+            _ => Token::new((TokenType::TkIllegal, s, TokenVal::InVal)),
+        }
+    }
+    /* 識別子である間オフセットを進め､部分文字列を返す */
+    pub fn read_ident(&mut self) -> String {
+        let p: usize = self.pos;
+        while self.ch.is_ascii_alphabetic() || self.ch.is_ascii_digit() || self.ch == 0x5f {
+            self.read_char();
+        }
+        self.input[p..self.pos].to_string()
     }
     /* 数値である間オフセットを進め､部分文字列を返す */
     pub fn read_number(&mut self) -> String {
@@ -106,7 +133,8 @@ impl Lexer {
                     self.read_char();
                 }
             }
-        } else { //10進数解析
+        } else {
+            //10進数解析
             while (self.ch as char).is_digit(10) {
                 self.read_char();
             }
@@ -118,28 +146,6 @@ impl Lexer {
         while self.ch.is_ascii_whitespace() {
             self.read_char();
         }
-    }
-    /* 初期状態から規則に従って解析関数にシフトする(DFA的) */
-    pub fn next_token(&mut self) -> Option<Token> {
-        self.skip_whitespace();
-        let s = conv::u8_to_string(&mut self.ch);
-        match self.ch as char {
-            '\0' => Some(Token::new((TokenType::TkEof, s, TokenVal::InVal))),
-            c if c == '"' => Some(self.judge_string()), //文字列リテラル
-            c if (c == 'u' && self.peak_char().is_ascii_digit()) => Some(self.judge_unumber()), //uint
-            c if c.is_ascii_digit() => Some(self.judge_number()), //signed nint
-            c if c.is_alphabetic() => Some(self.judge_keyword()), //予約語or識別子
-            c if c.is_ascii_punctuation() => Some(self.judge_mark()), //その他記号
-            _ => None,
-        }
-    }
-    /* 予約後or識別子*/
-    fn judge_keyword(&mut self) -> Token {
-        let s: String = self.read_ident();
-        if token::lookup(&s) {
-            return Token::new((token::get_keyword(&s), s, TokenVal::InVal));
-        }
-        Token::new((TokenType::TkIdent, s, TokenVal::InVal))
     }
     fn judge_number(&mut self) -> Token {
         let s: String = self.read_number();
@@ -193,33 +199,28 @@ impl Lexer {
         let val: u128 = u128::from_str_radix(ns, base).unwrap();
         Token::new((TokenType::TkUintlit, s, TokenVal::UintVal(val)))
     }
-    fn judge_mark(&mut self) -> Token {
-        let s = conv::u8_to_string(&mut self.ch);
-        match self.ch as char {
-            '+' => self.judge_plus(),
-            '-' => self.judge_minus(),
-            '*' => self.judge_star(),
-            '/' => self.judge_slash(),
-            '%' => self.judge_percent(),
-            '=' => self.judge_assign(),
-            '&' => self.judge_ampersand(),
-            '|' => self.judge_pipe(),
-            '!' => self.judge_bang(),
-            '<' => self.judge_lt(),
-            '>' => self.judge_gt(),
-            '.' => self.judge_dot(),
-            ',' => self.judge_comma(),
-            ':' => self.judge_colon(),
-            ';' => self.judge_semicolon(),
-            '(' => self.judge_lparen(),
-            ')' => self.judge_rparen(),
-            '{' => self.judge_lbrace(),
-            '}' => self.judge_rbrace(),
-            '[' => self.judge_lbracket(),
-            ']' => self.judge_rbracket(),
-            '\\' => self.judge_backslash(),
-            '\'' => self.judge_char(),
-            _ => Token::new((TokenType::TkIllegal, s, TokenVal::InVal)),
+    /* オフセットを1進める */
+    pub fn read_char(&mut self) {
+        if self.npos >= self.input.len() {
+            self.ch = 0; //null termination
+        } else {
+            match self.input.bytes().nth(self.npos) {
+                Some(c) => self.ch = c,
+                None => panic!("Error found between calling read_char() function"),
+            }
+        }
+        self.pos = self.npos;
+        self.npos += 1;
+    }
+    /* 次の文字をchar型で渡す */
+    pub fn peak_char(&self) -> char {
+        if self.npos >= self.input.len() {
+            return '\0';
+        } else {
+            match self.input.bytes().nth(self.npos) {
+                Some(c) => c as char,
+                None => panic!("Error found between calling read_char() function"),
+            }
         }
     }
     fn judge_char(&mut self) -> Token {
