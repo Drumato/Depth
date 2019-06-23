@@ -54,6 +54,7 @@ pub enum IMMType {
     UIMM64(u64),
     UIMM128(u128),
     IMMSTR(String),
+    IMMCHAR(char),
 }
 pub struct Immediate {
     pub bits: u8,
@@ -108,6 +109,12 @@ impl Immediate {
             },
         }
     }
+    pub fn new_char(sem_val: char) -> Immediate {
+        Immediate {
+            bits: 32,
+            ty: IMMType::IMMCHAR(sem_val),
+        }
+    }
     pub fn new_str(sem_val: String) -> Immediate {
         Immediate {
             bits: 128,
@@ -147,11 +154,14 @@ impl IR {
     pub fn new_divreg(reg1: Register, reg2: Register) -> IR {
         IR::new(IRType::DIVREG(reg1, reg2))
     }
-    pub fn new_imm(imm: Immediate, reg: Register) -> IR {
+    pub fn new_imm(reg: Register, imm: Immediate) -> IR {
         IR::new(IRType::IMM(reg, imm))
     }
-    pub fn new_uimm(imm: Immediate, reg: Register) -> IR {
+    pub fn new_uimm(reg: Register, imm: Immediate) -> IR {
         IR::new(IRType::UIMM(reg, imm))
+    }
+    pub fn new_char(reg: Register, imm: Immediate) -> IR {
+        IR::new(IRType::CHIMM(reg, imm))
     }
     pub fn new_ident(reg: Register, stacksize: u8) -> IR {
         IR::new(IRType::ID(reg, stacksize))
@@ -170,6 +180,9 @@ impl IR {
             ),
             IRType::IMM(reg, imm) => println!("immediate reg:{} imm", reg.name.blue().bold()),
             IRType::UIMM(reg, imm) => println!("u-immediate reg:{} imm", reg.name.blue().bold()),
+            IRType::CHIMM(reg, imm) => {
+                println!("char-immediate reg:{} imm", reg.name.blue().bold())
+            }
 
             IRType::PUSH64(reg) => println!("push-reg:{}", reg.name.blue().bold()),
 
@@ -234,6 +247,7 @@ pub enum IRType {
     /* immediate */
     IMM(Register, Immediate),
     UIMM(Register, Immediate),
+    CHIMM(Register, Immediate),
     ID(Register, u8), // u8 => stacksize
 
     MOVIMM(Register),

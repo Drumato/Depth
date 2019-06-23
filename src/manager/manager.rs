@@ -45,21 +45,31 @@ impl Manager {
                     println!("    mov {}, rax", reg1.name)
                 }
                 IRType::IMM(reg, imm) => match &imm.ty {
-                    IMMType::IMM8(v) => println!("    mov {}, {}", reg.name, v),
-                    IMMType::IMM16(v) => println!("    mov {}, {}", reg.name, v),
-                    IMMType::IMM32(v) => println!("    mov {}, {}", reg.name, v),
-                    IMMType::IMM64(v) => println!("    mov {}, {}", reg.name, v),
-                    IMMType::IMM128(v) => println!("    mov {}, {}", reg.name, v),
-                    IMMType::UIMM8(v) => println!("    mov {}, {}", reg.name, v),
-                    IMMType::UIMM16(v) => println!("    mov {}, {}", reg.name, v),
-                    IMMType::UIMM32(v) => println!("    mov {}, {}", reg.name, v),
-                    IMMType::UIMM64(v) => println!("    mov {}, {}", reg.name, v),
-                    IMMType::UIMM128(v) => println!("    mov {}, {}", reg.name, v),
+                    IMMType::IMM8(v) => println!("    mov {}, 0x{:x}", reg.name, v),
+                    IMMType::IMM16(v) => println!("    mov {}, 0x{:x}", reg.name, v),
+                    IMMType::IMM32(v) => println!("    mov {}, 0x{:x}", reg.name, v),
+                    IMMType::IMM64(v) => println!("    mov {}, 0x{:x}", reg.name, v),
+                    IMMType::IMM128(v) => println!("    mov {}, {:x}", reg.name, v),
+                    _ => (),
 
                     IMMType::IMMSTR(v) => {
                         let lit: String = str::from_utf8(v.as_bytes()).unwrap().to_string();
                         println!("    movabs {}, {}", reg.name, lit)
                     }
+                },
+                IRType::UIMM(reg, imm) => match &imm.ty {
+                    IMMType::UIMM8(v) => println!("    mov {}, 0x{:x}", reg.name, v),
+                    IMMType::UIMM16(v) => println!("    mov {}, 0x{:x}", reg.name, v),
+                    IMMType::UIMM32(v) => println!("    mov {}, 0x{:x}", reg.name, v),
+                    IMMType::UIMM64(v) => println!("    mov {}, 0x{:x}", reg.name, v),
+                    IMMType::UIMM128(v) => println!("    mov {}, 0x{:x}", reg.name, v),
+                    _ => (),
+                },
+                IRType::CHIMM(reg, imm) => match &imm.ty {
+                    IMMType::IMMCHAR(v) => {
+                        println!("    mov {}, 0x{:x}", reg.name, v.clone() as u32)
+                    }
+                    _ => (),
                 },
                 IRType::RETURNREG(reg1, reg2) => {
                     println!("    mov {}, {}", reg1.name, reg2.name);
@@ -68,7 +78,7 @@ impl Manager {
                     println!("    push rbp");
                     println!("    mov rbp,rsp");
                     if self.offset > 0 {
-                        println!("    sub rsp, {}", self.offset);
+                        println!("    sub rsp, 0x{:x}", self.offset);
                     }
                 }
                 IRType::EPILOGUE => {
@@ -117,7 +127,7 @@ impl Manager {
                 let assign_reg: Register = self.gen_expr(&ex[0]).unwrap();
                 if let node::NodeType::ID(ident_name) = &ident[0].ty {
                     if let semantic::SymbolType::ID(_, _, ref mut stacksize, _) =
-                        self.env.var_tables.get_mut(ident_name).unwrap().ty
+                        self.env.var_table.get_mut(ident_name).unwrap().ty
                     {
                         /* consider auto-var all variables now.*/
                         self.offset += *stacksize;
@@ -139,6 +149,7 @@ impl Manager {
         match &n.ty {
             node::NodeType::ID(ident_name) => Some(self.gen_ident(&ident_name)),
             node::NodeType::INT(tk) => Some(self.gen_imm(&tk)),
+            node::NodeType::CHAR(tk) => Some(self.gen_imm(&tk)),
             node::NodeType::STRING(tk) => Some(self.gen_imm(&tk)),
             node::NodeType::BINOP(operator, lop, rop) => {
                 Some(self.gen_binop(operator, &lop[0], &rop[0]))
@@ -177,7 +188,7 @@ impl Manager {
     fn gen_ident(&mut self, ident_name: &String) -> Register {
         let reg: Register = self.new_reg();
         if let semantic::SymbolType::ID(_, _, stacksize, _) =
-            self.env.var_tables.get(ident_name).unwrap().ty
+            self.env.var_table.get(ident_name).unwrap().ty
         {
             self.irs.push(IR::new_ident(reg.clone(), stacksize));
         }
@@ -188,8 +199,8 @@ impl Manager {
         if let TokenType::TkStrlit = tk.ty {
             let reg: Register = Register::new64(reg.vnum as u8);
             self.irs.push(IR::new_imm(
-                Immediate::new_str(tk.literal.clone()),
                 reg.clone(),
+                Immediate::new_str(tk.literal.clone()),
             ));
             return reg;
         }
@@ -197,17 +208,22 @@ impl Manager {
             TokenVal::IntVal(integer) => {
                 let reg: Register = Register::new64(reg.vnum as u8);
                 self.irs
-                    .push(IR::new_imm(Immediate::new_imm(integer), reg.clone()));
+                    .push(IR::new_imm(reg.clone(), Immediate::new_imm(integer)));
                 reg
             }
             TokenVal::UintVal(unsigned) => {
                 let reg: Register = Register::new64(reg.vnum as u8);
                 self.irs
-                    .push(IR::new_uimm(Immediate::new_uimm(unsigned), reg.clone()));
+                    .push(IR::new_uimm(reg.clone(), Immediate::new_uimm(unsigned)));
+                reg
+            }
+            TokenVal::CharVal(ch) => {
+                let reg: Register = Register::new64(reg.vnum as u8);
+                self.irs
+                    .push(IR::new_char(reg.clone(), Immediate::new_char(ch)));
                 reg
             }
             //RealVal(f64),
-            //CharVal(char),
             _ => Register::invalid(),
         }
     }

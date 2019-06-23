@@ -4,19 +4,19 @@ use super::super::parse::{error, node};
 use std::collections::HashMap;
 use token::TokenType;
 pub struct Environment {
-    pub type_tables: HashMap<String, Symbol>,
-    pub func_tables: HashMap<String, Symbol>,
-    pub var_tables: HashMap<String, Symbol>,
+    pub type_table: HashMap<String, Symbol>,
+    pub func_table: HashMap<String, Symbol>,
+    pub var_table: HashMap<String, Symbol>,
 }
 impl Environment {
     pub fn new() -> Self {
-        let type_tables: HashMap<String, Symbol> = HashMap::new();
-        let func_tables: HashMap<String, Symbol> = HashMap::new();
-        let var_tables: HashMap<String, Symbol> = HashMap::new();
+        let type_table: HashMap<String, Symbol> = HashMap::new();
+        let func_table: HashMap<String, Symbol> = HashMap::new();
+        let var_table: HashMap<String, Symbol> = HashMap::new();
         Self {
-            func_tables: func_tables,
-            type_tables: type_tables,
-            var_tables: var_tables,
+            func_table: func_table,
+            type_table: type_table,
+            var_table: var_table,
         }
     }
     pub fn semantic(&mut self, nodes: &Vec<node::Node>) {
@@ -39,7 +39,7 @@ impl Environment {
             if let TokenType::TkString = &type_name {
                 stacksize += (16 * TokenType::str_stacksize(name));
             }
-            self.var_tables.insert(
+            self.var_table.insert(
                 name.to_string(),
                 Symbol::new_ident(name.to_string(), type_name, stacksize, vty),
             );
@@ -54,7 +54,7 @@ impl Environment {
                 _ => (),
             }
         }
-        self.func_tables
+        self.func_table
             .insert(func_name.to_string(), Symbol::new_func(func_name));
     }
     fn analyze_lets(
@@ -188,7 +188,7 @@ impl Environment {
             new_map.insert(k.clone(), v.clone());
         }
         Self {
-            sym_tables: new_map,
+            sym_table: new_map,
         }
     }
     */

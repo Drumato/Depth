@@ -29,9 +29,9 @@ fn main() -> Result<(), Box<std::error::Error>> {
     /* semantic phase */
     manager.env.semantic(&manager.nodes);
     if matches.is_present("dump-symbol") {
-        println!("{}", "--------symbol_tables--------".green().bold());
+        println!("{}", "--------symbol_table--------".green().bold());
         println!("{}", "variables".green().bold());
-        for (sym_name, symbol) in manager.env.var_tables.iter() {
+        for (sym_name, symbol) in manager.env.var_table.iter() {
             println!("name:{}\tsym:{}", sym_name, symbol.string());
         }
     }

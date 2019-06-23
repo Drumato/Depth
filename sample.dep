@@ -1,4 +1,4 @@
 f main() -> i8 {
-  let x : i128 = 1
+  let x : ch = 'A'
   return x
 }
