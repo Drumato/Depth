@@ -32,7 +32,8 @@ This is the main source code repository for Depth.
 
 ### parsing
 
-- [x] some functions( `f main(){} f add(){}`)
+- [x] define-multiple-functions( `f main(){} f add(){}`)
+- [x] argument when define functions( `f main(x:i8,y:i32){}` )
 - [x] for-stmt( `for elem in ary{ some stmts }` )
 - [x] loop-stmt( `loop { some stmts }`)
 - [x] let-stmt()

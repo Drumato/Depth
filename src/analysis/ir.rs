@@ -154,6 +154,12 @@ impl IR {
     pub fn new_divreg(reg1: Register, reg2: Register) -> IR {
         IR::new(IRType::DIVREG(reg1, reg2))
     }
+    pub fn new_cmpreg(reg1: Register, reg2: Register) -> IR {
+        IR::new(IRType::CMPREG(reg1, reg2))
+    }
+    pub fn new_jmp(label: String, cmp: CMPType) -> IR {
+        IR::new(IRType::JMP(label, cmp))
+    }
     pub fn new_imm(reg: Register, imm: Immediate) -> IR {
         IR::new(IRType::IMM(reg, imm))
     }
@@ -230,6 +236,19 @@ impl IR {
                 reg1.name.blue().bold(),
                 reg2.name.blue().bold()
             ),
+            IRType::CMPREG(reg1, reg2) => println!(
+                "compare reg-reg:{} <=> {}",
+                reg1.name.blue().bold(),
+                reg2.name.blue().bold()
+            ),
+            IRType::JMP(label, cmp) => match &cmp {
+                CMPType::GT => println!("jle to {}", label.blue().bold()),
+                CMPType::GTEQ => println!("jl to {}", label.blue().bold()),
+                CMPType::LTEQ => println!("jg to {}", label.blue().bold()),
+                CMPType::LT => println!("jg to {}", label.blue().bold()),
+                CMPType::EQ => println!("jne to {}", label.blue().bold()),
+                CMPType::NTEQ => println!("je to {}", label.blue().bold()),
+            },
             IRType::RETURNIMM(reg, imm) => {
                 println!("return reg-imm{} <- imm", reg.name.blue().bold())
             }
@@ -238,6 +257,15 @@ impl IR {
             _ => (),
         }
     }
+}
+
+pub enum CMPType {
+    GT,
+    GTEQ,
+    LTEQ,
+    LT,
+    EQ,
+    NTEQ,
 }
 
 pub enum IRType {
@@ -264,6 +292,8 @@ pub enum IRType {
     MULIMM(Register, Immediate),
     DIVREG(Register, Register),
     DIVIMM(Register, Immediate),
+    CMPREG(Register, Register),
+    JMP(String, CMPType),
 
     /* statement */
     LETREG(Register, u8), // u8 => stacksize
