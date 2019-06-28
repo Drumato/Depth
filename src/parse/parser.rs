@@ -97,14 +97,14 @@ impl Parser {
         Node::new_num(token)
     }
     fn parse_array(&mut self, ty: Token) -> Node {
-        //%s(abc def ghi)
-        self.consume(&TokenType::TkLparen); //( -> abc
+        //%s[abc def ghi]
+        self.consume(&TokenType::TkLbracket); //( -> abc
         let mut elements: Vec<Token> = Vec::new();
-        while self.next.ty != TokenType::TkRparen {
+        while self.next.ty != TokenType::TkRbracket {
             elements.push(self.cur.clone());
             self.next_token();
         }
-        self.expect(&TokenType::TkRparen);
+        self.expect(&TokenType::TkRbracket);
         self.next_token();
         match ty.ty {
             TokenType::TkPerStr => Node::new_strary(elements),
@@ -114,7 +114,7 @@ impl Parser {
         }
     }
     fn logor(&mut self) -> Node {
-        // == or !=
+        // ||
         let mut lchild: Node = self.logand();
         loop {
             let t: Token = self.cur.clone();
@@ -128,7 +128,7 @@ impl Parser {
         lchild
     }
     fn logand(&mut self) -> Node {
-        // == or !=
+        // &&
         let mut lchild: Node = self.equal();
         loop {
             let t: Token = self.cur.clone();

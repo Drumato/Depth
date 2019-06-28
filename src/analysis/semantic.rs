@@ -27,24 +27,6 @@ impl Environment {
             }
         }
     }
-    fn new_ident(
-        &mut self,
-        _env_name: String,
-        ident_name: Vec<node::Node>,
-        type_name: TokenType,
-        vty: VarType,
-    ) {
-        let mut stacksize: u8 = type_name.stacksize();
-        if let node::NodeType::ID(name) = &ident_name[0].ty {
-            if let TokenType::TkString = &type_name {
-                stacksize += (16 * TokenType::str_stacksize(name));
-            }
-            self.var_table.insert(
-                name.to_string(),
-                Symbol::new_ident(name.to_string(), type_name, stacksize, vty),
-            );
-        }
-    }
     fn analyze_func(&mut self, func_name: String, nodes: Vec<node::Node>) {
         for n in nodes.iter() {
             match n.ty.clone() {
@@ -71,70 +53,89 @@ impl Environment {
         }
         self.new_ident(env_name, ident_name, type_name, VarType::AUTO)
     }
+    fn new_ident(
+        &mut self,
+        _env_name: String,
+        ident_name: Vec<node::Node>,
+        type_name: TokenType,
+        vty: VarType,
+    ) {
+        let mut stacksize: u8 = type_name.stacksize();
+        if let node::NodeType::ID(name) = &ident_name[0].ty {
+            if let TokenType::TkString = &type_name {
+                stacksize += (16 * TokenType::str_stacksize(name));
+            }
+            self.var_table.insert(
+                name.to_string(),
+                Symbol::new_ident(name.to_string(), type_name, stacksize, vty),
+            );
+        }
+    }
     fn checktype_binop(&mut self, ty: TokenType, lchild: Vec<node::Node>, rchild: Vec<node::Node>) {
         if ty == TokenType::TkPlus || ty == TokenType::TkStar {
             let lch: node::Node = self.walk(lchild[0].clone());
             let rch: node::Node = self.walk(rchild[0].clone());
-            if !self.checklchild_valid_admul(&lch) {
-                error::CompileError::TYPE(format!(
+            self.checklchild_valid_admul(
+                &lch,
+                &error::CompileError::TYPE(format!(
                     "operator '{}' doesn't implement for left-operand '{}'",
                     ty.string(),
                     lch.string(),
-                ))
-                .found();
-            }
+                )),
+            );
             if let node::NodeType::INT(_) = lch.ty.clone() {
-                if !self.check_number(&rch) {
-                    error::CompileError::TYPE(format!(
+                self.check_number(
+                    &rch,
+                    &error::CompileError::TYPE(format!(
                         "operator '{}' doesn't implement for '{}' and '{}'",
                         ty.string(),
                         lch.string(),
                         rch.string(),
-                    ))
-                    .found();
-                }
+                    )),
+                );
             } else if let node::NodeType::STRING(_) = lch.ty.clone() {
-                if !self.check_string(&rch) {
-                    error::CompileError::TYPE(format!(
+                self.check_string(
+                    &rch,
+                    &error::CompileError::TYPE(format!(
                         "operator '{}' doesn't implement for '{}' and '{}'",
                         ty.string(),
                         lch.string(),
                         rch.string(),
-                    ))
-                    .found();
-                }
+                    )),
+                );
             }
         } else if ty == TokenType::TkMinus || ty == TokenType::TkSlash {
             let lch: node::Node = self.walk(lchild[0].clone());
             let rch: node::Node = self.walk(rchild[0].clone());
-            if !self.checklchild_valid_subdiv(&lch) {
-                error::CompileError::TYPE(format!(
+            self.checklchild_valid_subdiv(
+                &rch,
+                &error::CompileError::TYPE(format!(
                     "operator '{}' doesn't implement for left-operand '{}'",
                     ty.string(),
                     lch.string(),
-                ))
-                .found();
-            }
+                )),
+            );
+
             if let node::NodeType::INT(_) = lch.ty.clone() {
-                if !self.check_number(&rch) {
-                    error::CompileError::TYPE(format!(
+                self.check_number(
+                    &rch,
+                    &error::CompileError::TYPE(format!(
                         "operator '{}' doesn't implement for '{}' and '{}'",
                         ty.string(),
                         lch.string(),
                         rch.string(),
-                    ))
-                    .found();
-                }
+                    )),
+                );
             } else if let node::NodeType::STRING(_) = lch.ty.clone() {
-                if !self.check_string(&rch) {
-                    error::CompileError::TYPE(format!(
+                self.check_string(
+                    &rch,
+                    &error::CompileError::TYPE(format!(
                         "operator '{}' doesn't implement for '{}' and '{}'",
                         ty.string(),
                         lch.string(),
                         rch.string(),
-                    ))
-                    .found();
-                }
+                    )),
+                )
             }
         }
     }
@@ -150,30 +151,30 @@ impl Environment {
     fn analyze_binop(&mut self, node: node::Node) {
         self.walk(node);
     }
-    fn checklchild_valid_admul(&mut self, lchild: &node::Node) -> bool {
+    fn checklchild_valid_admul(&mut self, lchild: &node::Node, e: &error::CompileError) {
         match &lchild.ty {
-            node::NodeType::INT(_) | node::NodeType::UINT(_) | node::NodeType::STRING(_) => true,
-            node::NodeType::ID(_) => true,
-            _ => false,
+            node::NodeType::INT(_) | node::NodeType::UINT(_) | node::NodeType::STRING(_) => (),
+            node::NodeType::ID(_) => (),
+            _ => e.found(),
         }
     }
-    fn checklchild_valid_subdiv(&mut self, lchild: &node::Node) -> bool {
+    fn checklchild_valid_subdiv(&mut self, lchild: &node::Node, e: &error::CompileError) {
         match &lchild.ty {
-            node::NodeType::INT(_) | node::NodeType::UINT(_) => true,
-            node::NodeType::ID(_) => true,
-            _ => false,
+            node::NodeType::INT(_) | node::NodeType::UINT(_) => (),
+            node::NodeType::ID(_) => (),
+            _ => e.found(),
         }
     }
-    fn check_number(&mut self, n: &node::Node) -> bool {
+    fn check_number(&mut self, n: &node::Node, e: &error::CompileError) {
         match &n.ty {
-            node::NodeType::INT(_) | node::NodeType::UINT(_) => true,
-            _ => false,
+            node::NodeType::INT(_) | node::NodeType::UINT(_) => (),
+            _ => e.found(),
         }
     }
-    fn check_string(&mut self, n: &node::Node) -> bool {
+    fn check_string(&mut self, n: &node::Node, e: &error::CompileError) {
         match &n.ty {
-            node::NodeType::STRING(_) => true,
-            _ => false,
+            node::NodeType::STRING(_) => (),
+            _ => e.found(),
         }
     }
     /*   pub fn merge<'a>(

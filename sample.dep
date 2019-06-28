@@ -1,4 +1,4 @@
 f main() -> i8 {
-  let x : ch = 'A'
+  let x : i8 = 30 + 40
   return x
 }
