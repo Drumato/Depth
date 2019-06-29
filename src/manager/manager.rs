@@ -227,7 +227,7 @@ impl Manager {
         for ir in self.irs.iter() {
             match &ir.ty {
                 IRType::LETREG(reg1, stacksize) => {
-                    println!("    mov QWORD PTR -{}[rbp], {}", stacksize / 8, reg1.name) //bits -> bytes
+                    println!("    mov QWORD PTR -{}[rbp], {}", stacksize, reg1.name) //bits -> bytes
                 }
                 IRType::ADDREG(reg1, reg2) => println!("    add {}, {}", reg1.name, reg2.name),
                 IRType::SUBREG(reg1, reg2) => println!("    sub {}, {}", reg1.name, reg2.name),
@@ -296,7 +296,7 @@ impl Manager {
                 }
                 IRType::LABEL(label_name) => println!("{}:", label_name),
                 IRType::ID(reg, stacksize) => {
-                    println!("    mov {}, QWORd PTR -{}[rbp]", reg.name, stacksize / 8) // bits->bytes
+                    println!("    mov {}, QWORD PTR -{}[rbp]", reg.name, stacksize) // bits->bytes
                 }
                 _ => (),
             }

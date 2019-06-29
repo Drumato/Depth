@@ -53,9 +53,9 @@ This is the main source code repository for Depth.
 - [x] unary-op
   - [x] signed-minus( `-30` )
   - [x] call-expression( `func()` )
-- [] expr-stmt ( if 0 == 0 { 3 })
-- [] pattern-match( `let (x,y) : (i8,i8) = 30,40` )
-- [] return when last evaluated expression( describe below )
+- [ ] expr-stmt ( if 0 == 0 { 3 })
+- [ ] pattern-match( `let (x,y) : (i8,i8) = 30,40` )
+- [ ] return when last evaluated expression( describe below )
 
 ### compiling
 
@@ -63,9 +63,10 @@ This is the main source code repository for Depth.
   - [x] signed int
   - [x] unsigned int(probably)
   - [x] char-lit
-  - [] string-lit
+  - [ ] string-lit
 - [x] return-reg( `mov rax,<register>` )
 - [x] prologue( `push rbp`, `mov rbp,rsp`, `sub rsp,<stack-offset-each-environment>` )
 - [x] epilogue( `mov rsp,rbp`,`pop rbp`)
 - [x] label( `main:` )
 - [x] store value to stack for using defined-identifier( `mov <register>, QWORD PTR <offset>[rbp]`)
+- [x] if-stmt

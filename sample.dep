@@ -1,5 +1,5 @@
 f main() -> i8 {
-  if 1 >= 0{
-    return 30
-  }
+  let x : i16 = 30
+  let y : i16 = 30
+  return x+y
 }
