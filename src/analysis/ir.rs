@@ -248,6 +248,7 @@ impl IR {
                 CMPType::LT => println!("jg to {}", label.blue().bold()),
                 CMPType::EQ => println!("jne to {}", label.blue().bold()),
                 CMPType::NTEQ => println!("je to {}", label.blue().bold()),
+                CMPType::NONE => println!("jmp to {}", label.blue().bold()),
             },
             IRType::RETURNIMM(reg, imm) => {
                 println!("return reg-imm{} <- imm", reg.name.blue().bold())
@@ -266,6 +267,7 @@ pub enum CMPType {
     LT,
     EQ,
     NTEQ,
+    NONE,
 }
 
 pub enum IRType {

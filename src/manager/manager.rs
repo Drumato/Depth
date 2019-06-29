@@ -94,8 +94,19 @@ impl Manager {
         for st in stmts.iter() {
             self.gen_stmt(st.clone());
         }
-        self.irs.push(IR::new_label(format!(".L{}", self.nlabel)));
-        self.nlabel += 1;
+        if alter.len() > 0 {
+            self.irs
+                .push(IR::new_jmp(format!(".L{}", self.nlabel + 1), CMPType::NONE));
+            self.irs.push(IR::new_label(format!(".L{}", self.nlabel)));
+            for st in alter.iter() {
+                self.gen_stmt(st.clone());
+            }
+            self.nlabel += 1;
+            self.irs.push(IR::new_label(format!(".L{}", self.nlabel)));
+        } else {
+            self.irs.push(IR::new_label(format!(".L{}", self.nlabel)));
+            self.nlabel += 1;
+        }
     }
     fn gen_expr(&mut self, n: &node::Node) -> Option<Register> {
         match &n.ty {
@@ -275,6 +286,7 @@ impl Manager {
                     CMPType::LT => println!("    jg {}", label),
                     CMPType::EQ => println!("    jne {}", label),
                     CMPType::NTEQ => println!("    je {}", label),
+                    CMPType::NONE => println!("    jmp {}", label),
                 },
                 IRType::RETURNREG(reg1, reg2) => {
                     println!("    mov {}, {}", reg1.name, reg2.name);

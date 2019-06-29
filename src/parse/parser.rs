@@ -284,6 +284,7 @@ impl Parser {
                 let n: Node = self.stmt();
                 alternatives.push(n.clone());
             }
+            self.consume(&TokenType::TkRbrace);
         }
         Node::new_ifs(
             if_keyword,
