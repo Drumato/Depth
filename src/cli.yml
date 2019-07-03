@@ -28,6 +28,12 @@ args:
     - dump-ir:
         long: dump-ir
         help: dump ir-tree
+    - stop-s:
+        short: S
+        help: stop until compile
+    - stop-c:
+        short: C
+        help: stop until assemble
     - verbose:
         short: v
         multiple: true

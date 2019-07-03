@@ -1,44 +1,51 @@
 use std::fs::File;
 use std::io::{self, BufReader, Read, Seek, SeekFrom, Write};
-pub struct Binaryen {
-    pub input: std::io::Cursor<Vec<u8>>,
+pub struct Bin {
+    pub b: std::io::Cursor<Vec<u8>>,
     pub le: bool,
 }
 
-impl Binaryen {
-    pub fn new(param: (Vec<u8>, bool)) -> Binaryen {
-        Binaryen {
-            input: std::io::Cursor::new(param.0),
+impl Bin {
+    fn new(param: (Vec<u8>, bool)) -> Bin {
+        Bin {
+            b: std::io::Cursor::new(param.0),
             le: param.1,
         }
     }
+    pub fn 
+    pub fn read_file(filepath: &str) -> Bin {
+        let mut file = File::open(filepath).unwrap();
+        let l: u64 = file.metadata().unwrap().len();
+        let mut buf = Vec::with_capacity(l as usize);
+        match file.read_to_end(&mut buf) {
+            _ => (),
+        }
+        Bin::new((buf, true))
+    }
+    pub fn write(&mut self, bys: &Vec<u8>) {
+        self.b.write(bys).unwrap();
+    }
     pub fn flush(&self, filepath: &str) -> Result<(), Box<std::error::Error>> {
         let mut file = File::create(filepath)?;
-        let buf = self.input.get_ref();
+        let buf = self.b.get_ref();
         file.write_all(buf)?;
         file.flush()?;
         Ok(())
     }
-
-    /*pub fn range(&mut self, src: u64, dst: u64) -> Result<Vec<u8>, Box<std::error::Error>> {
-        if src > dst {
-            println!("Error found: src is bigger than dst");
+    pub fn set(&mut self, pos: u64) {
+        self.b.set_position(pos);
+        assert_eq!(self.b.position(), pos);
+    }
+    pub fn concat_vec_to_u16(bys:&Vec<u8>)->u16{
+        let cnt : usize = 0;
+        let mut bys : u16 = 0;
+        loop{
+            if cnt == 16{
+                break;
+            }
+        bys ||= b[cnt];
+        bys <<= 128 - (8 + (8*cnt));
+        cnt += 1;
         }
-        let orig = self.input.position();
-        let length: u64 = dst - src;
-        let mut v = Vec::with_capacity(length as usize);
-        self.input.seek(SeekFrom::Start(src))?;
-        for i in 0..dst {
-            let i = i as usize;
-            self.input.write(*v[i])?;
-        }
-        println!("{:?}", v);
-        self.input.set_position(orig);
-        Ok(v)
-    }*/
 }
-//writer.seek(SeekFrom::End(-10))?;
-
-//   for i in 0..10 {
-//      writer.write(&[i])?;
-// }
+}

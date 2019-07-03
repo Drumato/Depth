@@ -207,3 +207,6 @@ Cargo.lock
 **/*.rs.bk
 
 # End of https://www.gitignore.io/api/c,go,rust,python
+GRTAGS
+GTAGS
+GPATH

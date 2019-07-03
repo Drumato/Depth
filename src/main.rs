@@ -20,6 +20,8 @@ mod analysis;
 use analysis::{ir, semantic};
 mod manager;
 use manager::manager::Manager;
+mod binary;
+use binary::bytes::Bin;
 
 fn main() -> Result<(), Box<std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
@@ -45,6 +47,11 @@ fn main() -> Result<(), Box<std::error::Error>> {
     }
     /* generate-code phase */
     manager.gen_code(&matches);
+    if matches.is_present("stop-s") {
+        return Ok(());
+    }
+    let mut bin: Bin = Bin::read_file("c.o");
+    println!("{:?}", bin.b);
     Ok(())
 }
 
