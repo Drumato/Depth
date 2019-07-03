@@ -12,7 +12,6 @@ impl Bin {
             le: param.1,
         }
     }
-    pub fn 
     pub fn read_file(filepath: &str) -> Bin {
         let mut file = File::open(filepath).unwrap();
         let l: u64 = file.metadata().unwrap().len();
@@ -36,16 +35,4 @@ impl Bin {
         self.b.set_position(pos);
         assert_eq!(self.b.position(), pos);
     }
-    pub fn concat_vec_to_u16(bys:&Vec<u8>)->u16{
-        let cnt : usize = 0;
-        let mut bys : u16 = 0;
-        loop{
-            if cnt == 16{
-                break;
-            }
-        bys ||= b[cnt];
-        bys <<= 128 - (8 + (8*cnt));
-        cnt += 1;
-        }
-}
 }

@@ -1,52 +1,67 @@
 use super::super::binary::bytes;
+use byteorder::{BigEndian, ByteOrder, LittleEndian};
 use bytes::Bin;
 pub struct Ehdr {
-    e_ident: u128,    /* magic number and other info */
-    e_type: u16,      /* Object file type */
-    e_machine: u8,    /* Architecture */
-    e_version: u32,   /* Object file version */
-    e_entry: u64,     /* Entry point virtual address */
-    e_phoff: u64,     /* Program header table file offset */
-    e_shoff: u64,     /* Section header table file offset */
-    e_flags: u32,     /* Processor-specific flags */
-    e_ehsize: u16,    /* ELF header size in bytes */
-    e_phentsize: u16, /* Program header table entry size */
-    e_phnum: u16,     /* Program header table entry count */
-    e_shentsize: u16, /* Section header table entry size */
-    e_shnum: u16,     /* Section header table entry count */
-    e_shstrndx: u16,  /* Section header string table index */
+    pub e_ident: u128,    /* magic number and other info */
+    pub e_type: u16,      /* Object file type */
+    pub e_machine: u16,   /* Architecture */
+    pub e_version: u32,   /* Object file version */
+    pub e_entry: u64,     /* Entry point virtual address */
+    pub e_phoff: u64,     /* Program header table file offset */
+    pub e_shoff: u64,     /* Section header table file offset */
+    pub e_flags: u32,     /* Processor-specific flags */
+    pub e_ehsize: u16,    /* ELF header size in bytes */
+    pub e_phentsize: u16, /* Program header table entry size */
+    pub e_phnum: u16,     /* Program header table entry count */
+    pub e_shentsize: u16, /* Section header table entry size */
+    pub e_shnum: u16,     /* Section header table entry count */
+    pub e_shstrndx: u16,  /* Section header string table index */
 }
 impl Ehdr {
-    pub fn new(b:Vec<u8>) -> Ehdr{
-        let mut e_ident : u128;
-       Ehdr{
-    e_ident: e_ident,
-    e_type:
-    e_machine:
-    e_version:
-    e_entry:
-    e_phoff:
-    e_shoff:
-    e_flags:
-    e_ehsize:
-    e_phentsize:
-    e_phnum:
-    e_shentsize:
-    e_shnum:
-    e_shstrndx:
+    pub fn new(b: Vec<u8>) -> Ehdr {
+        if !Ehdr::check_emagic(&b) {
+            println!("invalid elf-magic-number: got {:?}", &b[0..4]);
+        }
+        if b[4] != 0x02 {
+            println!("can't analyze elf32");
+        }
+        if b[5] != 0x01 {
+            println!("invalid endian");
+        }
+        if b[6] != 0x01 {
+            println!("invalid type");
+        }
+        let e_type: u16 = LittleEndian::read_u16(&b[16..18]);
+        if !Ehdr::check_etype(e_type) {
+            println!("invalid elf-type-number: got {}", e_type);
+        }
+        if !Ehdr::check_machine(&b) {
+            println!("invalid elf-machine-number");
+        }
+        Ehdr {
+            e_ident: BigEndian::read_u128(&b[..16]),
+            e_type: e_type,
+            e_machine: LittleEndian::read_u16(&b[18..20]),
+            e_version: LittleEndian::read_u32(&b[20..24]),
+            e_entry: LittleEndian::read_u64(&b[24..32]),
+            e_phoff: LittleEndian::read_u64(&b[32..40]),
+            e_shoff: LittleEndian::read_u64(&b[40..48]),
+            e_flags: LittleEndian::read_u32(&b[48..52]),
+            e_ehsize: LittleEndian::read_u16(&b[52..54]),
+            e_phentsize: LittleEndian::read_u16(&b[54..56]),
+            e_phnum: LittleEndian::read_u16(&b[56..58]),
+            e_shentsize: LittleEndian::read_u16(&b[58..60]),
+            e_shnum: LittleEndian::read_u16(&b[60..62]),
+            e_shstrndx: LittleEndian::read_u16(&b[62..64]),
         }
     }
-    pub fn check_ehdr(&self) -> bool {
-        self.check_emagic() && self.check_etype()
+    fn check_emagic(u: &Vec<u8>) -> bool {
+        ((u[0] == 0x7f) && (u[1] == 0x45) && (u[2] == 0x4c) && (u[3] == 0x46))
     }
-    fn check_emagic(&self) -> bool {
-        let elf_mag0: u8 = (self.e_ident << 120) as u8;
-        let elf_mag1: u8 = (self.e_ident << 112) as u8;
-        let elf_mag2: u8 = (self.e_ident << 104) as u8;
-        let elf_mag3: u8 = (self.e_ident << 96) as u8;
-        ((elf_mag0 == 0x7f) && (elf_mag1 == 0x45) && (elf_mag2 == 0x4c) && (elf_mag3 == 0x46))
+    fn check_etype(u: u16) -> bool {
+        (0 <= u && u <= 4)
     }
-    fn check_etype(&self) -> bool {
-        (0 <= self.e_type && self.e_type <= 4)
+    fn check_machine(u: &Vec<u8>) -> bool {
+        ((u[18] == 0x3e) && (u[19] == 0x00))
     }
 }

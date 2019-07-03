@@ -22,6 +22,8 @@ mod manager;
 use manager::manager::Manager;
 mod binary;
 use binary::bytes::Bin;
+mod elf;
+use elf::ehdr::Ehdr;
 
 fn main() -> Result<(), Box<std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
@@ -51,7 +53,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
         return Ok(());
     }
     let mut bin: Bin = Bin::read_file("c.o");
-    println!("{:?}", bin.b);
+    let ehdr: Ehdr = Ehdr::new(bin.b.into_inner());
     Ok(())
 }
 
