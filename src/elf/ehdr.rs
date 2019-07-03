@@ -64,4 +64,20 @@ impl Ehdr {
     fn check_machine(u: &Vec<u8>) -> bool {
         ((u[18] == 0x3e) && (u[19] == 0x00))
     }
+    pub fn out(&self) {
+        println!("e_ident->0x{:x}", self.e_ident);
+        println!("e_type->0x{:x}", self.e_type);
+        println!("e_machine->0x{:x}", self.e_machine);
+        println!("e_version->0x{:x}", self.e_version);
+        println!("e_entry->0x{:x}", self.e_entry);
+        println!("e_phoff->0x{:x}", self.e_phoff);
+        println!("e_shoff->0x{:x}", self.e_shoff);
+        println!("e_flags->0x{:x}", self.e_flags);
+        println!("e_ehsize->0x{:x}", self.e_ehsize);
+        println!("e_phentsize->0x{:x}", self.e_phentsize);
+        println!("e_phnum->0x{:x}", self.e_phnum);
+        println!("e_shentsize->0x{:x}", self.e_shentsize);
+        println!("e_shnum->0x{:x}", self.e_shnum);
+        println!("e_shstrndx->0x{:x}", self.e_shstrndx);
+    }
 }

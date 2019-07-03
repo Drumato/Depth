@@ -54,6 +54,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
     }
     let mut bin: Bin = Bin::read_file("c.o");
     let ehdr: Ehdr = Ehdr::new(bin.b.into_inner());
+    ehdr.out();
     Ok(())
 }
 
