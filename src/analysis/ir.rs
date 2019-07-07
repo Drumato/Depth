@@ -2,7 +2,7 @@ use super::super::lex::token::IntType;
 use colored::*;
 
 const REG64: [&str; 8] = ["rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp"];
-const XREG64: [&str; 8] = ["r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"];
+//const XREG64: [&str; 8] = ["r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"];
 const BP64: u8 = 7;
 const AX64: u8 = 0;
 #[derive(Clone)]
@@ -184,11 +184,9 @@ impl IR {
                 "stack-offset".blue().bold(),
                 stacksize
             ),
-            IRType::IMM(reg, imm) => println!("immediate reg:{} imm", reg.name.blue().bold()),
-            IRType::UIMM(reg, imm) => println!("u-immediate reg:{} imm", reg.name.blue().bold()),
-            IRType::CHIMM(reg, imm) => {
-                println!("char-immediate reg:{} imm", reg.name.blue().bold())
-            }
+            IRType::IMM(reg, _) => println!("immediate reg:{} imm", reg.name.blue().bold()),
+            IRType::UIMM(reg, _) => println!("u-immediate reg:{} imm", reg.name.blue().bold()),
+            IRType::CHIMM(reg, _) => println!("char-immediate reg:{} imm", reg.name.blue().bold()),
 
             IRType::PUSH64(reg) => println!("push-reg:{}", reg.name.blue().bold()),
 
@@ -197,25 +195,25 @@ impl IR {
                 reg1.name.blue().bold(),
                 reg2.name.blue().bold()
             ),
-            IRType::ADDIMM(reg, imm) => println!("add reg-imm:{} + imm", reg.name.blue().bold()),
+            IRType::ADDIMM(reg, _) => println!("add reg-imm:{} + imm", reg.name.blue().bold()),
             IRType::SUBREG(reg1, reg2) => println!(
                 "sub reg-reg:{} - {}",
                 reg1.name.blue().bold(),
                 reg2.name.blue().bold()
             ),
-            IRType::SUBIMM(reg, imm) => println!("sub reg-imm:{} - imm", reg.name.blue().bold()),
+            IRType::SUBIMM(reg, _) => println!("sub reg-imm:{} - imm", reg.name.blue().bold()),
             IRType::MULREG(reg1, reg2) => println!(
                 "mul reg-reg:{} * {}",
                 reg1.name.blue().bold(),
                 reg2.name.blue().bold()
             ),
-            IRType::MULIMM(reg, imm) => println!("mul reg-imm:{} + imm", reg.name.blue().bold()),
+            IRType::MULIMM(reg, _) => println!("mul reg-imm:{} + imm", reg.name.blue().bold()),
             IRType::DIVREG(reg1, reg2) => println!(
                 "div reg-reg:{} / {}",
                 reg1.name.blue().bold(),
                 reg2.name.blue().bold()
             ),
-            IRType::DIVIMM(reg, imm) => println!("div reg-imm:{} - imm", reg.name.blue().bold()),
+            IRType::DIVIMM(reg, _) => println!("div reg-imm:{} - imm", reg.name.blue().bold()),
 
             IRType::LETREG(reg1, stacksize) => println!(
                 "let : {}:{} <- {}",
@@ -250,7 +248,7 @@ impl IR {
                 CMPType::NTEQ => println!("je to {}", label.blue().bold()),
                 CMPType::NONE => println!("jmp to {}", label.blue().bold()),
             },
-            IRType::RETURNIMM(reg, imm) => {
+            IRType::RETURNIMM(reg, _) => {
                 println!("return reg-imm{} <- imm", reg.name.blue().bold())
             }
             IRType::PROLOGUE => println!("func-progolue"),

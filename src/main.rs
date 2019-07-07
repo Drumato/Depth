@@ -17,13 +17,14 @@ use colored::*;
 mod parse;
 use parse::node;
 mod analysis;
-use analysis::{ir, semantic};
+use analysis::semantic;
 mod manager;
 use manager::manager::Manager;
 mod binary;
 use binary::bytes::Bin;
 mod elf;
 use elf::ehdr::Ehdr;
+mod asm;
 
 fn main() -> Result<(), Box<std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
@@ -52,9 +53,10 @@ fn main() -> Result<(), Box<std::error::Error>> {
     if matches.is_present("stop-s") {
         return Ok(());
     }
-    let mut bin: Bin = Bin::read_file("c.o");
-    let ehdr: Ehdr = Ehdr::new(bin.b.into_inner());
-    ehdr.out();
+    let bin: Bin = Bin::read_file("c.o");
+    let _ehdr: Ehdr = Ehdr::new(bin.b.into_inner());
+    //ehdr.out();
+    let atokens: Vec<asm::parse::AToken> = asm_lex_phase(&matches);
     Ok(())
 }
 
@@ -97,4 +99,24 @@ fn parse_phase(matches: &clap::ArgMatches, tokens: Vec<token::Token>) -> Manager
         }
     };
     manager
+}
+
+fn asm_lex_phase(matches: &clap::ArgMatches) -> Vec<asm::parse::AToken> {
+    let filecontent: String = drumatech::fileu::content_or_raw("c.s");
+    if matches.is_present("dump-source") {
+        println!("{}", "--------asmsource--------".green().bold());
+        let out = std::io::stdout(); //バッファリング
+        let mut out = BufWriter::new(out.lock());
+        writeln!(out, "{}", &filecontent).unwrap();
+    }
+    let tokens: Vec<asm::parse::AToken> = asm::parse::lex_phase(filecontent); //字句解析結果のトークン列
+    if matches.is_present("dump-token") {
+        println!("{}", "--------asmtokens--------".green().bold());
+        let out = std::io::stdout();
+        let mut out = BufWriter::new(out.lock());
+        for t in &tokens {
+            writeln!(out, "{}", t.dump()).unwrap(); //トークン列ダンプ(デバッグ用)
+        }
+    }
+    tokens
 }

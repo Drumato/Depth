@@ -5,7 +5,7 @@ extern crate drumatech;
 use drumatech::conv;
 
 /* 字句解析に用いる構造体 */
-pub struct Lexer {
+struct Lexer {
     pub input: String, /* 入力文字 */
     pub pos: usize,    /* 現在見ている文字 */
     pub npos: usize,   /* 次見る文字 */
@@ -28,7 +28,7 @@ pub fn lex_phase(input_str: String) -> Vec<Token> {
 
 impl Lexer {
     /* Constructor */
-    pub fn new(input_str: String) -> Option<Lexer> {
+    fn new(input_str: String) -> Option<Lexer> {
         let ch: u8 = input_str.bytes().nth(0)?;
         Some(Lexer {
             input: input_str,
@@ -38,7 +38,7 @@ impl Lexer {
         })
     }
     /* 初期状態から規則に従って解析関数にシフトする(DFA的) */
-    pub fn next_token(&mut self) -> Option<Token> {
+    fn next_token(&mut self) -> Option<Token> {
         self.skip_whitespace();
         let s = conv::u8_to_string(&mut self.ch);
         match self.ch as char {
@@ -52,7 +52,7 @@ impl Lexer {
         }
     }
     /* 文字列リテラルを受け付けてトークンを返す */
-    pub fn judge_string(&mut self) -> Token {
+    fn judge_string(&mut self) -> Token {
         self.read_char(); //ignore "
         let p: usize = self.pos;
         while self.peak_char() != '"' {

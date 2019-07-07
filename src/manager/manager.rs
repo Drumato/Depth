@@ -3,7 +3,6 @@ use super::super::lex::token::{Token, TokenType, TokenVal};
 use super::super::parse::{error, node};
 use ir::{CMPType, IMMType, IRType, Immediate, Register, IR};
 use std::collections::HashMap;
-use std::io::{BufWriter, Write};
 use std::str;
 //ファイル単位で存在させる(予定の)構造体
 pub struct Manager {
@@ -19,8 +18,8 @@ impl Manager {
     fn gen_func(
         &mut self,
         func_name: String,
-        args: &HashMap<String, TokenType>,
-        ret_type: &TokenType,
+        _args: &HashMap<String, TokenType>,
+        _ret_type: &TokenType,
         stmts: Vec<node::Node>,
     ) {
         self.irs.push(IR::new_label(func_name));
@@ -66,7 +65,7 @@ impl Manager {
         stmts: &Vec<node::Node>,
         alter: &Vec<node::Node>,
     ) {
-        let judge_reg: Register = self.gen_expr(&cond[0]).unwrap();
+        let _judge_reg: Register = self.gen_expr(&cond[0]).unwrap();
         let cond_node: &node::Node = &cond[0];
         if let node::NodeType::BINOP(op, _, _) = &cond_node.ty {
             match &op {
@@ -120,7 +119,7 @@ impl Manager {
             _ => None,
         }
     }
-    pub fn gen_ir(&mut self, matches: &clap::ArgMatches) {
+    pub fn gen_ir(&mut self, _matches: &clap::ArgMatches) {
         for func in self.nodes.to_vec() {
             if let node::NodeType::FUNC(func_name, args, ret_type, stmts) = &func.ty {
                 self.gen_func(func_name.to_string(), args, ret_type, stmts.to_vec());
@@ -226,7 +225,6 @@ impl Manager {
                     .push(IR::new_char(reg.clone(), Immediate::new_char(ch)));
                 reg
             }
-            //RealVal(f64),
             _ => Register::invalid(),
         }
     }
@@ -258,12 +256,12 @@ impl Manager {
                     IMMType::IMM32(v) => println!("    mov {}, 0x{:x}", reg.name, v),
                     IMMType::IMM64(v) => println!("    mov {}, 0x{:x}", reg.name, v),
                     IMMType::IMM128(v) => println!("    mov {}, {:x}", reg.name, v),
-                    _ => (),
 
                     IMMType::IMMSTR(v) => {
                         let lit: String = str::from_utf8(v.as_bytes()).unwrap().to_string();
                         println!("    movabs {}, {}", reg.name, lit)
                     }
+                    _ => (),
                 },
                 IRType::UIMM(reg, imm) => match &imm.ty {
                     IMMType::UIMM8(v) => println!("    mov {}, 0x{:x}", reg.name, v),

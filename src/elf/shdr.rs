@@ -1,6 +1,4 @@
-use super::super::binary::bytes;
 use byteorder::{ByteOrder, LittleEndian};
-use bytes::Bin;
 pub struct ShdrTable {
     pub shdrs: Vec<Shdr>,
 }
@@ -39,7 +37,7 @@ impl Shdr {
             sh_link: LittleEndian::read_u32(&b[40..44]),
             sh_info: LittleEndian::read_u32(&b[44..48]),
             sh_addralign: LittleEndian::read_u64(&b[48..56]),
-            sh_entsize: LittleEndian::read_u64(&[56..64]),
+            sh_entsize: LittleEndian::read_u64(&b[56..64]),
         }
     }
     pub fn out(&self) {

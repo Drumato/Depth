@@ -1,6 +1,4 @@
-use super::super::binary::bytes;
 use byteorder::{BigEndian, ByteOrder, LittleEndian};
-use bytes::Bin;
 pub struct Ehdr {
     pub e_ident: u128,    /* magic number and other info */
     pub e_type: u16,      /* Object file type */
@@ -59,7 +57,7 @@ impl Ehdr {
         ((u[0] == 0x7f) && (u[1] == 0x45) && (u[2] == 0x4c) && (u[3] == 0x46))
     }
     fn check_etype(u: u16) -> bool {
-        (0 <= u && u <= 4)
+        u <= 4
     }
     fn check_machine(u: &Vec<u8>) -> bool {
         ((u[18] == 0x3e) && (u[19] == 0x00))

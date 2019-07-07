@@ -1,4 +1,5 @@
 pub mod analysis;
+pub mod asm;
 pub mod binary;
 pub mod elf;
 pub mod lex;

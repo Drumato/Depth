@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{self, BufReader, Read, Seek, SeekFrom, Write};
+use std::io::{Read, Write};
 pub struct Bin {
     pub b: std::io::Cursor<Vec<u8>>,
     pub le: bool,

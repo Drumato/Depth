@@ -1,8 +1,3 @@
 f main() -> i8 {
-  let x : i8 = 30
-  if x < 0{
-    return x
-  } else {
-    return 0
-  }
+  return 0
 }
