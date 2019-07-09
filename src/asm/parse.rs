@@ -305,3 +305,134 @@ impl ALexer {
         AToken::new((ATType::AColon, s, ATVal::InVal))
     }
 }
+
+struct AParser {
+    tokens: Vec<AToken>,
+    cur: AToken,
+    next: AToken,
+    pos: usize,
+}
+
+impl AParser {
+    fn new(tokens: Vec<AToken>) -> AParser {
+        /* Constructor */
+        let cur: AToken = tokens[0].clone();
+        let next: AToken = tokens[1].clone();
+        AParser {
+            tokens: tokens,
+            cur: cur,
+            next: next,
+            pos: 2,
+        }
+    }
+    fn next_token(&mut self) {
+        /* オフセットを進める */
+        self.cur = self.next.clone();
+        if self.pos == self.tokens.len() {
+            return;
+        }
+        self.next = self.tokens[self.pos].clone();
+        self.pos += 1;
+    }
+    fn consume(&mut self, ty: &ATType) -> bool {
+        if &self.cur.ty == ty {
+            self.next_token();
+            return true;
+        }
+        CompileError::PARSE(format!(
+            "{} expected but got {}",
+            ty.string(),
+            self.cur.ty.string(),
+        ))
+        .found();
+        false
+    }
+    pub fn expect(&mut self, ty: &ATType) {
+        if &self.next.ty == ty {
+            self.next_token();
+            return;
+        }
+        CompileError::PARSE(format!(
+            "{} expected but got {}",
+            ty.string(),
+            self.next.ty.string()
+        ))
+        .found();
+    }
+    fn stmt(&mut self) -> ANode {
+        match &self.cur.ty {
+            //ATType::AMov => self.parse_bininst(),
+            ATType::ARet => {
+                let n: ANode = ANode::new(ANType::NINST(self.cur.ty.clone()));
+                self.next_token();
+                n
+            }
+            _ => ANode::new(ANType::INVALID),
+        }
+    }
+    fn term(&mut self) -> ANode {
+        match &self.cur.ty {
+            ATType::AIntlit(t) => {
+                let n: ANode = ANode::new(ANType::INT(t));
+                self.next_token();
+                n
+            }
+            ATType::AReg(t) => {
+                let n: ANode = ANode::new(ANType::REG(t));
+                self.next_token();
+                n
+            }
+            _ => ANode::new(ANType::INVALID),
+        }
+    }
+}
+
+pub fn parse(tokens: Vec<AToken>) -> Vec<ANode> {
+    let mut parser: AParser = AParser::new(tokens);
+    let mut nodes: Vec<ANode> = Vec::new();
+    loop {
+        if parser.cur.ty != ATType::ALabel {
+            break;
+        }
+        nodes.push(parser.stmt());
+    }
+    parser.consume(&ATType::AEof);
+    nodes
+}
+#[derive(Debug, Clone, PartialEq)]
+struct ANode {
+    pub ty: ANType,
+}
+
+impl ANode {
+    pub fn new(op: ANType) -> Self {
+        Self { ty: op }
+    }
+    pub fn new_num(num: AToken) -> Self {
+        match num.ty {
+            ATType::AIntlit => ANode::new(ANType::INT(num)),
+            _ => ANode::new(ANType::INVALID),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum ANType {
+    INT(AToken),
+    REG(AToken),
+    BININST(ATType, Vec<ANode>, Vec<ANode>),
+    ONEINST(ATType, Vec<ANode>),
+    NINST(ATType),
+    INVALID,
+}
+
+impl ANType {
+    pub fn dump(&self) -> String {
+        match self {
+            ANType::INT(_) => "INTLIT".to_string(),
+            ANType::REG(_) => "REGISTER".to_string(),
+            ANType::NINST(ty) => ty.string().to_string(),
+            _ => "Invalid Node".to_string(),
+        }
+    }
+}
