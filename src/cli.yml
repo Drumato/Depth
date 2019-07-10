@@ -19,9 +19,15 @@ args:
     - dump-token:
         long: dump-token
         help: dump tokens with lexer
+    - dump-asmtoken:
+        long: dump-asmtoken
+        help: dump asmtokens with lexer
     - dump-ast:
         long: dump-ast
         help: dump ast nodes with parser
+    - dump-asmast:
+        long: dump-asmast
+        help: dump asmast nodes with parser
     - dump-symbol:
         long: dump-symbol
         help: dump symbol-tables each environments

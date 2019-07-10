@@ -53,10 +53,11 @@ fn main() -> Result<(), Box<std::error::Error>> {
     if matches.is_present("stop-s") {
         return Ok(());
     }
-    let bin: Bin = Bin::read_file("c.o");
-    let _ehdr: Ehdr = Ehdr::new(bin.b.into_inner());
+    //let bin: Bin = Bin::read_file("c.o");
+    //let _ehdr: Ehdr = Ehdr::new(bin.b.into_inner());
     //ehdr.out();
     let atokens: Vec<asm::parse::AToken> = asm_lex_phase(&matches);
+    let anodes: Vec<asm::parse::ANode> = asm_parse_phase(&matches, atokens);
     Ok(())
 }
 
@@ -110,7 +111,7 @@ fn asm_lex_phase(matches: &clap::ArgMatches) -> Vec<asm::parse::AToken> {
         writeln!(out, "{}", &filecontent).unwrap();
     }
     let tokens: Vec<asm::parse::AToken> = asm::parse::lex_phase(filecontent); //字句解析結果のトークン列
-    if matches.is_present("dump-token") {
+    if matches.is_present("dump-asmtoken") {
         println!("{}", "--------asmtokens--------".green().bold());
         let out = std::io::stdout();
         let mut out = BufWriter::new(out.lock());
@@ -119,4 +120,20 @@ fn asm_lex_phase(matches: &clap::ArgMatches) -> Vec<asm::parse::AToken> {
         }
     }
     tokens
+}
+
+fn asm_parse_phase(
+    matches: &clap::ArgMatches,
+    tokens: Vec<asm::parse::AToken>,
+) -> Vec<asm::parse::ANode> {
+    let anodes: Vec<asm::parse::ANode> = asm::parse::parse(tokens);
+    if matches.is_present("dump-asmast") {
+        println!("{}", "--------asmAST--------".green().bold());
+        let out = std::io::stdout();
+        let mut out = BufWriter::new(out.lock());
+        for n in &anodes {
+            writeln!(out, "{}", n.ty.dump()).unwrap();
+        }
+    }
+    anodes
 }

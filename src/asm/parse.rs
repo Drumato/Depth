@@ -1,3 +1,5 @@
+use super::super::parse::error;
+use error::CompileError;
 extern crate drumatech;
 use colored::*;
 use drumatech::conv;
@@ -359,9 +361,18 @@ impl AParser {
         ))
         .found();
     }
+    fn parse_bininst(&mut self) -> ANode {
+        let inst: ATType = self.cur.ty.clone();
+        self.expect(&ATType::AReg);
+        let lop: ANode = self.term();
+        self.consume(&ATType::AComma);
+        let rop: ANode = self.term();
+        ANode::new(ANType::BININST(inst, vec![lop], vec![rop]))
+    }
+
     fn stmt(&mut self) -> ANode {
         match &self.cur.ty {
-            //ATType::AMov => self.parse_bininst(),
+            ATType::AMov => self.parse_bininst(),
             ATType::ARet => {
                 let n: ANode = ANode::new(ANType::NINST(self.cur.ty.clone()));
                 self.next_token();
@@ -372,18 +383,28 @@ impl AParser {
     }
     fn term(&mut self) -> ANode {
         match &self.cur.ty {
-            ATType::AIntlit(t) => {
-                let n: ANode = ANode::new(ANType::INT(t));
+            ATType::AIntlit => {
+                let n: ANode = ANode::new(ANType::INT(self.cur.clone()));
                 self.next_token();
                 n
             }
-            ATType::AReg(t) => {
-                let n: ANode = ANode::new(ANType::REG(t));
+            ATType::AReg => {
+                let n: ANode = ANode::new(ANType::REG(self.cur.clone()));
                 self.next_token();
                 n
             }
             _ => ANode::new(ANType::INVALID),
         }
+    }
+    fn compound_stmt(&mut self) -> Vec<ANode> {
+        let mut nodes: Vec<ANode> = Vec::new();
+        loop {
+            if self.cur.ty == ATType::AEof {
+                break;
+            }
+            nodes.push(self.stmt());
+        }
+        nodes
     }
 }
 
@@ -394,13 +415,14 @@ pub fn parse(tokens: Vec<AToken>) -> Vec<ANode> {
         if parser.cur.ty != ATType::ALabel {
             break;
         }
-        nodes.push(parser.stmt());
+        parser.next_token();
+        nodes = parser.compound_stmt();
     }
     parser.consume(&ATType::AEof);
     nodes
 }
 #[derive(Debug, Clone, PartialEq)]
-struct ANode {
+pub struct ANode {
     pub ty: ANType,
 }
 
@@ -429,9 +451,12 @@ pub enum ANType {
 impl ANType {
     pub fn dump(&self) -> String {
         match self {
-            ANType::INT(_) => "INTLIT".to_string(),
-            ANType::REG(_) => "REGISTER".to_string(),
-            ANType::NINST(ty) => ty.string().to_string(),
+            ANType::INT(t) | ANType::REG(t) => t.dump(),
+            ANType::NINST(ty) => format!("non-operand inst->{}", ty.string().blue().bold()),
+            ANType::BININST(ty, lop, rop) => format!(
+                "bin-operand inst->{}",
+                ty.string().to_string().blue().bold()
+            ),
             _ => "Invalid Node".to_string(),
         }
     }
