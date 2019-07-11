@@ -158,17 +158,6 @@ impl ALexer {
         self.pos = self.npos;
         self.npos += 1;
     }
-    /* 次の文字をchar型で渡す */
-    pub fn peak_char(&self) -> char {
-        if self.npos >= self.input.len() {
-            return '\0';
-        } else {
-            match self.input.bytes().nth(self.npos) {
-                Some(c) => c as char,
-                None => panic!("Error found between calling read_char() function"),
-            }
-        }
-    }
     fn read_number(&mut self) -> String {
         let p: usize = self.pos;
         if self.ch as char == '0' {
@@ -429,12 +418,6 @@ pub struct ANode {
 impl ANode {
     pub fn new(op: ANType) -> Self {
         Self { ty: op }
-    }
-    pub fn new_num(num: AToken) -> Self {
-        match num.ty {
-            ATType::AIntlit => ANode::new(ANType::INT(num)),
-            _ => ANode::new(ANType::INVALID),
-        }
     }
 }
 

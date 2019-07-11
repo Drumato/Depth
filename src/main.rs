@@ -58,6 +58,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
     //ehdr.out();
     let atokens: Vec<asm::parse::AToken> = asm_lex_phase(&matches);
     let anodes: Vec<asm::parse::ANode> = asm_parse_phase(&matches, atokens);
+    asm::gen::generate(anodes);
     Ok(())
 }
 

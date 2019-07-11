@@ -6,7 +6,7 @@ pub struct Bin {
 }
 
 impl Bin {
-    fn new(param: (Vec<u8>, bool)) -> Bin {
+    pub fn new(param: (Vec<u8>, bool)) -> Bin {
         Bin {
             b: std::io::Cursor::new(param.0),
             le: param.1,
