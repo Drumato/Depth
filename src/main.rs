@@ -24,6 +24,7 @@ mod binary;
 use binary::bytes::Bin;
 mod elf;
 use elf::ehdr::Ehdr;
+use elf::section;
 mod asm;
 
 fn main() -> Result<(), Box<std::error::Error>> {
@@ -58,7 +59,17 @@ fn main() -> Result<(), Box<std::error::Error>> {
     //ehdr.out();
     let atokens: Vec<asm::parse::AToken> = asm_lex_phase(&matches);
     let anodes: Vec<asm::parse::ANode> = asm_parse_phase(&matches, atokens);
-    asm::gen::generate(anodes);
+    let text: Vec<u8> = asm::gen::generate(anodes);
+    let mut bin: Bin = Bin::new((vec![], true));
+    let shstrndx: Vec<u8> = section::build_shstrndx(vec![
+        ".text".as_bytes().to_vec(),
+        ".shstrndx".as_bytes().to_vec(),
+    ]);
+    let ehdr: Ehdr = gen_ehdr(0x40 + text.len() + shstrndx.len());
+    bin.write(&ehdr.bin());
+    bin.write(&text);
+    bin.write(&shstrndx);
+    bin.flush("c.o");
     Ok(())
 }
 
@@ -137,4 +148,40 @@ fn asm_parse_phase(
         }
     }
     anodes
+}
+
+fn gen_ehdr(shoff: usize) -> Ehdr {
+    let mut bin: Vec<u8> = Vec::new();
+    let mut e_ident: Vec<u8> = vec![
+        0x7f, 0x45, 0x4c, 0x46, 0x02, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00,
+    ];
+    let mut e_type: Vec<u8> = vec![0x01, 0x00]; //ET_REL
+    let mut e_machine: Vec<u8> = vec![0x3e, 0x00]; //amdx86-64
+    let mut e_version: Vec<u8> = vec![0x01, 0x00, 0x00, 0x00]; //EV_CURRENT
+    let mut e_entry: Vec<u8> = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+    let mut e_phoff: Vec<u8> = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+    let mut e_shoff: Vec<u8> = shoff.to_le_bytes().to_vec();
+    let mut e_flags: Vec<u8> = vec![0x00, 0x00, 0x00, 0x00];
+    let mut e_ehsize: Vec<u8> = vec![0x40, 0x00]; //64bytes
+    let mut e_phentsize: Vec<u8> = vec![0x00, 0x00];
+    let mut e_phnum: Vec<u8> = vec![0x00, 0x00];
+    let mut e_shentsize: Vec<u8> = vec![0x40, 0x00]; //64bytes
+    let mut e_shnum: Vec<u8> = vec![0x02, 0x00];
+    let mut e_shstrndx: Vec<u8> = vec![0x01, 0x00];
+    bin.append(&mut e_ident);
+    bin.append(&mut e_type);
+    bin.append(&mut e_machine);
+    bin.append(&mut e_version);
+    bin.append(&mut e_entry);
+    bin.append(&mut e_phoff);
+    bin.append(&mut e_shoff);
+    bin.append(&mut e_flags);
+    bin.append(&mut e_ehsize);
+    bin.append(&mut e_phentsize);
+    bin.append(&mut e_phnum);
+    bin.append(&mut e_shentsize);
+    bin.append(&mut e_shnum);
+    bin.append(&mut e_shstrndx);
+    Ehdr::new(bin)
 }

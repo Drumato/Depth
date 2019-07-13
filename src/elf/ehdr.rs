@@ -1,4 +1,5 @@
 use byteorder::{BigEndian, ByteOrder, LittleEndian};
+pub const E_MAGIC: u32 = 0x7f454c46;
 pub struct Ehdr {
     pub e_ident: u128,    /* magic number and other info */
     pub e_type: u16,      /* Object file type */
@@ -37,7 +38,7 @@ impl Ehdr {
             println!("invalid elf-machine-number");
         }
         Ehdr {
-            e_ident: BigEndian::read_u128(&b[..16]),
+            e_ident: LittleEndian::read_u128(&b[..16]),
             e_type: e_type,
             e_machine: LittleEndian::read_u16(&b[18..20]),
             e_version: LittleEndian::read_u32(&b[20..24]),
@@ -77,5 +78,51 @@ impl Ehdr {
         println!("e_shentsize->0x{:x}", self.e_shentsize);
         println!("e_shnum->0x{:x}", self.e_shnum);
         println!("e_shstrndx->0x{:x}", self.e_shstrndx);
+    }
+    pub fn bin(&self) -> Vec<u8> {
+        let mut bb: Vec<u8> = Vec::new();
+        for b in self.e_ident.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_type.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_machine.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_version.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_entry.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_phoff.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_shoff.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_flags.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_ehsize.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_phentsize.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_phnum.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_shentsize.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_shnum.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_shstrndx.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        bb
     }
 }

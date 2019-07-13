@@ -76,12 +76,12 @@ impl Immediate {
         Immediate::NOTHING
     }
 }
-pub fn generate(nodes: Vec<ANode>) {
+pub fn generate(nodes: Vec<ANode>) -> Vec<u8> {
     let mut bin: Bin = Bin::new((vec![], true));
     for n in nodes {
         bin.write(&gen_stmt(n));
     }
-    bin.flush("sample.txt");
+    bin.b.get_ref().to_vec()
 }
 fn gen_stmt(node: ANode) -> Vec<u8> {
     match node.ty {
