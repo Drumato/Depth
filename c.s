@@ -1,3 +1,3 @@
 main:
-  mov rax, 32
+  mov rax, 60
   ret

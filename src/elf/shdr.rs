@@ -1,4 +1,11 @@
 use byteorder::{ByteOrder, LittleEndian};
+pub const SHF_WRITE: u64 = 1 << 0;
+pub const SHF_ALLOC: u64 = 1 << 1;
+pub const SHF_EXECUTE: u64 = 1 << 2;
+pub const SHT_NULL: u32 = 0;
+pub const SHT_PROGBITS: u32 = 1;
+pub const SHT_SYMTAB: u32 = 2;
+pub const SHT_STRTAB: u32 = 3;
 pub struct ShdrTable {
     pub shdrs: Vec<Shdr>,
 }
@@ -51,5 +58,39 @@ impl Shdr {
         println!("sh_info->0x{:x}", self.sh_info);
         println!("sh_addralign->0x{:x}", self.sh_addralign);
         println!("sh_entsize->0x{:x}", self.sh_entsize);
+    }
+    pub fn bin(&self) -> Vec<u8> {
+        let mut bb: Vec<u8> = Vec::new();
+        for b in self.sh_name.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.sh_type.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.sh_flags.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.sh_addr.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.sh_offset.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.sh_size.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.sh_link.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.sh_info.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.sh_addralign.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.sh_entsize.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        bb
     }
 }

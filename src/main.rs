@@ -25,6 +25,8 @@ use binary::bytes::Bin;
 mod elf;
 use elf::ehdr::Ehdr;
 use elf::section;
+use elf::shdr;
+use shdr::Shdr;
 mod asm;
 
 fn main() -> Result<(), Box<std::error::Error>> {
@@ -59,16 +61,34 @@ fn main() -> Result<(), Box<std::error::Error>> {
     //ehdr.out();
     let atokens: Vec<asm::parse::AToken> = asm_lex_phase(&matches);
     let anodes: Vec<asm::parse::ANode> = asm_parse_phase(&matches, atokens);
+    let null_hdr: Shdr = gen_nullhdr();
     let text: Vec<u8> = asm::gen::generate(anodes);
+    let text_hdr: Shdr = gen_shdr(
+        1,
+        shdr::SHT_PROGBITS,
+        text.len() as u64,
+        shdr::SHF_ALLOC | shdr::SHF_EXECUTE,
+        0x40,
+    );
     let mut bin: Bin = Bin::new((vec![], true));
     let shstrndx: Vec<u8> = section::build_shstrndx(vec![
         ".text".as_bytes().to_vec(),
         ".shstrndx".as_bytes().to_vec(),
     ]);
+    let shstr_hdr: Shdr = gen_shdr(
+        7,
+        shdr::SHT_STRTAB,
+        shstrndx.len() as u64,
+        0,
+        0x40 + text.len() as u64,
+    );
     let ehdr: Ehdr = gen_ehdr(0x40 + text.len() + shstrndx.len());
     bin.write(&ehdr.bin());
     bin.write(&text);
     bin.write(&shstrndx);
+    bin.write(&null_hdr.bin());
+    bin.write(&text_hdr.bin());
+    bin.write(&shstr_hdr.bin());
     bin.flush("c.o");
     Ok(())
 }
@@ -167,8 +187,8 @@ fn gen_ehdr(shoff: usize) -> Ehdr {
     let mut e_phentsize: Vec<u8> = vec![0x00, 0x00];
     let mut e_phnum: Vec<u8> = vec![0x00, 0x00];
     let mut e_shentsize: Vec<u8> = vec![0x40, 0x00]; //64bytes
-    let mut e_shnum: Vec<u8> = vec![0x02, 0x00];
-    let mut e_shstrndx: Vec<u8> = vec![0x01, 0x00];
+    let mut e_shnum: Vec<u8> = vec![0x03, 0x00];
+    let mut e_shstrndx: Vec<u8> = vec![0x02, 0x00];
     bin.append(&mut e_ident);
     bin.append(&mut e_type);
     bin.append(&mut e_machine);
@@ -184,4 +204,38 @@ fn gen_ehdr(shoff: usize) -> Ehdr {
     bin.append(&mut e_shnum);
     bin.append(&mut e_shstrndx);
     Ehdr::new(bin)
+}
+
+fn gen_nullhdr() -> Shdr {
+    Shdr::new(vec![
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00,
+    ])
+}
+fn gen_shdr(ndx: u32, shtype: u32, size: u64, flags: u64, offset: u64) -> Shdr {
+    let mut bin: Vec<u8> = Vec::new();
+    let mut sh_name: Vec<u8> = ndx.to_le_bytes().to_vec();
+    let mut sh_type: Vec<u8> = shtype.to_le_bytes().to_vec();
+    let mut sh_size: Vec<u8> = size.to_le_bytes().to_vec();
+    let mut sh_flags: Vec<u8> = flags.to_le_bytes().to_vec();
+    let mut sh_info: Vec<u8> = vec![0x00, 0x00, 0x00, 0x00];
+    let mut sh_link: Vec<u8> = vec![0x00, 0x00, 0x00, 0x00];
+    let mut sh_addralign: Vec<u8> = vec![0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+    let mut sh_entsize: Vec<u8> = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+    let mut sh_offset: Vec<u8> = offset.to_le_bytes().to_vec();
+    let mut sh_addr: Vec<u8> = vec![0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+    bin.append(&mut sh_name);
+    bin.append(&mut sh_type);
+    bin.append(&mut sh_flags);
+    bin.append(&mut sh_addr);
+    bin.append(&mut sh_offset);
+    bin.append(&mut sh_size);
+    bin.append(&mut sh_link);
+    bin.append(&mut sh_info);
+    bin.append(&mut sh_addralign);
+    bin.append(&mut sh_entsize);
+    Shdr::new(bin)
 }
