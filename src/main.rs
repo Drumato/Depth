@@ -22,12 +22,12 @@ mod manager;
 use manager::manager::Manager;
 mod binary;
 use binary::bytes::Bin;
-mod elf;
-use elf::ehdr::Ehdr;
-use elf::section;
-use elf::shdr;
-use shdr::Shdr;
 mod asm;
+
+extern crate genelf;
+use elf::{Ehdr, Shdr, ELF};
+use genelf::elf::elf;
+use std::fs::File;
 
 fn main() -> Result<(), Box<std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
@@ -61,35 +61,29 @@ fn main() -> Result<(), Box<std::error::Error>> {
     //ehdr.out();
     let atokens: Vec<asm::parse::AToken> = asm_lex_phase(&matches);
     let anodes: Vec<asm::parse::ANode> = asm_parse_phase(&matches, atokens);
-    let null_hdr: Shdr = gen_nullhdr();
+    let mut elf_file: ELF = ELF::init();
     let text: Vec<u8> = asm::gen::generate(anodes);
-    let text_hdr: Shdr = gen_shdr(
+    elf_file.ehdr = gen_ehdr(0x40 + text.len() + 17);
+    elf_file.append_shdr(gen_nullhdr());
+    elf_file.append_shdr(gen_shdr(
         1,
-        shdr::SHT_PROGBITS,
+        elf::SHT_PROGBITS,
         text.len() as u64,
-        shdr::SHF_ALLOC | shdr::SHF_EXECUTE,
+        elf::SHF_ALLOC | elf::SHF_EXECUTE,
         0x40,
-    );
-    let mut bin: Bin = Bin::new((vec![], true));
-    let shstrndx: Vec<u8> = section::build_shstrndx(vec![
-        ".text".as_bytes().to_vec(),
-        ".shstrndx".as_bytes().to_vec(),
-    ]);
-    let shstr_hdr: Shdr = gen_shdr(
+    ));
+    elf_file.append_shdr(gen_shdr(
         7,
-        shdr::SHT_STRTAB,
-        shstrndx.len() as u64,
+        elf::SHT_STRTAB,
+        17,
         0,
         0x40 + text.len() as u64,
-    );
-    let ehdr: Ehdr = gen_ehdr(0x40 + text.len() + shstrndx.len());
-    bin.write(&ehdr.bin());
-    bin.write(&text);
-    bin.write(&shstrndx);
-    bin.write(&null_hdr.bin());
-    bin.write(&text_hdr.bin());
-    bin.write(&shstr_hdr.bin());
-    bin.flush("c.o");
+    ));
+    elf_file.set_text(text);
+    elf_file.set_shstrtab(vec![".text", ".shstrndx"]);
+    let mut file = File::create("c.o")?;
+    file.write_all(&elf_file.bin())?;
+    file.flush()?;
     Ok(())
 }
 
@@ -187,8 +181,8 @@ fn gen_ehdr(shoff: usize) -> Ehdr {
     let mut e_phentsize: Vec<u8> = vec![0x00, 0x00];
     let mut e_phnum: Vec<u8> = vec![0x00, 0x00];
     let mut e_shentsize: Vec<u8> = vec![0x40, 0x00]; //64bytes
-    let mut e_shnum: Vec<u8> = vec![0x03, 0x00];
-    let mut e_shstrndx: Vec<u8> = vec![0x02, 0x00];
+    let mut e_shnum: Vec<u8> = vec![0x00, 0x00];
+    let mut e_shstrndx: Vec<u8> = vec![0x00, 0x00];
     bin.append(&mut e_ident);
     bin.append(&mut e_type);
     bin.append(&mut e_machine);
