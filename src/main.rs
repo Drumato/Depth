@@ -56,9 +56,6 @@ fn main() -> Result<(), Box<std::error::Error>> {
     if matches.is_present("stop-s") {
         return Ok(());
     }
-    //let bin: Bin = Bin::read_file("c.o");
-    //let _ehdr: Ehdr = Ehdr::new(bin.b.into_inner());
-    //ehdr.out();
     let atokens: Vec<asm::parse::AToken> = asm_lex_phase(&matches);
     let anodes: Vec<asm::parse::ANode> = asm_parse_phase(&matches, atokens);
     let mut elf_file: ELF = ELF::init();
