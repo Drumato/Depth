@@ -25,7 +25,7 @@ use binary::bytes::Bin;
 mod asm;
 
 extern crate genelf;
-use elf::{Ehdr, Shdr, ELF};
+use elf::{Ehdr, Shdr, Symbol, ELF};
 use genelf::elf::elf;
 use std::fs::File;
 
@@ -56,28 +56,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
     if matches.is_present("stop-s") {
         return Ok(());
     }
-    let atokens: Vec<asm::parse::AToken> = asm_lex_phase(&matches);
-    let anodes: Vec<asm::parse::ANode> = asm_parse_phase(&matches, atokens);
-    let mut elf_file: ELF = ELF::init();
-    let text: Vec<u8> = asm::gen::generate(anodes);
-    elf_file.ehdr = gen_ehdr(0x40 + text.len() + 17);
-    elf_file.append_shdr(gen_nullhdr());
-    elf_file.append_shdr(gen_shdr(
-        1,
-        elf::SHT_PROGBITS,
-        text.len() as u64,
-        elf::SHF_ALLOC | elf::SHF_EXECUTE,
-        0x40,
-    ));
-    elf_file.append_shdr(gen_shdr(
-        7,
-        elf::SHT_STRTAB,
-        17,
-        0,
-        0x40 + text.len() as u64,
-    ));
-    elf_file.set_text(text);
-    elf_file.set_shstrtab(vec![".text", ".shstrndx"]);
+    let mut elf_file: ELF = gen_elf_phase(&matches);
     let mut file = File::create("c.o")?;
     file.write_all(&elf_file.bin())?;
     file.flush()?;
@@ -159,6 +138,48 @@ fn asm_parse_phase(
         }
     }
     anodes
+}
+fn gen_elf_phase(matches: &clap::ArgMatches) -> ELF {
+    let mut elf_file: ELF = ELF::init();
+
+    let strtab: Vec<&str> = vec!["main"];
+    let shstrtab: Vec<&str> = vec![".text", ".strtab", ".symtab", ".shstrtab"];
+    let atokens: Vec<asm::parse::AToken> = asm_lex_phase(&matches);
+    let anodes: Vec<asm::parse::ANode> = asm_parse_phase(&matches, atokens);
+    let text: Vec<u8> = asm::gen::generate(anodes);
+    elf_file.ehdr = gen_ehdr(0x40 + text.len() + 17);
+    elf_file.append_shdr(gen_nullhdr());
+    /*
+    elf_file.append_shdr(gen_shdr(
+        //.text
+        1,
+        elf::SHT_PROGBITS,
+        text.len() as u64,
+        elf::SHF_ALLOC | elf::SHF_EXECUTE,
+        0x40,
+    ));
+    elf_file.append_shdr(gen_shdr(7, elf::SHT_STRTAB, 6, 0, 0x40 + text.len() as u64)); //.strtab
+    elf_file.append_shdr(gen_shdr(
+        //.symtab
+        15,
+        elf::SHT_STRTAB,
+        33,
+        0,
+        0x40 + text.len() + 6 as u64,
+    ));
+    elf_file.append_shdr(gen_shdr(
+        //.shstrtab
+        23,
+        elf::SHT_STRTAB,
+        33,
+        0,
+        0x40 + text.len() + 6 as u64,
+    ));
+    elf_file.set_text(text);
+    elf_file.set_strtab(strtab);
+    elf_file.set_shstrtab(shstrtab);
+    */
+    elf_file
 }
 
 fn gen_ehdr(shoff: usize) -> Ehdr {

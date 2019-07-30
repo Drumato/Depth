@@ -38,12 +38,6 @@ impl Parser {
             self.next_token();
             return true;
         }
-        CompileError::PARSE(format!(
-            "{} expected but got {}",
-            ty.string(),
-            self.cur.ty.string(),
-        ))
-        .found();
         false
     }
     pub fn expect(&mut self, ty: &TokenType) {
@@ -118,12 +112,10 @@ impl Parser {
         let mut lchild: Node = self.logand();
         loop {
             let t: Token = self.cur.clone();
-            if t.ty != TokenType::TkLogor {
+            if !self.consume(&TokenType::TkLogor) {
                 break;
             }
-            self.next_token();
-            let rchild = self.logand();
-            lchild = Node::new_binop(t.ty, lchild.clone(), rchild.clone());
+            lchild = Node::new_binop(t.ty, lchild.clone(), self.logand().clone());
         }
         lchild
     }
@@ -132,12 +124,10 @@ impl Parser {
         let mut lchild: Node = self.equal();
         loop {
             let t: Token = self.cur.clone();
-            if t.ty != TokenType::TkLogand {
+            if !self.consume(&TokenType::TkLogand) {
                 break;
             }
-            self.next_token();
-            let rchild = self.equal();
-            lchild = Node::new_binop(t.ty, lchild.clone(), rchild.clone());
+            lchild = Node::new_binop(t.ty, lchild.clone(), self.equal().clone());
         }
         lchild
     }
@@ -146,12 +136,10 @@ impl Parser {
         let mut lchild: Node = self.cmp();
         loop {
             let t: Token = self.cur.clone();
-            if t.ty != TokenType::TkEq && t.ty != TokenType::TkNoteq {
+            if !self.consume(&TokenType::TkEq) && !self.consume(&TokenType::TkNoteq) {
                 break;
             }
-            self.next_token();
-            let rchild = self.cmp();
-            lchild = Node::new_binop(t.ty, lchild.clone(), rchild.clone());
+            lchild = Node::new_binop(t.ty, lchild.clone(), self.cmp().clone());
         }
         lchild
     }
@@ -160,16 +148,14 @@ impl Parser {
         let mut lchild: Node = self.shift();
         loop {
             let t: Token = self.cur.clone();
-            if t.ty != TokenType::TkLt
-                && t.ty != TokenType::TkGt
-                && t.ty != TokenType::TkGteq
-                && t.ty != TokenType::TkLteq
+            if !self.consume(&TokenType::TkLt)
+                && !self.consume(&TokenType::TkLteq)
+                && !self.consume(&TokenType::TkGt)
+                && !self.consume(&TokenType::TkGteq)
             {
                 break;
             }
-            self.next_token();
-            let rchild = self.shift();
-            lchild = Node::new_binop(t.ty, lchild.clone(), rchild.clone());
+            lchild = Node::new_binop(t.ty, lchild.clone(), self.shift().clone());
         }
         lchild
     }
@@ -178,12 +164,10 @@ impl Parser {
         let mut lchild: Node = self.adsub();
         loop {
             let t: Token = self.cur.clone();
-            if t.ty != TokenType::TkLshift && t.ty != TokenType::TkRshift {
+            if !self.consume(&TokenType::TkLshift) && !self.consume(&TokenType::TkRshift) {
                 break;
             }
-            self.next_token();
-            let rchild = self.adsub();
-            lchild = Node::new_binop(t.ty, lchild.clone(), rchild.clone());
+            lchild = Node::new_binop(t.ty, lchild.clone(), self.adsub().clone());
         }
         lchild
     }
@@ -192,12 +176,10 @@ impl Parser {
         let mut lchild: Node = self.muldiv();
         loop {
             let t: Token = self.cur.clone();
-            if t.ty != TokenType::TkPlus && t.ty != TokenType::TkMinus {
+            if !self.consume(&TokenType::TkPlus) && !self.consume(&TokenType::TkMinus) {
                 break;
             }
-            self.next_token();
-            let rchild = self.muldiv();
-            lchild = Node::new_binop(t.ty, lchild.clone(), rchild.clone());
+            lchild = Node::new_binop(t.ty, lchild.clone(), self.muldiv().clone());
         }
         lchild
     }
@@ -206,15 +188,13 @@ impl Parser {
         let mut lchild: Node = self.term();
         loop {
             let t: Token = self.cur.clone();
-            if t.ty != TokenType::TkStar
-                && t.ty != TokenType::TkSlash
-                && t.ty != TokenType::TkPercent
+            if !self.consume(&TokenType::TkStar)
+                && !self.consume(&TokenType::TkSlash)
+                && !self.consume(&TokenType::TkPercent)
             {
                 break;
             }
-            self.next_token();
-            let rchild = self.term();
-            lchild = Node::new_binop(t.ty, lchild.clone(), rchild.clone());
+            lchild = Node::new_binop(t.ty, lchild.clone(), self.term().clone());
         }
         lchild
     }
