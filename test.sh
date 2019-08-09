@@ -33,6 +33,7 @@ try 30 'f main(){let a : i8 = 1 if a >= 1 { return 30 } else { return 50 } }'
 try 30 'f main(){let a : i8 = 1 if a <= 1 { return 30 } else { return 50 } }'
 try 30 'f main(){let a : i8 = 1 if a == 1 { return 30 } else { return 50 } }'
 try 30 'f main(){let a : i8 = 1 if a != 2 { return 30 } else { return 50 } }'
+try 30 'f main(){ return add()} f add() -> i8 { return 30}'
 echo -e "\e[33mAll Test Passed.\e[0m"
 
 make clean

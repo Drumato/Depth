@@ -1,3 +1,7 @@
-f main() -> i8 {
-  return 50
+f main() -> i32 {
+  return today()
+}
+
+f today() -> i32 {
+  return 9
 }

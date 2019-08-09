@@ -33,7 +33,9 @@ impl Manager {
         match &n.ty {
             node::NodeType::RETS(_, ex) => {
                 let ret_reg: Register = self.gen_expr(&ex[0]).unwrap();
-                self.irs.push(IR::new_ret(ret_reg.vnum));
+                if ret_reg.name != "rax" {
+                    self.irs.push(IR::new_ret(ret_reg.vnum));
+                }
             }
             //STRUCTS(String, Vec<Node>) => {},
             node::NodeType::LETS(_, ident, _, ex) => self.gen_letstmt(ident, ex),
@@ -112,13 +114,19 @@ impl Manager {
     fn gen_expr(&mut self, n: &node::Node) -> Option<Register> {
         match &n.ty {
             node::NodeType::ID(ident_name) => Some(self.gen_ident(&ident_name)),
+            node::NodeType::CALL(ident_name, args) => {
+                Some(self.gen_call(ident_name.to_string(), &args))
+            }
             node::NodeType::INT(tk) => Some(self.gen_imm(&tk)),
             node::NodeType::CHAR(tk) => Some(self.gen_imm(&tk)),
             node::NodeType::STRING(tk) => Some(self.gen_imm(&tk)),
             node::NodeType::BINOP(operator, lop, rop) => {
                 Some(self.gen_binop(operator, &lop[0], &rop[0]))
             }
-            _ => None,
+            _ => {
+                error::CompileError::SEMA(format!("unable to generate ir: {}", n.string())).found();
+                None
+            }
         }
     }
     pub fn gen_ir(&mut self, _matches: &clap::ArgMatches) {
@@ -207,6 +215,13 @@ impl Manager {
             self.irs.push(IR::new_ident(reg.clone(), stacksize));
         }
         reg
+    }
+    fn gen_call(&mut self, ident_name: String, args: &Vec<node::Node>) -> Register {
+        for n in args.iter() {
+            self.gen_expr(n);
+        }
+        self.irs.push(IR::new_call(ident_name));
+        ir::Register::new_rax()
     }
     fn gen_imm(&mut self, tk: &Token) -> Register {
         let reg: Register = self.new_reg();
@@ -303,6 +318,9 @@ impl Manager {
                 }
                 IRType::CMPREG(reg1, reg2) => {
                     println!("    cmp {}, {}", reg1.name, reg2.name);
+                }
+                IRType::CALL(name) => {
+                    println!("    call {}", name);
                 }
                 IRType::PROLOGUE => {
                     println!("    push rbp");

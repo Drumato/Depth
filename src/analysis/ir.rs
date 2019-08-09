@@ -172,6 +172,9 @@ impl IR {
     pub fn new_ident(reg: Register, stacksize: u8) -> IR {
         IR::new(IRType::ID(reg, stacksize))
     }
+    pub fn new_call(ident_name: String) -> IR {
+        IR::new(IRType::CALL(ident_name))
+    }
     pub fn new_letreg(ident: Register, stacksize: u8) -> IR {
         IR::new(IRType::LETREG(ident, stacksize))
     }
@@ -251,6 +254,7 @@ impl IR {
             IRType::RETURNIMM(reg, _) => {
                 println!("return reg-imm{} <- imm", reg.name.blue().bold())
             }
+            IRType::CALL(ident_name) => println!("call {}", ident_name),
             IRType::PROLOGUE => println!("func-progolue"),
             IRType::EPILOGUE => println!("func-epilogue"),
             _ => (),
@@ -294,6 +298,7 @@ pub enum IRType {
     DIVIMM(Register, Immediate),
     CMPREG(Register, Register),
     JMP(String, CMPType),
+    CALL(String),
 
     /* statement */
     LETREG(Register, u8), // u8 => stacksize

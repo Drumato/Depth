@@ -63,7 +63,11 @@ impl Parser {
             TokenType::TkCharlit => Node::new_char(t), //文字リテラル
             TokenType::TkPerStr | TokenType::TkPerChar | TokenType::TkPerInt => self.parse_array(t), //%記法
             TokenType::TkIdent => self.parse_ident(t), //変数解析
-            _ => Node::new(NodeType::INVALID),
+            _ => {
+                CompileError::PARSE(format!("got invalid node {} when parsing term", t.dump()))
+                    .found();
+                Node::new(NodeType::INVALID)
+            }
         }
     }
     /* 変数の解析を行う関数 */
@@ -73,12 +77,13 @@ impl Parser {
             return Node::new_ident(t.literal);
         }
         //もし呼び出し式なら
+        self.next_token();
         loop {
             if self.cur.ty == TokenType::TkRparen {
                 break;
             }
             arguments.push(self.expr().clone());
-            self.next_token();
+            //self.next_token();
         }
         self.next_token();
         Node::new_call(t.literal, arguments)
@@ -103,7 +108,11 @@ impl Parser {
             TokenType::TkPerStr => Node::new_strary(elements),
             TokenType::TkPerChar => Node::new_charary(elements),
             TokenType::TkPerInt => Node::new_intary(elements),
-            _ => Node::new(NodeType::INVALID),
+            _ => {
+                CompileError::PARSE(format!("got invalid node {} when parsing array", ty.dump()))
+                    .found();
+                Node::new(NodeType::INVALID)
+            }
         }
     }
     fn logor(&mut self) -> Node {
@@ -210,7 +219,14 @@ impl Parser {
             TokenType::TkFor => self.parse_for(),
             TokenType::TkIf => self.parse_if(),
             TokenType::TkStruct => self.parse_struct(),
-            _ => Node::new(NodeType::INVALID),
+            _ => {
+                CompileError::PARSE(format!(
+                    "got invalid node {} when parsing stmt",
+                    self.cur.dump()
+                ))
+                .found();
+                Node::new(NodeType::INVALID)
+            }
         }
     }
     fn parse_struct(&mut self) -> Node {
