@@ -90,22 +90,24 @@ impl Manager {
                 _ => (),
             }
         }
-        for st in stmts.iter() {
-            self.gen_stmt(st.clone());
-        }
         if alter.len() > 0 {
-            self.irs
-                .push(IR::new_jmp(format!(".L{}", self.nlabel + 1), CMPType::NONE));
-            self.irs.push(IR::new_label(format!(".L{}", self.nlabel)));
             for st in alter.iter() {
                 self.gen_stmt(st.clone());
             }
-            self.nlabel += 1;
+            self.irs
+                .push(IR::new_jmp(format!(".L{}", self.nlabel + 1), CMPType::NONE));
             self.irs.push(IR::new_label(format!(".L{}", self.nlabel)));
+            self.nlabel += 1;
         } else {
+            self.irs
+                .push(IR::new_jmp(format!(".L{}", self.nlabel + 1), CMPType::NONE));
             self.irs.push(IR::new_label(format!(".L{}", self.nlabel)));
             self.nlabel += 1;
         }
+        for st in stmts.iter() {
+            self.gen_stmt(st.clone());
+        }
+        self.irs.push(IR::new_label(format!(".L{}", self.nlabel)));
     }
     fn gen_expr(&mut self, n: &node::Node) -> Option<Register> {
         match &n.ty {
@@ -180,6 +182,16 @@ impl Manager {
                 lreg
             }
             TokenType::TkGt => {
+                self.irs.push(IR::new_cmpreg(lreg.clone(), rreg));
+                self.kill();
+                lreg
+            }
+            TokenType::TkEq => {
+                self.irs.push(IR::new_cmpreg(lreg.clone(), rreg));
+                self.kill();
+                lreg
+            }
+            TokenType::TkNoteq => {
                 self.irs.push(IR::new_cmpreg(lreg.clone(), rreg));
                 self.kill();
                 lreg
@@ -278,12 +290,12 @@ impl Manager {
                     _ => (),
                 },
                 IRType::JMP(label, cmp) => match cmp {
-                    CMPType::GT => println!("    jle {}", label),
-                    CMPType::GTEQ => println!("    jl {}", label),
-                    CMPType::LTEQ => println!("    jge {}", label),
-                    CMPType::LT => println!("    jg {}", label),
-                    CMPType::EQ => println!("    jne {}", label),
-                    CMPType::NTEQ => println!("    je {}", label),
+                    CMPType::GT => println!("    jg {}", label),
+                    CMPType::GTEQ => println!("    jge {}", label),
+                    CMPType::LTEQ => println!("    jle {}", label),
+                    CMPType::LT => println!("    jl {}", label),
+                    CMPType::EQ => println!("    je {}", label),
+                    CMPType::NTEQ => println!("    jne {}", label),
                     CMPType::NONE => println!("    jmp {}", label),
                 },
                 IRType::RETURNREG(reg1, reg2) => {
