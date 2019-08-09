@@ -74,13 +74,12 @@ impl Parser {
         }
         //もし呼び出し式なら
         loop {
-            if self.next.ty == TokenType::TkRparen {
+            if self.cur.ty == TokenType::TkRparen {
                 break;
             }
             arguments.push(self.expr().clone());
             self.next_token();
         }
-        self.expect(&TokenType::TkRparen);
         self.next_token();
         Node::new_call(t.literal, arguments)
     }
