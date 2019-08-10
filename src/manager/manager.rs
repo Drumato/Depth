@@ -4,6 +4,7 @@ use super::super::parse::{error, node};
 use ir::{CMPType, IMMType, IRType, Immediate, Register, IR};
 use std::collections::HashMap;
 use std::str;
+
 //ファイル単位で存在させる(予定の)構造体
 pub struct Manager {
     pub nodes: Vec<node::Node>,

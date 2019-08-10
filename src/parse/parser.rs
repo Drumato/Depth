@@ -300,10 +300,16 @@ impl Parser {
         let ident_name: Vec<Node> = vec![Node::new_ident(self.cur.literal.clone())];
         self.expect(&TokenType::TkColon);
         self.next_token(); // : -> typename
-        if !self.cur.ty.is_typename() {
+        if !self.cur.ty.is_typename()
+            && self.cur.ty != TokenType::TkAmpersand(Box::new(TokenType::TkNone))
+        {
             CompileError::PARSE(format!("expected typename but got {}", self.cur.literal)).found();
         }
-        let typename: TokenType = self.cur.ty.clone();
+        let mut typename: TokenType = self.cur.ty.clone();
+        if let TokenType::TkAmpersand(ref mut n) = typename {
+            self.next_token();
+            *n = Box::new(self.cur.ty.clone());
+        }
         self.expect(&TokenType::TkAssign);
         self.next_token(); // = -> the start of expr
         let expr: Node = self.expr();
@@ -357,7 +363,6 @@ impl Parser {
             }
         }
         self.expect(&TokenType::TkRparen);
-
         let ret: TokenType = if self.next.ty == TokenType::TkArrow {
             self.next_token();
             self.next_token();

@@ -357,7 +357,11 @@ impl Lexer {
             return Token::new((TokenType::TkLogand, s, TokenVal::InVal));
         }
         self.read_char();
-        Token::new((TokenType::TkAmpersand, s, TokenVal::InVal))
+        Token::new((
+            TokenType::TkAmpersand(Box::new(TokenType::TkNone)),
+            s,
+            TokenVal::InVal,
+        ))
     }
     fn judge_pipe(&mut self) -> Token {
         let mut s = conv::u8_to_string(&mut self.ch);

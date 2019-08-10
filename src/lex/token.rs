@@ -183,7 +183,7 @@ pub enum TokenType {
     TkDecre,
     TkBang,
     TkPipe,
-    TkAmpersand,
+    TkAmpersand(Box<TokenType>),
     TkSlash,
     TkStar,
     TkPercent,
@@ -218,6 +218,7 @@ pub enum TokenType {
     TkRbrace,
     TkLbracket,
     TkRbracket,
+    TkNone,
 }
 
 impl TokenType {
@@ -309,7 +310,7 @@ impl TokenType {
             TokenType::TkNoteq => "NOTEQ",
             TokenType::TkPipe => "PIPE",
             TokenType::TkLogor => "LOGOR",
-            TokenType::TkAmpersand => "AMPERSAND",
+            TokenType::TkAmpersand(_) => "AMPERSAND",
             TokenType::TkLogand => "LOGAND",
             TokenType::TkPercent => "PERCENT",
             TokenType::TkPerStr => "PERSTR",
@@ -334,6 +335,7 @@ impl TokenType {
             TokenType::TkRbrace => "RBRACE",
             TokenType::TkLbracket => "LBRACKET",
             TokenType::TkRbracket => "RBRACKET",
+            TokenType::TkNone => "NONE",
         }
     }
     pub fn is_typename(&self) -> bool {
