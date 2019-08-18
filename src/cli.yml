@@ -31,9 +31,9 @@ args:
     - dump-symbol:
         long: dump-symbol
         help: dump symbol-tables each environments
-    - dump-ir:
-        long: dump-ir
-        help: dump ir-tree
+    - dump-hir:
+        long: dump-hir
+        help: dump hir
     - stop-s:
         short: S
         help: stop until compile
