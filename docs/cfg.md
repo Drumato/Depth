@@ -1,8 +1,12 @@
 # term
 
+priority -> **`T1` > `T2`**
+
 ```
-T -> num
-T -> ( E )
+T1 -> -(T)
+T2 -> num
+T2 -> ( E )
+
 ```
 
 # expr
