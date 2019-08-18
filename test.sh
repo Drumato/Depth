@@ -18,22 +18,8 @@ try() {
   fi
 }
 
-try 41 'f main(){return 12 + 34 - 5}'
-try 47 "f main(){return 5+6*7}"
-try 6 'f main(){let x : i8 = 3 return x+3}'
-try 6 'f main(){let foo : i8 = 3 let bar : i8 = 3 return foo+bar}'
-try 30 'f main(){let a : i8 = 1 if a > 0{ return 30 }}'
-try 30 'f main(){let a : i8 = 1 if a >= 1 { return 30 } }'
-try 30 'f main(){let a : i8 = 1 if a <= 1 { return 30 } }'
-try 30 'f main(){let a : i8 = 1 if a == 1 { return 30 } }'
-try 30 'f main(){let a : i8 = 1 if a != 0 { return 30 } }'
-try 50 'f main(){let a : i8 = 0 if a > 0{ return 30 } else { return 50 } }'
-try 30 'f main(){let a : i8 = 1 if a > 0{ return 30 } else { return 50 } }'
-try 30 'f main(){let a : i8 = 1 if a >= 1 { return 30 } else { return 50 } }'
-try 30 'f main(){let a : i8 = 1 if a <= 1 { return 30 } else { return 50 } }'
-try 30 'f main(){let a : i8 = 1 if a == 1 { return 30 } else { return 50 } }'
-try 30 'f main(){let a : i8 = 1 if a != 2 { return 30 } else { return 50 } }'
-try 30 'f main(){ return add()} f add() -> i8 { return 30}'
+try 9 "3+6"
+try 3 "6-3"
 echo -e "\e[33mAll Test Passed.\e[0m"
 
 make clean

@@ -1,7 +1,1 @@
-f main() -> i32 {
-  return today()
-}
-
-f today() -> i32 {
-  return 9
-}
+  3 + 5 - 4
