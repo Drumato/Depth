@@ -24,6 +24,7 @@ try 2 "10-(3+5)"
 try 30 "3*10"
 try 7 "1+2*3"
 try 9 "(1+2)*3"
+try 4 "(-2)+6"
 echo -e "\e[33mAll Test Passed.\e[0m"
 
 make clean

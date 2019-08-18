@@ -5,6 +5,12 @@ use super::manager::Manager;
 impl Manager {
     pub fn gen_expr(&mut self, n: node::Node) -> usize {
         match n {
+            node::Node::UNARY(t, binner) => {
+                let inner: node::Node = unsafe { Box::into_raw(binner).read() };
+                let rr: usize = self.gen_expr(inner);
+                self.hirs.push(HIR::NEGATIVE(rr - 1));
+                self.regnum
+            }
             node::Node::BINOP(t, blhs, brhs) => {
                 let lhs: node::Node = unsafe { Box::into_raw(blhs).read() };
                 let rhs: node::Node = unsafe { Box::into_raw(brhs).read() };

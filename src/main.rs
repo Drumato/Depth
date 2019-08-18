@@ -24,13 +24,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
     let tokens: Vec<tok::Token> = lex_phase(&matches);
     let nodes: Vec<node::Node> = parse_phase(&matches, tokens);
     let manager: Manager = genir_phase(&matches, nodes);
-
-    if matches.is_present("intel") {
-        println!(".intel_syntax noprefix");
-        println!(".global main");
-    }
-    println!("main:");
-    manager.genx64();
+    genx64_phase(&matches, manager);
 
     Ok(())
 }
@@ -66,4 +60,60 @@ fn genir_phase(matches: &clap::ArgMatches, nodes: Vec<node::Node>) -> Manager {
         }
     }
     manager
+}
+fn genx64_phase(matches: &clap::ArgMatches, manager: Manager) {
+    if matches.is_present("intel") {
+        println!(".intel_syntax noprefix");
+        println!(".global main");
+    }
+    println!("main:");
+    manager.genx64();
+}
+
+fn test_phase(matches: &clap::ArgMatches) -> Result<(), Box<std::error::Error>> {
+    if matches.is_present("test") {
+        let expects: Vec<i32> = vec![9, 3, 2, 30, 7, 9, 4];
+        for (idx, test_file) in std::fs::read_dir("test/")?.enumerate() {
+            let dir = test_file?;
+            let content = drumatech::fileu::content_or_raw(dir.path().to_str().unwrap());
+            std::process::Command::new("./target/debug/depth")
+                .arg("--intel")
+                .arg(content.clone())
+                .arg(">")
+                .arg("c.s")
+                .output()
+                .unwrap_or_else(|e| {
+                    panic!("failed to execute process: {}", e);
+                });
+            std::process::Command::new("gcc")
+                .arg("c.s")
+                .output()
+                .unwrap_or_else(|e| {
+                    panic!("failed to execute process: {}", e);
+                });
+            let output = std::process::Command::new("a.out")
+                .output()
+                .unwrap_or_else(|e| {
+                    panic!("failed to execute process: {}", e);
+                });
+            if let Some(code) = output.status.code() {
+                if code == expects[idx] {
+                    eprintln!(
+                        "{} => {}",
+                        content,
+                        format!("{}", expects[idx]).blue().bold()
+                    );
+                } else {
+                    eprintln!(
+                        "{} expected but got {}",
+                        format!("{}", expects[idx]).blue().bold(),
+                        format!("{}", code).blue().bold(),
+                    );
+                    eprintln!("{}", format!("{} failed", &content.red().bold()));
+                }
+            }
+        }
+        std::process::exit(0);
+    }
+    Ok(())
 }

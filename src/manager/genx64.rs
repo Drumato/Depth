@@ -22,6 +22,9 @@ impl Manager {
                     println!("  mov {}, rax", gr(lr));
                 }
                 HIR::LOAD(reg, val) => println!("  mov {}, {}", gr(reg), val),
+                HIR::NEGATIVE(reg) => {
+                    println!("  neg {}", gr(reg));
+                }
                 HIR::RETURN(reg) => {
                     println!("  mov rax, {}", gr(reg));
                     println!("  ret");

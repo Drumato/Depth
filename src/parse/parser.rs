@@ -28,14 +28,14 @@ impl Parser {
         self.adsub()
     }
     fn muldiv(&mut self) -> Node {
-        let mut lhs: Node = self.term();
+        let mut lhs: Node = self.unary();
         self.check_invalid(&lhs);
         loop {
             match self.cur_token() {
                 Token::STAR | Token::SLASH => {
                     let op: Token = self.get_token();
                     self.next_token();
-                    lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.term()));
+                    lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.unary()));
                 }
                 _ => {
                     break;
@@ -61,6 +61,13 @@ impl Parser {
         }
         lhs
     }
+    fn unary(&mut self) -> Node {
+        if self.consume(&Token::MINUS) {
+            let op: Token = self.get_token();
+            return Node::UNARY(op, Box::new(self.term()));
+        }
+        self.term()
+    }
     fn term(&mut self) -> Node {
         let t: &Token = self.cur_token();
         if let Token::LPAREN = t {
@@ -80,6 +87,13 @@ impl Parser {
             eprintln!("got INVALID Node");
             std::process::exit(1);
         }
+    }
+    fn consume(&self, t: &Token) -> bool {
+        if self.cur_token() == t {
+            self.next_token();
+            return true;
+        }
+        false
     }
     fn cur_token(&self) -> &Token {
         unsafe {
