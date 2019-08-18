@@ -32,6 +32,12 @@ impl Manager {
             Token::MINUS => {
                 self.hirs.push(HIR::SUB(lr - 1, rr - 1));
             }
+            Token::STAR => {
+                self.hirs.push(HIR::MUL(lr - 1, rr - 1));
+            }
+            Token::SLASH => {
+                self.hirs.push(HIR::DIV(lr - 1, rr - 1));
+            }
             _ => (),
         }
     }

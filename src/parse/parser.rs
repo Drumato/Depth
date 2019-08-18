@@ -27,15 +27,32 @@ impl Parser {
     fn expr(&mut self) -> Node {
         self.adsub()
     }
-    fn adsub(&mut self) -> Node {
+    fn muldiv(&mut self) -> Node {
         let mut lhs: Node = self.term();
+        self.check_invalid(&lhs);
+        loop {
+            match self.cur_token() {
+                Token::STAR | Token::SLASH => {
+                    let op: Token = self.get_token();
+                    self.next_token();
+                    lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.term()));
+                }
+                _ => {
+                    break;
+                }
+            }
+        }
+        lhs
+    }
+    fn adsub(&mut self) -> Node {
+        let mut lhs: Node = self.muldiv();
         self.check_invalid(&lhs);
         loop {
             match self.cur_token() {
                 Token::PLUS | Token::MINUS => {
                     let op: Token = self.get_token();
                     self.next_token();
-                    lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.term()));
+                    lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.muldiv()));
                 }
                 _ => {
                     break;

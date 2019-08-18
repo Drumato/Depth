@@ -4,6 +4,8 @@ pub enum HIR {
     LOAD(usize, i128),
     ADD(usize, usize),
     SUB(usize, usize),
+    MUL(usize, usize),
+    DIV(usize, usize),
     RETURN(usize),
 }
 
@@ -13,6 +15,8 @@ impl HIR {
             HIR::LOAD(reg, val) => format!("load {} to {}", val, reg),
             HIR::ADD(lr, rr) => format!("add {} and {}", lr, rr),
             HIR::SUB(lr, rr) => format!("sub {} and {}", lr, rr),
+            HIR::MUL(lr, rr) => format!("mul {} and {}", lr, rr),
+            HIR::DIV(lr, rr) => format!("div {} and {}", lr, rr),
             HIR::RETURN(reg) => format!("return {}", reg),
         }
     }

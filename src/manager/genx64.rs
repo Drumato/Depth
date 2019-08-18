@@ -10,6 +10,17 @@ impl Manager {
             match ir {
                 HIR::ADD(lr, rr) => println!("  add {}, {}", gr(lr), gr(rr)),
                 HIR::SUB(lr, rr) => println!("  sub {}, {}", gr(lr), gr(rr)),
+                HIR::MUL(lr, rr) => {
+                    println!("  mov rax, {}", gr(lr));
+                    println!("  imul {}", gr(rr));
+                    println!("  mov {}, rax", gr(lr));
+                }
+                HIR::DIV(lr, rr) => {
+                    println!("  mov rax, {}", gr(lr));
+                    println!("  cqo");
+                    println!("  idiv {}", gr(rr));
+                    println!("  mov {}, rax", gr(lr));
+                }
                 HIR::LOAD(reg, val) => println!("  mov {}, {}", gr(reg), val),
                 HIR::RETURN(reg) => {
                     println!("  mov rax, {}", gr(reg));
