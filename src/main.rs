@@ -11,11 +11,15 @@ use colored::*;
 mod token;
 use token::token as tok;
 mod lex;
+mod parse;
+use parse::{node, parser};
 
 fn main() -> Result<(), Box<std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
-    let _tokens: Vec<tok::Token> = lex_phase(&matches);
+    let tokens: Vec<tok::Token> = lex_phase(&matches);
+    let _nodes: Vec<node::Node> = parse_phase(&matches, tokens);
+
     Ok(())
 }
 
@@ -29,4 +33,15 @@ fn lex_phase(matches: &clap::ArgMatches) -> Vec<tok::Token> {
         }
     }
     tokens
+}
+
+fn parse_phase(matches: &clap::ArgMatches, tokens: Vec<tok::Token>) -> Vec<node::Node> {
+    let nodes: Vec<node::Node> = parser::parsing(tokens);
+    if matches.is_present("dump-ast") {
+        eprintln!("{}", "--------dumpast--------".blue().bold());
+        for n in nodes.iter() {
+            eprintln!("{}", n.string().green().bold());
+        }
+    }
+    nodes
 }

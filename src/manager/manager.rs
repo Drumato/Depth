@@ -1,10 +1,12 @@
-use super::super::token::token::Token;
+use super::super::parse::node::Func;
 pub struct Manager {
-    pub tokens: Vec<Token>,
+    pub functions: Vec<Func>,
 }
 
 impl Manager {
-    pub fn new(tokens: Vec<Token>) -> Manager {
-        Manager { tokens: tokens }
+    pub fn new(functions: Vec<Func>) -> Manager {
+        Manager {
+            functions: functions,
+        }
     }
 }

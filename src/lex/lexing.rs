@@ -4,8 +4,12 @@ pub fn lexing(mut input: String) -> Vec<Token> {
     let mut tokens: Vec<Token> = Vec::new();
     while let Some((t, idx)) = tokenize(&input) {
         input.drain(..idx);
-        if should_ignore(&t) {
+        if t.should_ignore() {
             continue;
+        }
+        if let &Token::EOF = &t {
+            tokens.push(t);
+            break;
         }
         tokens.push(t);
     }
@@ -34,17 +38,12 @@ fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
         '-' => Some((Token::MINUS, 1)),
         ' ' => Some((Token::BLANK, count_len(input, |c| c == &' '))),
         '\n' => Some((Token::LF, 1)),
+        '\0' => Some((Token::EOF, 1)),
         _ => None,
     }
 }
 fn is_decimal(ch: char) -> bool {
     '1' <= ch && ch <= '9'
-}
-fn should_ignore(t: &Token) -> bool {
-    match t {
-        Token::BLANK | Token::LF => true,
-        _ => false,
-    }
 }
 fn count_len(input: &String, f: fn(ch: &char) -> bool) -> usize {
     input.chars().take_while(f).collect::<String>().len()
