@@ -36,6 +36,8 @@ fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
     match input.as_bytes()[0] as char {
         '+' => Some((Token::PLUS, 1)),
         '-' => Some((Token::MINUS, 1)),
+        '(' => Some((Token::LPAREN, 1)),
+        ')' => Some((Token::RPAREN, 1)),
         ' ' => Some((Token::BLANK, count_len(input, |c| c == &' '))),
         '\n' => Some((Token::LF, 1)),
         '\0' => Some((Token::EOF, 1)),

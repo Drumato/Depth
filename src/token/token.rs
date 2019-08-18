@@ -3,6 +3,8 @@ pub enum Token {
     INTEGER(i128),
     PLUS,
     MINUS,
+    LPAREN,
+    RPAREN,
     EOF,
     BLANK,
     LF,
@@ -13,6 +15,8 @@ impl Token {
             Token::INTEGER(int) => format!("INTEGER<{}>", int),
             Token::PLUS => "PLUS".to_string(),
             Token::MINUS => "MINUS".to_string(),
+            Token::LPAREN => "LPAREN".to_string(),
+            Token::RPAREN => "RPAREN".to_string(),
             Token::EOF => "EOF".to_string(),
             _ => "".to_string(),
         }
