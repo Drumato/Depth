@@ -2,16 +2,27 @@ use super::super::ir::hi::HIR;
 use super::super::parse::node;
 use super::super::token::token::Token;
 use super::manager::Manager;
+use super::semantics::Type;
 impl Manager {
-    pub fn gen_expr(&mut self, n: node::Node) -> usize {
+    pub fn gen_stmt(&mut self, n: node::Node) {
         match n {
-            node::Node::UNARY(_t, binner) => {
+            node::Node::RETURN(bexpr) => {
+                let expr: node::Node = unsafe { Box::into_raw(bexpr).read() };
+                let return_reg: usize = self.gen_expr(expr) - 1;
+                self.hirs.push(HIR::RETURN(return_reg));
+            }
+            _ => (),
+        }
+    }
+    fn gen_expr(&mut self, n: node::Node) -> usize {
+        match n {
+            node::Node::UNARY(_t, binner, _) => {
                 let inner: node::Node = unsafe { Box::into_raw(binner).read() };
                 let rr: usize = self.gen_expr(inner);
                 self.hirs.push(HIR::NEGATIVE(rr - 1));
                 self.regnum
             }
-            node::Node::BINOP(t, blhs, brhs) => {
+            node::Node::BINOP(t, blhs, brhs, _) => {
                 let lhs: node::Node = unsafe { Box::into_raw(blhs).read() };
                 let rhs: node::Node = unsafe { Box::into_raw(brhs).read() };
 
@@ -21,12 +32,14 @@ impl Manager {
                 self.regnum -= 1;
                 self.regnum
             }
-            node::Node::INTEGER(int) => {
-                let load_reg: usize = self.regnum;
-                self.hirs.push(HIR::LOAD(load_reg, int));
-                self.regnum += 1;
-                self.regnum
-            }
+            node::Node::NUMBER(ty) => match ty {
+                Type::INTEGER(int, _, _) => {
+                    let load_reg: usize = self.regnum;
+                    self.hirs.push(HIR::LOAD(load_reg, int));
+                    self.regnum += 1;
+                    self.regnum
+                }
+            },
             _ => 42,
         }
     }

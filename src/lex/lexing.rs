@@ -21,6 +21,8 @@ fn tokenize(input: &String) -> Option<(Token, usize)> {
         return None;
     }
     match input.as_bytes()[0] as char {
+        c if c.is_alphabetic() => tokenize_keywords(input),
+
         c if c == '0' => Some((Token::INTEGER(0), 1)),
         c if is_decimal(c) => {
             let length: usize = count_len(input, |c| c.is_ascii_digit());
@@ -55,6 +57,13 @@ fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
         '\0' => Some((Token::EOF, 1)),
         _ => None,
     }
+}
+fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
+    let length: usize = count_len(input, |c| c.is_alphabetic());
+    if input.starts_with("return") {
+        return Some((Token::RETURN, length));
+    }
+    None
 }
 fn is_decimal(ch: char) -> bool {
     '1' <= ch && ch <= '9'

@@ -48,9 +48,7 @@ pub fn gen_hir(nodes: Vec<node::Node>) -> Manager {
         regnum: 0,
     };
     for n in nodes {
-        manager.gen_expr(n);
+        manager.gen_stmt(n);
     }
-    let return_reg: usize = manager.regnum - 1;
-    manager.hirs.push(HIR::RETURN(return_reg));
     manager
 }

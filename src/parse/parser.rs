@@ -1,3 +1,4 @@
+use super::super::manager::semantics::Type;
 use super::super::token::token::Token;
 use super::node::Node;
 pub struct Parser {
@@ -20,12 +21,26 @@ impl Parser {
     }
     fn toplevel(&mut self) {
         while let Some(_) = Token::is_valid(self.cur_token()) {
-            let expr: Node = self.expr();
-            self.nodes.push(expr);
+            let stmt: Node = self.stmt();
+            self.nodes.push(stmt);
         }
+    }
+    fn stmt(&mut self) -> Node {
+        while let Some(_) = Token::is_valid(self.cur_token()) {
+            if let Token::RETURN = self.cur_token() {
+                return self.parse_return();
+            }
+        }
+        Node::INVALID
     }
     fn expr(&mut self) -> Node {
         self.equal()
+    }
+    fn parse_return(&mut self) -> Node {
+        if self.consume(&Token::RETURN) {
+            return Node::RETURN(Box::new(self.expr()));
+        }
+        Node::INVALID
     }
     fn muldiv(&mut self) -> Node {
         let mut lhs: Node = self.unary();
@@ -35,7 +50,7 @@ impl Parser {
                 Token::STAR | Token::SLASH | Token::PERCENT => {
                     let op: Token = self.get_token();
                     self.next_token();
-                    lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.unary()));
+                    lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.unary()), None);
                 }
                 _ => {
                     break;
@@ -52,7 +67,7 @@ impl Parser {
                 Token::PLUS | Token::MINUS => {
                     let op: Token = self.get_token();
                     self.next_token();
-                    lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.muldiv()));
+                    lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.muldiv()), None);
                 }
                 _ => {
                     break;
@@ -69,7 +84,7 @@ impl Parser {
                 Token::LSHIFT | Token::RSHIFT => {
                     let op: Token = self.get_token();
                     self.next_token();
-                    lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.adsub()));
+                    lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.adsub()), None);
                 }
                 _ => {
                     break;
@@ -86,7 +101,7 @@ impl Parser {
                 Token::LT | Token::GT | Token::LTEQ | Token::GTEQ => {
                     let op: Token = self.get_token();
                     self.next_token();
-                    lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.shift()));
+                    lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.shift()), None);
                 }
                 _ => {
                     break;
@@ -103,7 +118,7 @@ impl Parser {
                 Token::EQ | Token::NTEQ => {
                     let op: Token = self.get_token();
                     self.next_token();
-                    lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.relation()));
+                    lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.relation()), None);
                 }
                 _ => {
                     break;
@@ -115,7 +130,7 @@ impl Parser {
     fn unary(&mut self) -> Node {
         if self.consume(&Token::MINUS) {
             let op: Token = self.get_token();
-            return Node::UNARY(op, Box::new(self.term()));
+            return Node::UNARY(op, Box::new(self.term()), None);
         }
         self.term()
     }
@@ -129,7 +144,7 @@ impl Parser {
         }
         if let Token::INTEGER(int) = t {
             self.next_token();
-            return Node::INTEGER(*int);
+            return Node::NUMBER(Type::INTEGER(*int, 8, None));
         }
         Node::INVALID
     }
