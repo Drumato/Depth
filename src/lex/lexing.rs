@@ -33,6 +33,12 @@ fn tokenize(input: &String) -> Option<(Token, usize)> {
     }
 }
 fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
+    if input.len() >= 2 {
+        let multilength: String = std::str::from_utf8(&input.as_bytes()[0..2]).unwrap().into();
+        if let Some(t) = tokenize_multisymbols(&multilength) {
+            return Some((t, 2));
+        }
+    }
     match input.as_bytes()[0] as char {
         '+' => Some((Token::PLUS, 1)),
         '-' => Some((Token::MINUS, 1)),
@@ -52,4 +58,11 @@ fn is_decimal(ch: char) -> bool {
 }
 fn count_len(input: &String, f: fn(ch: &char) -> bool) -> usize {
     input.chars().take_while(f).collect::<String>().len()
+}
+fn tokenize_multisymbols(input: &String) -> Option<Token> {
+    match input.as_str() {
+        "<<" => Some(Token::LSHIFT),
+        ">>" => Some(Token::RSHIFT),
+        _ => None,
+    }
 }

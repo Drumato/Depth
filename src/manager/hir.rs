@@ -5,7 +5,7 @@ use super::manager::Manager;
 impl Manager {
     pub fn gen_expr(&mut self, n: node::Node) -> usize {
         match n {
-            node::Node::UNARY(t, binner) => {
+            node::Node::UNARY(_t, binner) => {
                 let inner: node::Node = unsafe { Box::into_raw(binner).read() };
                 let rr: usize = self.gen_expr(inner);
                 self.hirs.push(HIR::NEGATIVE(rr - 1));
@@ -46,6 +46,12 @@ impl Manager {
             }
             Token::PERCENT => {
                 self.hirs.push(HIR::MOD(lr - 1, rr - 1));
+            }
+            Token::LSHIFT => {
+                self.hirs.push(HIR::LSHIFT(lr - 1, rr - 1));
+            }
+            Token::RSHIFT => {
+                self.hirs.push(HIR::RSHIFT(lr - 1, rr - 1));
             }
             _ => (),
         }

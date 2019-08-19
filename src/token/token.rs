@@ -8,6 +8,8 @@ pub enum Token {
     PERCENT,
     LPAREN,
     RPAREN,
+    LSHIFT,
+    RSHIFT,
     EOF,
     BLANK,
     LF,
@@ -23,6 +25,8 @@ impl Token {
             Token::PERCENT => "PERCENT".to_string(),
             Token::LPAREN => "LPAREN".to_string(),
             Token::RPAREN => "RPAREN".to_string(),
+            Token::LSHIFT => "LSHIFT".to_string(),
+            Token::RSHIFT => "RSHIFT".to_string(),
             Token::EOF => "EOF".to_string(),
             _ => "".to_string(),
         }

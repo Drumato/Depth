@@ -25,7 +25,7 @@ impl Parser {
         }
     }
     fn expr(&mut self) -> Node {
-        self.adsub()
+        self.shift()
     }
     fn muldiv(&mut self) -> Node {
         let mut lhs: Node = self.unary();
@@ -53,6 +53,23 @@ impl Parser {
                     let op: Token = self.get_token();
                     self.next_token();
                     lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.muldiv()));
+                }
+                _ => {
+                    break;
+                }
+            }
+        }
+        lhs
+    }
+    fn shift(&mut self) -> Node {
+        let mut lhs: Node = self.adsub();
+        self.check_invalid(&lhs);
+        loop {
+            match self.cur_token() {
+                Token::LSHIFT | Token::RSHIFT => {
+                    let op: Token = self.get_token();
+                    self.next_token();
+                    lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.adsub()));
                 }
                 _ => {
                     break;

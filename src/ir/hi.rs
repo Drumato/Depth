@@ -7,6 +7,8 @@ pub enum HIR {
     MUL(usize, usize),
     DIV(usize, usize),
     MOD(usize, usize),
+    LSHIFT(usize, usize),
+    RSHIFT(usize, usize),
     NEGATIVE(usize),
     RETURN(usize),
 }
@@ -15,11 +17,13 @@ impl HIR {
     pub fn string(&self) -> String {
         match self {
             HIR::LOAD(reg, val) => format!("load {} to {}", val, reg),
-            HIR::ADD(lr, rr) => format!("add {} and {}", lr, rr),
-            HIR::SUB(lr, rr) => format!("sub {} and {}", lr, rr),
-            HIR::MUL(lr, rr) => format!("mul {} and {}", lr, rr),
-            HIR::DIV(lr, rr) => format!("div {} and {}", lr, rr),
-            HIR::MOD(lr, rr) => format!("mod {} and {}", lr, rr),
+            HIR::ADD(lr, rr) => format!("{} plus {}", lr, rr),
+            HIR::SUB(lr, rr) => format!("{} minus {}", lr, rr),
+            HIR::MUL(lr, rr) => format!("{} multiply {}", lr, rr),
+            HIR::DIV(lr, rr) => format!("{} divided by {}", lr, rr),
+            HIR::MOD(lr, rr) => format!("reminder of '{} divided by {}'", lr, rr),
+            HIR::LSHIFT(lr, rr) => format!("lshift {} {} times", lr, rr),
+            HIR::RSHIFT(lr, rr) => format!("rshift {} {} times", lr, rr),
             HIR::NEGATIVE(reg) => format!("negative {} ", reg),
             HIR::RETURN(reg) => format!("return {}", reg),
         }

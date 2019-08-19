@@ -23,6 +23,14 @@ impl Manager {
                     self.division(lr, rr);
                     println!("  mov {}, rdx", gr(lr));
                 }
+                HIR::LSHIFT(lr, rr) => {
+                    println!("  mov rcx, {}", gr(rr));
+                    println!("  sal {}, cl", gr(lr))
+                }
+                HIR::RSHIFT(lr, rr) => {
+                    println!("  mov rcx, {}", gr(rr));
+                    println!("  sar {}, cl", gr(lr));
+                }
                 HIR::LOAD(reg, val) => println!("  mov {}, {}", gr(reg), val),
                 HIR::NEGATIVE(reg) => {
                     println!("  neg {}", gr(reg));
