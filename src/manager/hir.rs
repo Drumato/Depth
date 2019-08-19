@@ -26,6 +26,14 @@ impl Manager {
                 let return_reg: usize = self.gen_expr(expr) - 1;
                 self.hirs.push(HIR::RETURN(return_reg));
             }
+            node::Node::IF(bcond, bstmt) => {
+                let cond: node::Node = unsafe { Box::into_raw(bcond).read() };
+                let cmp_reg: usize = self.gen_expr(cond) - 1;
+                self.hirs.push(HIR::CMP(cmp_reg));
+                let stmt: node::Node = unsafe { Box::into_raw(bstmt).read() };
+                self.gen_stmt(stmt);
+                self.hirs.push(HIR::LABEL);
+            }
             _ => (),
         }
     }

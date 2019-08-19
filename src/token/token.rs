@@ -22,6 +22,7 @@ pub enum Token {
     FUNC,
     IDENT(String),
     RETURN,
+    IF,
     EOF,
     BLANK,
     LF,
@@ -51,6 +52,7 @@ impl Token {
             Token::EOF => "EOF".to_string(),
             Token::FUNC => "FUNCTION".to_string(),
             Token::IDENT(name) => format!("IDENTIFIER<{}>", name),
+            Token::IF => "IF".to_string(),
             _ => "".to_string(),
         }
     }
@@ -62,7 +64,7 @@ impl Token {
     }
     pub fn start_stmt(token: &Token) -> Option<()> {
         match token {
-            Token::RETURN => Some(()),
+            Token::RETURN | Token::IF => Some(()),
             _ => None,
         }
     }

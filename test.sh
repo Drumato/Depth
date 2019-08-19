@@ -40,6 +40,10 @@ try 1 "f main(){return 1==1}"
 try 0 "f main(){return 1==0}"
 try 0 "f main(){return 1!=1}"
 try 1 "f main(){return 1!=0}"
+try 20 "f main(){if 1>0 return 20 return 30 }"
+try 30 "f main(){if 0>1 return 20 return 30 }"
+try 20 "f main(){if 1 return 20 return 30 }"
+try 30 "f main(){if 0 return 20 return 30 }"
 echo -e "\e[33mAll Test Passed.\e[0m"
 
 make clean

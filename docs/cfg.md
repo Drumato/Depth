@@ -33,5 +33,7 @@ E6 -> E5 != T
 # stmt
 
 ```
+S -> E
 S -> return E
+S -> if E S
 ```

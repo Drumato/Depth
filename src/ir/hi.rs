@@ -20,6 +20,8 @@ pub enum HIR {
     NEGATIVE(usize),
     RETURN(usize),
     FUNCNAME(String),
+    LABEL,
+    CMP(usize),
 }
 
 impl HIR {
@@ -44,6 +46,8 @@ impl HIR {
             HIR::NEGATIVE(reg) => format!("negative {} ", reg),
             HIR::RETURN(reg) => format!("return {}", reg),
             HIR::FUNCNAME(name) => format!("function of {}", name),
+            HIR::LABEL => "LABEL".to_string(),
+            HIR::CMP(reg) => format!("compare between {} and 0, then jump", reg),
         }
     }
 }

@@ -6,6 +6,7 @@ pub enum Node {
     UNARY(Token, Box<Node>, Option<Type>),
     NUMBER(Type),
     RETURN(Box<Node>),
+    IF(Box<Node>, Box<Node>),
     INVALID,
 }
 impl Node {
@@ -19,6 +20,7 @@ impl Node {
                 Type::INTEGER(val, _, _) => format!("INT-Node<{}>", val),
             },
             Node::RETURN(expr) => format!("RETURN({})", expr.string()),
+            Node::IF(cond, stmt) => format!("IF({}) ({}) ", cond.string(), stmt.string()),
             Node::INVALID => "INVALID".to_string(),
         }
     }

@@ -1,6 +1,7 @@
 use super::super::ir::hi::HIR;
 use super::manager::Manager;
 const FREE_REG: [&str; 6] = ["r10", "r11", "r12", "r13", "r14", "r15"];
+static mut LABEL: usize = 1;
 fn gr(num: &usize) -> String {
     FREE_REG[*num].to_string()
 }
@@ -68,6 +69,14 @@ impl Manager {
                 HIR::FUNCNAME(name) => {
                     println!("{}:", name);
                 }
+                HIR::LABEL => {
+                    println!(".L{}:", self.get_label());
+                    self.inc_label();
+                }
+                HIR::CMP(reg) => {
+                    println!("  cmp {}, 0", gr(reg));
+                    println!("  je .L{}", self.get_label());
+                }
             }
         }
     }
@@ -80,5 +89,18 @@ impl Manager {
         println!("  cmp {}, {}", gr(lr), gr(rr));
         println!("  {} al", inst);
         println!("  movzx {}, al", gr(lr));
+    }
+    fn inc_label(&self) {
+        unsafe {
+            LABEL += 1;
+        }
+    }
+    fn dec_label(&self) {
+        unsafe {
+            LABEL -= 1;
+        }
+    }
+    fn get_label(&self) -> usize {
+        unsafe { LABEL }
     }
 }

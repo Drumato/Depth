@@ -49,10 +49,11 @@ impl Parser {
         f
     }
     fn stmt(&mut self) -> Node {
-        while let Some(_) = Token::is_valid(self.cur_token()) {
-            if let Token::RETURN = self.cur_token() {
-                return self.parse_return();
-            }
+        if let Token::RETURN = self.cur_token() {
+            return self.parse_return();
+        }
+        if let Token::IF = self.cur_token() {
+            return self.parse_if();
         }
         Node::INVALID
     }
@@ -62,6 +63,13 @@ impl Parser {
     fn parse_return(&mut self) -> Node {
         if self.consume(&Token::RETURN) {
             return Node::RETURN(Box::new(self.expr()));
+        }
+        Node::INVALID
+    }
+    fn parse_if(&mut self) -> Node {
+        if self.consume(&Token::IF) {
+            let cond: Node = self.expr();
+            return Node::IF(Box::new(cond), Box::new(self.stmt()));
         }
         Node::INVALID
     }
