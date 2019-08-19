@@ -43,6 +43,12 @@ impl Manager {
                 HIR::GTEQ(lr, rr) => {
                     self.compare(lr, rr, "setge");
                 }
+                HIR::EQ(lr, rr) => {
+                    self.compare(lr, rr, "sete");
+                }
+                HIR::NTEQ(lr, rr) => {
+                    self.compare(lr, rr, "setne");
+                }
                 HIR::LOAD(reg, val) => println!("  mov {}, {}", gr(reg), val),
                 HIR::NEGATIVE(reg) => {
                     println!("  neg {}", gr(reg));

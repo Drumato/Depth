@@ -7,6 +7,6 @@ gcc:
 	dr --intel sample.dep
 fclean:
 	cargo clean
-	rm -f depth *.o tmp* *.out *.txt *.s
+	rm -f *.o tmp* *.out *.txt *.s
 clean:
-	rm -f depth *.o tmp* *.out *.txt *.s
+	rm -f ./target/debug/depth *.o tmp* *.out *.txt *.s

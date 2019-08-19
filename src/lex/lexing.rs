@@ -21,6 +21,7 @@ fn tokenize(input: &String) -> Option<(Token, usize)> {
         return None;
     }
     match input.as_bytes()[0] as char {
+        c if c == '0' => Some((Token::INTEGER(0), 1)),
         c if is_decimal(c) => {
             let length: usize = count_len(input, |c| c.is_ascii_digit());
             Some((
@@ -67,6 +68,8 @@ fn tokenize_multisymbols(input: &String) -> Option<Token> {
         ">>" => Some(Token::RSHIFT),
         "<=" => Some(Token::LTEQ),
         ">=" => Some(Token::GTEQ),
+        "==" => Some(Token::EQ),
+        "!=" => Some(Token::NTEQ),
         _ => None,
     }
 }

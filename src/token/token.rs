@@ -14,6 +14,8 @@ pub enum Token {
     GT,
     LTEQ,
     GTEQ,
+    EQ,
+    NTEQ,
     EOF,
     BLANK,
     LF,
@@ -35,6 +37,8 @@ impl Token {
             Token::GT => "GREATERTHAN".to_string(),
             Token::LTEQ => "LESSTHANEQUAL".to_string(),
             Token::GTEQ => "GREATERTHANEQUAL".to_string(),
+            Token::EQ => "EQUAL".to_string(),
+            Token::NTEQ => "NOTEQUAL".to_string(),
             Token::EOF => "EOF".to_string(),
             _ => "".to_string(),
         }

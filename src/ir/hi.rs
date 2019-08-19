@@ -13,6 +13,8 @@ pub enum HIR {
     LTEQ(usize, usize),
     GT(usize, usize),
     GTEQ(usize, usize),
+    EQ(usize, usize),
+    NTEQ(usize, usize),
     NEGATIVE(usize),
     RETURN(usize),
 }
@@ -32,6 +34,8 @@ impl HIR {
             HIR::LTEQ(lr, rr) => format!("{} less than or equal {}", lr, rr),
             HIR::GT(lr, rr) => format!("{} greater than {}", lr, rr),
             HIR::GTEQ(lr, rr) => format!("{} greater than or equal {}", lr, rr),
+            HIR::EQ(lr, rr) => format!("{} equal {}", lr, rr),
+            HIR::NTEQ(lr, rr) => format!("{} not equal {}", lr, rr),
             HIR::NEGATIVE(reg) => format!("negative {} ", reg),
             HIR::RETURN(reg) => format!("return {}", reg),
         }

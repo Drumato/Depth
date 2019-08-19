@@ -36,6 +36,10 @@ try 1 "6>=4"
 try 0 "2<=1"
 try 1 "1<=1"
 try 1 "1>=1"
+try 1 "1==1"
+try 0 "1==0"
+try 0 "1!=1"
+try 1 "1!=0"
 echo -e "\e[33mAll Test Passed.\e[0m"
 
 make clean

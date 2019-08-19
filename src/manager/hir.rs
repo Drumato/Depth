@@ -65,6 +65,12 @@ impl Manager {
             Token::GTEQ => {
                 self.hirs.push(HIR::GTEQ(lr - 1, rr - 1));
             }
+            Token::EQ => {
+                self.hirs.push(HIR::EQ(lr - 1, rr - 1));
+            }
+            Token::NTEQ => {
+                self.hirs.push(HIR::NTEQ(lr - 1, rr - 1));
+            }
             _ => (),
         }
     }
