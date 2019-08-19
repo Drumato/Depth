@@ -1,29 +1,52 @@
 use super::super::manager::semantics::Type;
 use super::super::token::token::Token;
-use super::node::Node;
-pub struct Parser {
+use super::node::{Func, Node};
+struct Parser {
     tokens: Vec<Token>,
-    nodes: Vec<Node>,
+    funcs: Vec<Func>,
 }
 static mut CUR: usize = 0;
 static mut NEXT: usize = 0;
-pub fn parsing(tokens: Vec<Token>) -> Vec<Node> {
+pub fn parsing(tokens: Vec<Token>) -> Vec<Func> {
     let mut parser: Parser = Parser::new(tokens);
     parser.toplevel();
-    parser.nodes
+    parser.funcs
 }
 impl Parser {
     fn new(tokens: Vec<Token>) -> Parser {
         Parser {
             tokens: tokens,
-            nodes: Vec::new(),
+            funcs: Vec::new(),
         }
     }
     fn toplevel(&mut self) {
-        while let Some(_) = Token::is_valid(self.cur_token()) {
-            let stmt: Node = self.stmt();
-            self.nodes.push(stmt);
+        while let Token::FUNC = self.cur_token() {
+            let func: Func = self.func();
+            self.funcs.push(func);
         }
+    }
+    fn func(&mut self) -> Func {
+        let mut f: Func = Func {
+            name: String::new(),
+            stmts: Vec::new(),
+        };
+        self.next_token();
+        let t: &Token = self.cur_token();
+        if let Token::IDENT(name) = t {
+            f.name = name.to_string();
+            self.next_token();
+            self.expect(&Token::LPAREN);
+            self.expect(&Token::RPAREN);
+            self.expect(&Token::LBRACE);
+            let mut t: Token = self.get_token();
+            while let Some(_) = Token::start_stmt(&t) {
+                let stmt: Node = self.stmt();
+                f.stmts.push(stmt);
+                self.consume(&Token::RBRACE);
+                t = self.get_token();
+            }
+        }
+        f
     }
     fn stmt(&mut self) -> Node {
         while let Some(_) = Token::is_valid(self.cur_token()) {
@@ -161,6 +184,26 @@ impl Parser {
         }
         false
     }
+    fn expect(&self, t: &Token) -> bool {
+        if self.peek_token() == t {
+            self.next_token();
+            return true;
+        }
+        eprintln!(
+            "{} expected but got {}",
+            t.string(),
+            self.cur_token().string()
+        );
+        false
+    }
+    fn peek_token(&self) -> &Token {
+        unsafe {
+            if CUR == self.tokens.len() {
+                return &Token::EOF;
+            }
+            &self.tokens[NEXT]
+        }
+    }
     fn cur_token(&self) -> &Token {
         unsafe {
             if CUR == self.tokens.len() {
@@ -170,7 +213,12 @@ impl Parser {
         }
     }
     fn get_token(&mut self) -> Token {
-        unsafe { self.tokens[CUR].clone() }
+        unsafe {
+            if CUR == self.tokens.len() {
+                return Token::EOF;
+            }
+            self.tokens[CUR].clone()
+        }
     }
     fn next_token(&self) {
         unsafe {

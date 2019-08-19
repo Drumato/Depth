@@ -3,6 +3,7 @@ use super::manager::Manager;
 
 type TypeSize = usize;
 type Pointer = Option<Box<Type>>;
+#[derive(Clone)]
 pub enum Type {
     INTEGER(i128, TypeSize, Pointer), // INTEGER(INTTYPE) in future
 }

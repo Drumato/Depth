@@ -8,6 +8,8 @@ pub enum Token {
     PERCENT,
     LPAREN,
     RPAREN,
+    LBRACE,
+    RBRACE,
     LSHIFT,
     RSHIFT,
     LT,
@@ -17,6 +19,8 @@ pub enum Token {
     EQ,
     NTEQ,
 
+    FUNC,
+    IDENT(String),
     RETURN,
     EOF,
     BLANK,
@@ -33,6 +37,8 @@ impl Token {
             Token::PERCENT => "PERCENT".to_string(),
             Token::LPAREN => "LPAREN".to_string(),
             Token::RPAREN => "RPAREN".to_string(),
+            Token::LBRACE => "LBRACE".to_string(),
+            Token::RBRACE => "RBRACE".to_string(),
             Token::LSHIFT => "LSHIFT".to_string(),
             Token::RSHIFT => "RSHIFT".to_string(),
             Token::LT => "LESSTHAN".to_string(),
@@ -43,6 +49,8 @@ impl Token {
             Token::NTEQ => "NOTEQUAL".to_string(),
             Token::RETURN => "RETURN".to_string(),
             Token::EOF => "EOF".to_string(),
+            Token::FUNC => "FUNCTION".to_string(),
+            Token::IDENT(name) => format!("IDENTIFIER<{}>", name),
             _ => "".to_string(),
         }
     }
@@ -50,6 +58,12 @@ impl Token {
         match token {
             Token::EOF => None,
             _ => Some(()),
+        }
+    }
+    pub fn start_stmt(token: &Token) -> Option<()> {
+        match token {
+            Token::RETURN => Some(()),
+            _ => None,
         }
     }
     pub fn should_ignore(&self) -> bool {

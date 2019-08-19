@@ -4,7 +4,22 @@ use super::super::token::token::Token;
 use super::manager::Manager;
 use super::semantics::Type;
 impl Manager {
-    pub fn gen_stmt(&mut self, n: node::Node) {
+    pub fn gen_irs(&mut self) {
+        let func_num: usize = self.functions.len();
+        let mut idx: usize = 0;
+        loop {
+            if idx == func_num {
+                break;
+            }
+            let f: node::Func = self.functions[idx].clone();
+            self.hirs.push(HIR::FUNCNAME(f.name));
+            for n in f.stmts {
+                self.gen_stmt(n);
+            }
+            idx += 1;
+        }
+    }
+    fn gen_stmt(&mut self, n: node::Node) {
         match n {
             node::Node::RETURN(bexpr) => {
                 let expr: node::Node = unsafe { Box::into_raw(bexpr).read() };

@@ -50,6 +50,8 @@ fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
         '%' => Some((Token::PERCENT, 1)),
         '(' => Some((Token::LPAREN, 1)),
         ')' => Some((Token::RPAREN, 1)),
+        '{' => Some((Token::LBRACE, 1)),
+        '}' => Some((Token::RBRACE, 1)),
         '<' => Some((Token::LT, 1)),
         '>' => Some((Token::GT, 1)),
         ' ' => Some((Token::BLANK, count_len(input, |c| c == &' '))),
@@ -60,10 +62,17 @@ fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
 }
 fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
     let length: usize = count_len(input, |c| c.is_alphabetic());
-    if input.starts_with("return") {
-        return Some((Token::RETURN, length));
+    let keywords: Vec<&str> = vec!["return", "f"];
+    let types: Vec<Token> = vec![Token::RETURN, Token::FUNC];
+    for (idx, k) in keywords.iter().enumerate() {
+        if input.starts_with(k) {
+            return Some((types[idx].clone(), length));
+        }
     }
-    None
+    Some((
+        Token::IDENT(input.chars().take(length).collect::<String>()),
+        length,
+    ))
 }
 fn is_decimal(ch: char) -> bool {
     '1' <= ch && ch <= '9'

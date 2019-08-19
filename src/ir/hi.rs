@@ -1,6 +1,8 @@
 use super::super::manager::manager::Manager;
 use super::super::parse::node;
 pub enum HIR {
+    PROLOGUE,
+    EPILOGUE,
     LOAD(usize, i128),
     ADD(usize, usize),
     SUB(usize, usize),
@@ -17,11 +19,14 @@ pub enum HIR {
     NTEQ(usize, usize),
     NEGATIVE(usize),
     RETURN(usize),
+    FUNCNAME(String),
 }
 
 impl HIR {
     pub fn string(&self) -> String {
         match self {
+            HIR::PROLOGUE => format!("function prologue"),
+            HIR::EPILOGUE => format!("function epilogue"),
             HIR::LOAD(reg, val) => format!("load {} to {}", val, reg),
             HIR::ADD(lr, rr) => format!("{} plus {}", lr, rr),
             HIR::SUB(lr, rr) => format!("{} minus {}", lr, rr),
@@ -38,17 +43,7 @@ impl HIR {
             HIR::NTEQ(lr, rr) => format!("{} not equal {}", lr, rr),
             HIR::NEGATIVE(reg) => format!("negative {} ", reg),
             HIR::RETURN(reg) => format!("return {}", reg),
+            HIR::FUNCNAME(name) => format!("function of {}", name),
         }
     }
-}
-
-pub fn gen_hir(nodes: Vec<node::Node>) -> Manager {
-    let mut manager: Manager = Manager {
-        hirs: Vec::new(),
-        regnum: 0,
-    };
-    for n in nodes {
-        manager.gen_stmt(n);
-    }
-    manager
 }

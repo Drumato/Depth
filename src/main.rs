@@ -1,5 +1,4 @@
 extern crate yaml_rust;
-
 #[macro_use]
 extern crate clap;
 use clap::App;
@@ -22,9 +21,9 @@ fn main() -> Result<(), Box<std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
     let tokens: Vec<tok::Token> = lex_phase(&matches);
-    let mut nodes: Vec<node::Node> = parse_phase(&matches, tokens);
-    Manager::semantics(&mut nodes);
-    let manager: Manager = genir_phase(&matches, nodes);
+    let mut funcs: Vec<node::Func> = parse_phase(&matches, tokens);
+    //Manager::semantics(&mut nodes);
+    let manager: Manager = genir_phase(&matches, funcs);
     genx64_phase(&matches, manager);
 
     Ok(())
@@ -42,18 +41,26 @@ fn lex_phase(matches: &clap::ArgMatches) -> Vec<tok::Token> {
     tokens
 }
 
-fn parse_phase(matches: &clap::ArgMatches, tokens: Vec<tok::Token>) -> Vec<node::Node> {
-    let nodes: Vec<node::Node> = parser::parsing(tokens);
+fn parse_phase(matches: &clap::ArgMatches, tokens: Vec<tok::Token>) -> Vec<node::Func> {
+    let funcs: Vec<node::Func> = parser::parsing(tokens);
     if matches.is_present("dump-ast") {
         eprintln!("{}", "--------dumpast--------".blue().bold());
-        for n in nodes.iter() {
-            eprintln!("{}", n.string().green().bold());
+        for f in funcs.iter() {
+            eprintln!("{}'s stmts:", f.name);
+            for n in f.stmts.iter() {
+                eprintln!("{}", n.string().green().bold());
+            }
         }
     }
-    nodes
+    funcs
 }
-fn genir_phase(matches: &clap::ArgMatches, nodes: Vec<node::Node>) -> Manager {
-    let manager: Manager = hi::gen_hir(nodes);
+fn genir_phase(matches: &clap::ArgMatches, funcs: Vec<node::Func>) -> Manager {
+    let mut manager: Manager = Manager {
+        functions: funcs,
+        hirs: Vec::new(),
+        regnum: 0,
+    };
+    manager.gen_irs();
     if matches.is_present("dump-hir") {
         eprintln!("{}", "--------dumphir--------".blue().bold());
         for ir in manager.hirs.iter() {
@@ -67,6 +74,5 @@ fn genx64_phase(matches: &clap::ArgMatches, manager: Manager) {
         println!(".intel_syntax noprefix");
         println!(".global main");
     }
-    println!("main:");
     manager.genx64();
 }

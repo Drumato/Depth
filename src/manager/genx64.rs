@@ -57,6 +57,17 @@ impl Manager {
                     println!("  mov rax, {}", gr(reg));
                     println!("  ret");
                 }
+                HIR::PROLOGUE => {
+                    println!("  push rbp");
+                    println!("  mov rsp, rbp");
+                }
+                HIR::EPILOGUE => {
+                    println!("  mov rbp, rsp");
+                    println!("  pop rbp");
+                }
+                HIR::FUNCNAME(name) => {
+                    println!("{}:", name);
+                }
             }
         }
     }

@@ -1,5 +1,6 @@
 use super::super::manager::semantics::Type;
 use super::super::token::token::Token;
+#[derive(Clone)]
 pub enum Node {
     BINOP(Token, Box<Node>, Box<Node>, Option<Type>),
     UNARY(Token, Box<Node>, Option<Type>),
@@ -23,7 +24,8 @@ impl Node {
     }
 }
 
+#[derive(Clone)]
 pub struct Func {
-    name: String,
-    stmts: Vec<Node>,
+    pub name: String,
+    pub stmts: Vec<Node>,
 }
