@@ -44,6 +44,9 @@ impl Manager {
             Token::SLASH => {
                 self.hirs.push(HIR::DIV(lr - 1, rr - 1));
             }
+            Token::PERCENT => {
+                self.hirs.push(HIR::MOD(lr - 1, rr - 1));
+            }
             _ => (),
         }
     }

@@ -32,7 +32,7 @@ impl Parser {
         self.check_invalid(&lhs);
         loop {
             match self.cur_token() {
-                Token::STAR | Token::SLASH => {
+                Token::STAR | Token::SLASH | Token::PERCENT => {
                     let op: Token = self.get_token();
                     self.next_token();
                     lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.unary()));

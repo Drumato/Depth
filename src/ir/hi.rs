@@ -6,6 +6,7 @@ pub enum HIR {
     SUB(usize, usize),
     MUL(usize, usize),
     DIV(usize, usize),
+    MOD(usize, usize),
     NEGATIVE(usize),
     RETURN(usize),
 }
@@ -18,6 +19,7 @@ impl HIR {
             HIR::SUB(lr, rr) => format!("sub {} and {}", lr, rr),
             HIR::MUL(lr, rr) => format!("mul {} and {}", lr, rr),
             HIR::DIV(lr, rr) => format!("div {} and {}", lr, rr),
+            HIR::MOD(lr, rr) => format!("mod {} and {}", lr, rr),
             HIR::NEGATIVE(reg) => format!("negative {} ", reg),
             HIR::RETURN(reg) => format!("return {}", reg),
         }

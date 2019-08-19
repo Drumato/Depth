@@ -38,6 +38,7 @@ fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
         '-' => Some((Token::MINUS, 1)),
         '*' => Some((Token::STAR, 1)),
         '/' => Some((Token::SLASH, 1)),
+        '%' => Some((Token::PERCENT, 1)),
         '(' => Some((Token::LPAREN, 1)),
         ')' => Some((Token::RPAREN, 1)),
         ' ' => Some((Token::BLANK, count_len(input, |c| c == &' '))),

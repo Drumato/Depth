@@ -16,10 +16,12 @@ impl Manager {
                     println!("  mov {}, rax", gr(lr));
                 }
                 HIR::DIV(lr, rr) => {
-                    println!("  mov rax, {}", gr(lr));
-                    println!("  cqo");
-                    println!("  idiv {}", gr(rr));
+                    self.division(lr, rr);
                     println!("  mov {}, rax", gr(lr));
+                }
+                HIR::MOD(lr, rr) => {
+                    self.division(lr, rr);
+                    println!("  mov {}, rdx", gr(lr));
                 }
                 HIR::LOAD(reg, val) => println!("  mov {}, {}", gr(reg), val),
                 HIR::NEGATIVE(reg) => {
@@ -31,5 +33,10 @@ impl Manager {
                 }
             }
         }
+    }
+    fn division(&self, lr: &usize, rr: &usize) {
+        println!("  mov rax, {}", gr(lr));
+        println!("  cqo");
+        println!("  idiv {}", gr(rr));
     }
 }
