@@ -22,10 +22,20 @@ fn main() -> Result<(), Box<std::error::Error>> {
     let matches = App::from_yaml(yaml).get_matches();
     let tokens: Vec<tok::Token> = lex_phase(&matches);
     let mut funcs: Vec<node::Func> = parse_phase(&matches, tokens);
-    //Manager::semantics(&mut nodes);
-    let manager: Manager = genir_phase(&matches, funcs);
+    let mut manager: Manager = Manager {
+        functions: funcs,
+        hirs: Vec::new(),
+        regnum: 0,
+    };
+    manager.semantics();
+    manager.gen_irs();
+    if matches.is_present("dump-hir") {
+        eprintln!("{}", "--------dumphir--------".blue().bold());
+        for ir in manager.hirs.iter() {
+            eprintln!("{}", ir.string().green().bold());
+        }
+    }
     genx64_phase(&matches, manager);
-
     Ok(())
 }
 
@@ -53,21 +63,6 @@ fn parse_phase(matches: &clap::ArgMatches, tokens: Vec<tok::Token>) -> Vec<node:
         }
     }
     funcs
-}
-fn genir_phase(matches: &clap::ArgMatches, funcs: Vec<node::Func>) -> Manager {
-    let mut manager: Manager = Manager {
-        functions: funcs,
-        hirs: Vec::new(),
-        regnum: 0,
-    };
-    manager.gen_irs();
-    if matches.is_present("dump-hir") {
-        eprintln!("{}", "--------dumphir--------".blue().bold());
-        for ir in manager.hirs.iter() {
-            eprintln!("{}", ir.string().green().bold());
-        }
-    }
-    manager
 }
 fn genx64_phase(matches: &clap::ArgMatches, manager: Manager) {
     if matches.is_present("intel") {

@@ -1,4 +1,4 @@
-use super::super::parse::node::Node;
+use super::super::parse::node::{Func, Node};
 use super::manager::Manager;
 
 type TypeSize = usize;
@@ -9,12 +9,16 @@ pub enum Type {
 }
 
 impl Manager {
-    pub fn semantics(nodes: &mut Vec<Node>) {
-        for n in nodes {
-            match n {
-                Node::BINOP(ref mut t, blhs, blrs, oty) => {}
-                _ => (),
+    pub fn semantics(&mut self) {
+        let func_num: usize = self.functions.len();
+        let mut idx: usize = 0;
+        loop {
+            if idx == func_num {
+                break;
             }
+            let f: Func = self.functions[idx].clone();
+            for n in f.stmts {}
+            idx += 1;
         }
     }
 }
