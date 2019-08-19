@@ -47,6 +47,8 @@ fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
         '%' => Some((Token::PERCENT, 1)),
         '(' => Some((Token::LPAREN, 1)),
         ')' => Some((Token::RPAREN, 1)),
+        '<' => Some((Token::LT, 1)),
+        '>' => Some((Token::GT, 1)),
         ' ' => Some((Token::BLANK, count_len(input, |c| c == &' '))),
         '\n' => Some((Token::LF, 1)),
         '\0' => Some((Token::EOF, 1)),
@@ -63,6 +65,8 @@ fn tokenize_multisymbols(input: &String) -> Option<Token> {
     match input.as_str() {
         "<<" => Some(Token::LSHIFT),
         ">>" => Some(Token::RSHIFT),
+        "<=" => Some(Token::LTEQ),
+        ">=" => Some(Token::GTEQ),
         _ => None,
     }
 }

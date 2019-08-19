@@ -53,6 +53,18 @@ impl Manager {
             Token::RSHIFT => {
                 self.hirs.push(HIR::RSHIFT(lr - 1, rr - 1));
             }
+            Token::LT => {
+                self.hirs.push(HIR::LT(lr - 1, rr - 1));
+            }
+            Token::GT => {
+                self.hirs.push(HIR::GT(lr - 1, rr - 1));
+            }
+            Token::LTEQ => {
+                self.hirs.push(HIR::LTEQ(lr - 1, rr - 1));
+            }
+            Token::GTEQ => {
+                self.hirs.push(HIR::GTEQ(lr - 1, rr - 1));
+            }
             _ => (),
         }
     }

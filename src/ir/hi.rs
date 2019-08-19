@@ -9,6 +9,10 @@ pub enum HIR {
     MOD(usize, usize),
     LSHIFT(usize, usize),
     RSHIFT(usize, usize),
+    LT(usize, usize),
+    LTEQ(usize, usize),
+    GT(usize, usize),
+    GTEQ(usize, usize),
     NEGATIVE(usize),
     RETURN(usize),
 }
@@ -24,6 +28,10 @@ impl HIR {
             HIR::MOD(lr, rr) => format!("reminder of '{} divided by {}'", lr, rr),
             HIR::LSHIFT(lr, rr) => format!("lshift {} {} times", lr, rr),
             HIR::RSHIFT(lr, rr) => format!("rshift {} {} times", lr, rr),
+            HIR::LT(lr, rr) => format!("{} less than {}", lr, rr),
+            HIR::LTEQ(lr, rr) => format!("{} less than or equal {}", lr, rr),
+            HIR::GT(lr, rr) => format!("{} greater than {}", lr, rr),
+            HIR::GTEQ(lr, rr) => format!("{} greater than or equal {}", lr, rr),
             HIR::NEGATIVE(reg) => format!("negative {} ", reg),
             HIR::RETURN(reg) => format!("return {}", reg),
         }

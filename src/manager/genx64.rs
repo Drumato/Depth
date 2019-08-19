@@ -31,6 +31,18 @@ impl Manager {
                     println!("  mov rcx, {}", gr(rr));
                     println!("  sar {}, cl", gr(lr));
                 }
+                HIR::LT(lr, rr) => {
+                    self.compare(lr, rr, "setl");
+                }
+                HIR::LTEQ(lr, rr) => {
+                    self.compare(lr, rr, "setle");
+                }
+                HIR::GT(lr, rr) => {
+                    self.compare(lr, rr, "setg");
+                }
+                HIR::GTEQ(lr, rr) => {
+                    self.compare(lr, rr, "setge");
+                }
                 HIR::LOAD(reg, val) => println!("  mov {}, {}", gr(reg), val),
                 HIR::NEGATIVE(reg) => {
                     println!("  neg {}", gr(reg));
@@ -46,5 +58,10 @@ impl Manager {
         println!("  mov rax, {}", gr(lr));
         println!("  cqo");
         println!("  idiv {}", gr(rr));
+    }
+    fn compare(&self, lr: &usize, rr: &usize, inst: &str) {
+        println!("  cmp {}, {}", gr(lr), gr(rr));
+        println!("  {} al", inst);
+        println!("  movzx {}, al", gr(lr));
     }
 }
