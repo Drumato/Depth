@@ -36,4 +36,5 @@ E6 -> E5 != T
 S -> E
 S -> return E
 S -> if E S
+S -> { S*n }
 ```

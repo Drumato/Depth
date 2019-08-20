@@ -61,7 +61,9 @@ impl Token {
     }
     pub fn start_stmt(token: &Token) -> Option<()> {
         match token {
-            Token::RETURN | Token::IF | Token::LPAREN | Token::INTEGER(_) => Some(()),
+            Token::LBRACE | Token::RETURN | Token::IF | Token::LPAREN | Token::INTEGER(_) => {
+                Some(())
+            }
             t => {
                 if t == &Token::EOF {
                     return None;

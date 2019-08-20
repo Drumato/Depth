@@ -45,6 +45,15 @@ impl Manager {
                 }
                 self.hirs.push(HIR::LABEL);
             }
+            node::Node::BLOCK(bstmts) => {
+                let stmts: Vec<node::Node> = bstmts
+                    .into_iter()
+                    .map(|bst| unsafe { Box::into_raw(bst).read() })
+                    .collect::<Vec<node::Node>>();
+                for st in stmts {
+                    self.gen_stmt(st);
+                }
+            }
             _ => (),
         }
     }

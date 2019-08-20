@@ -56,6 +56,9 @@ impl Parser {
         if let Token::IF = self.cur_token() {
             return self.parse_if();
         }
+        if let Token::LBRACE = self.cur_token() {
+            return self.parse_block();
+        }
         self.expr()
     }
     fn expr(&mut self) -> Node {
@@ -85,6 +88,24 @@ impl Parser {
             self.cur_token().string()
         ));
         Node::INVALID
+    }
+    fn parse_block(&mut self) -> Node {
+        self.compound_stmt()
+    }
+    fn compound_stmt(&mut self) -> Node {
+        self.next_token();
+        let mut stmts: Vec<Box<Node>> = Vec::new();
+        let mut t: Token = self.get_token();
+        while let Some(_) = Token::start_stmt(&t) {
+            let stmt: Node = self.stmt();
+            stmts.push(Box::new(stmt));
+            self.consume(&Token::RBRACE);
+            t = self.get_token();
+            if self.consume(&Token::RBRACE) {
+                return Node::BLOCK(stmts);
+            }
+        }
+        Node::BLOCK(stmts)
     }
     fn muldiv(&mut self) -> Node {
         let mut lhs: Node = self.unary();

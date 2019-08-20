@@ -7,6 +7,7 @@ pub enum Node {
     NUMBER(Type),
     RETURN(Box<Node>),
     IF(Box<Node>, Box<Node>, Option<Box<Node>>), // condition, block,else
+    BLOCK(Vec<Box<Node>>),
     INVALID,
 }
 impl Node {
@@ -30,6 +31,10 @@ impl Node {
                 ),
                 None => format!("IF({}) ({}) ", cond.string(), stmt.string()),
             },
+            Node::BLOCK(bstmts) => {
+                let stmts: String = bstmts.into_iter().map(|st| st.string()).collect::<String>();
+                format!("BLOCK({})", stmts)
+            }
             Node::INVALID => "INVALID".to_string(),
         }
     }
