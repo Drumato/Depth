@@ -20,6 +20,7 @@ pub enum HIR {
     FUNCNAME(String),
     LABEL,
     CMP(usize),
+    JUMP,
 }
 
 impl HIR {
@@ -46,6 +47,7 @@ impl HIR {
             HIR::FUNCNAME(name) => format!("function of {}", name),
             HIR::LABEL => "LABEL".to_string(),
             HIR::CMP(reg) => format!("compare between {} and 0, then jump", reg),
+            HIR::JUMP => "JUMP".to_string(),
         }
     }
 }

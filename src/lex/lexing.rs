@@ -66,8 +66,8 @@ fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
 }
 fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
     let length: usize = count_len(input, |c| c.is_alphabetic());
-    let keywords: Vec<&str> = vec!["return", "if", "func"];
-    let types: Vec<Token> = vec![Token::RETURN, Token::IF, Token::FUNC];
+    let keywords: Vec<&str> = vec!["return", "if", "else", "func"];
+    let types: Vec<Token> = vec![Token::RETURN, Token::IF, Token::ELSE, Token::FUNC];
     for (idx, k) in keywords.iter().enumerate() {
         if input.starts_with(k) {
             return Some((types[idx].clone(), length));

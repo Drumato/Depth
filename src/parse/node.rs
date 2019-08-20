@@ -6,7 +6,7 @@ pub enum Node {
     UNARY(Token, Box<Node>, Option<Type>),
     NUMBER(Type),
     RETURN(Box<Node>),
-    IF(Box<Node>, Box<Node>),
+    IF(Box<Node>, Box<Node>, Option<Box<Node>>), // condition, block,else
     INVALID,
 }
 impl Node {
@@ -21,7 +21,15 @@ impl Node {
                 _ => format!("UNKNOWN"),
             },
             Node::RETURN(expr) => format!("RETURN({})", expr.string()),
-            Node::IF(cond, stmt) => format!("IF({}) ({}) ", cond.string(), stmt.string()),
+            Node::IF(cond, stmt, alter) => match alter {
+                Some(else_block) => format!(
+                    "IF({}) ({}) ELSE({})",
+                    cond.string(),
+                    stmt.string(),
+                    else_block.string(),
+                ),
+                None => format!("IF({}) ({}) ", cond.string(), stmt.string()),
+            },
             Node::INVALID => "INVALID".to_string(),
         }
     }

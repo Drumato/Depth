@@ -71,6 +71,9 @@ impl Manager {
                 HIR::FUNCNAME(name) => {
                     println!("{}:", name);
                 }
+                HIR::JUMP => {
+                    println!("  jmp .L{}", self.get_label() + 1);
+                }
                 HIR::LABEL => {
                     println!(".L{}:", self.get_label());
                     self.inc_label();

@@ -74,7 +74,11 @@ impl Parser {
     fn parse_if(&mut self) -> Node {
         if self.consume(&Token::IF) {
             let cond: Node = self.expr();
-            return Node::IF(Box::new(cond), Box::new(self.stmt()));
+            let stmt: Node = self.stmt();
+            if !self.consume(&Token::ELSE) {
+                return Node::IF(Box::new(cond), Box::new(stmt), None);
+            }
+            return Node::IF(Box::new(cond), Box::new(stmt), Some(Box::new(self.stmt())));
         }
         Error::PARSE.found(&format!(
             "unexpected {} while parsing if-stmt",

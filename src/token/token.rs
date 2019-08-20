@@ -24,6 +24,7 @@ pub enum Token {
     IDENT(String),
     RETURN,
     IF,
+    ELSE,
     EOF,
     BLANK,
     LF,
@@ -54,6 +55,7 @@ impl Token {
             Token::FUNC => "FUNCTION".to_string(),
             Token::IDENT(name) => format!("IDENTIFIER<{}>", name),
             Token::IF => "IF".to_string(),
+            Token::ELSE => "ELSE".to_string(),
             _ => "".to_string(),
         }
     }

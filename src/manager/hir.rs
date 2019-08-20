@@ -28,12 +28,21 @@ impl Manager {
                 let return_reg: usize = self.gen_expr(expr) - 1;
                 self.hirs.push(HIR::RETURN(return_reg));
             }
-            node::Node::IF(bcond, bstmt) => {
+            node::Node::IF(bcond, bstmt, oalter) => {
                 let cond: node::Node = unsafe { Box::into_raw(bcond).read() };
                 let cmp_reg: usize = self.gen_expr(cond) - 1;
                 self.hirs.push(HIR::CMP(cmp_reg));
                 let stmt: node::Node = unsafe { Box::into_raw(bstmt).read() };
                 self.gen_stmt(stmt);
+                match oalter {
+                    Some(balter) => {
+                        self.hirs.push(HIR::JUMP);
+                        self.hirs.push(HIR::LABEL);
+                        let alter: node::Node = unsafe { Box::into_raw(balter).read() };
+                        self.gen_stmt(alter);
+                    }
+                    None => (),
+                }
                 self.hirs.push(HIR::LABEL);
             }
             _ => (),

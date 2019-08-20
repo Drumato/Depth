@@ -18,3 +18,5 @@ q.dep 0
 r.dep 1
 s.dep 1
 t.dep 1
+u.dep 30
+v.dep 20
