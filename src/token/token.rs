@@ -1,3 +1,4 @@
+use super::super::ce::types::Error;
 #[derive(Eq, PartialEq, Clone)]
 pub enum Token {
     INTEGER(i128),
@@ -56,16 +57,19 @@ impl Token {
             _ => "".to_string(),
         }
     }
-    pub fn is_valid(token: &Token) -> Option<()> {
-        match token {
-            Token::EOF => None,
-            _ => Some(()),
-        }
-    }
     pub fn start_stmt(token: &Token) -> Option<()> {
         match token {
-            Token::RETURN | Token::IF => Some(()),
-            _ => None,
+            Token::RETURN | Token::IF | Token::LPAREN | Token::INTEGER(_) => Some(()),
+            t => {
+                if t == &Token::EOF {
+                    return None;
+                }
+                Error::PARSE.found(&format!(
+                    "unexpected {} while parsing statement",
+                    token.string()
+                ));
+                None
+            }
         }
     }
     pub fn should_ignore(&self) -> bool {

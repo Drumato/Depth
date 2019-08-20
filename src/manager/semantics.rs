@@ -24,7 +24,7 @@ impl Manager {
             idx += 1;
         }
     }
-    fn walk(&mut self, mut n: Node) -> Type {
+    fn walk(&mut self, n: Node) -> Type {
         match n {
             //Node::UNARY(op,binner,otype),
             Node::NUMBER(ty) => ty,

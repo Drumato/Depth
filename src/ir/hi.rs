@@ -1,5 +1,3 @@
-use super::super::manager::manager::Manager;
-use super::super::parse::node;
 pub enum HIR {
     PROLOGUE,
     EPILOGUE,

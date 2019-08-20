@@ -12,7 +12,6 @@ mod lex;
 mod parse;
 use parse::{node, parser};
 mod ir;
-use ir::hi;
 mod manager;
 use manager::manager::Manager;
 mod ce;
@@ -21,7 +20,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
     let tokens: Vec<tok::Token> = lex_phase(&matches);
-    let mut funcs: Vec<node::Func> = parse_phase(&matches, tokens);
+    let funcs: Vec<node::Func> = parse_phase(&matches, tokens);
     let mut manager: Manager = Manager {
         functions: funcs,
         hirs: Vec::new(),

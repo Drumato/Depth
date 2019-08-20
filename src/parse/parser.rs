@@ -56,7 +56,7 @@ impl Parser {
         if let Token::IF = self.cur_token() {
             return self.parse_if();
         }
-        Node::INVALID
+        self.expr()
     }
     fn expr(&mut self) -> Node {
         self.equal()
