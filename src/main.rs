@@ -16,6 +16,7 @@ mod ir;
 use ir::hi;
 mod manager;
 use manager::manager::Manager;
+mod ce;
 
 fn main() -> Result<(), Box<std::error::Error>> {
     let yaml = load_yaml!("cli.yml");

@@ -1,4 +1,4 @@
-pub mod error;
+pub mod ce;
 pub mod ir;
 pub mod lex;
 pub mod manager;

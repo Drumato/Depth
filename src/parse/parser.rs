@@ -1,3 +1,4 @@
+use super::super::ce::types::Error;
 use super::super::manager::semantics::Type;
 use super::super::token::token::Token;
 use super::node::{Func, Node};
@@ -64,6 +65,10 @@ impl Parser {
         if self.consume(&Token::RETURN) {
             return Node::RETURN(Box::new(self.expr()));
         }
+        Error::PARSE.found(&format!(
+            "unexpected {} while parsing return-stmt",
+            self.cur_token().string()
+        ));
         Node::INVALID
     }
     fn parse_if(&mut self) -> Node {
@@ -71,6 +76,10 @@ impl Parser {
             let cond: Node = self.expr();
             return Node::IF(Box::new(cond), Box::new(self.stmt()));
         }
+        Error::PARSE.found(&format!(
+            "unexpected {} while parsing if-stmt",
+            self.cur_token().string()
+        ));
         Node::INVALID
     }
     fn muldiv(&mut self) -> Node {
@@ -177,11 +186,12 @@ impl Parser {
             self.next_token();
             return Node::NUMBER(Type::INTEGER(*int, 8, None));
         }
+        Error::PARSE.found(&format!("unexpected {} while parsing term", t.string(),));
         Node::INVALID
     }
     fn check_invalid(&mut self, n: &Node) {
         if let &Node::INVALID = n {
-            eprintln!("got INVALID Node");
+            Error::PARSE.found(&format!("got INVALID Node",));
             std::process::exit(1);
         }
     }
@@ -197,11 +207,11 @@ impl Parser {
             self.next_token();
             return true;
         }
-        eprintln!(
+        Error::PARSE.found(&format!(
             "{} expected but got {}",
             t.string(),
             self.cur_token().string()
-        );
+        ));
         false
     }
     fn peek_token(&self) -> &Token {

@@ -1,3 +1,4 @@
+use super::super::ce::types::Error;
 use super::super::token::token::Token;
 
 pub fn lexing(mut input: String) -> Vec<Token> {
@@ -57,7 +58,10 @@ fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
         ' ' => Some((Token::BLANK, count_len(input, |c| c == &' '))),
         '\n' => Some((Token::LF, 1)),
         '\0' => Some((Token::EOF, 1)),
-        _ => None,
+        c => {
+            Error::PARSE.found(&format!("unexpected mark '{}'", c));
+            None
+        }
     }
 }
 fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
