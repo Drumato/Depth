@@ -13,9 +13,11 @@ impl Manager {
             }
             let f: node::Func = self.functions[idx].clone();
             self.hirs.push(HIR::FUNCNAME(f.name));
+            self.hirs.push(HIR::PROLOGUE);
             for n in f.stmts {
                 self.gen_stmt(n);
             }
+            self.hirs.push(HIR::EPILOGUE);
             idx += 1;
         }
     }
@@ -62,6 +64,7 @@ impl Manager {
                     self.regnum += 1;
                     self.regnum
                 }
+                _ => self.regnum,
             },
             _ => 42,
         }

@@ -18,6 +18,7 @@ impl Node {
             Node::UNARY(op, inner, _) => format!("{}({})", op.string(), inner.string()),
             Node::NUMBER(ty) => match ty {
                 Type::INTEGER(val, _, _) => format!("INT-Node<{}>", val),
+                _ => format!("UNKNOWN"),
             },
             Node::RETURN(expr) => format!("RETURN({})", expr.string()),
             Node::IF(cond, stmt) => format!("IF({}) ({}) ", cond.string(), stmt.string()),

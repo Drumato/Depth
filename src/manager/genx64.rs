@@ -56,15 +56,17 @@ impl Manager {
                 }
                 HIR::RETURN(reg) => {
                     println!("  mov rax, {}", gr(reg));
-                    println!("  ret");
+                    println!("  call .Lend");
                 }
                 HIR::PROLOGUE => {
                     println!("  push rbp");
-                    println!("  mov rsp, rbp");
+                    println!("  mov rbp, rsp");
                 }
                 HIR::EPILOGUE => {
-                    println!("  mov rbp, rsp");
+                    println!(".Lend:");
+                    println!("  mov rsp, rbp");
                     println!("  pop rbp");
+                    println!("  ret");
                 }
                 HIR::FUNCNAME(name) => {
                     println!("{}:", name);
@@ -95,11 +97,13 @@ impl Manager {
             LABEL += 1;
         }
     }
+    /*
     fn dec_label(&self) {
         unsafe {
             LABEL -= 1;
         }
     }
+    */
     fn get_label(&self) -> usize {
         unsafe { LABEL }
     }

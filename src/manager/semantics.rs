@@ -6,6 +6,7 @@ type Pointer = Option<Box<Type>>;
 #[derive(Clone)]
 pub enum Type {
     INTEGER(i128, TypeSize, Pointer), // INTEGER(INTTYPE) in future
+    UNKNOWN,                          // INTEGER(INTTYPE) in future
 }
 
 impl Manager {
@@ -17,8 +18,19 @@ impl Manager {
                 break;
             }
             let f: Func = self.functions[idx].clone();
-            for n in f.stmts {}
+            for n in f.stmts {
+                self.walk(n);
+            }
             idx += 1;
+        }
+    }
+    fn walk(&mut self, mut n: Node) -> Type {
+        match n {
+            //Node::UNARY(op,binner,otype),
+            Node::NUMBER(ty) => ty,
+            //Node::RETURN(bstmt),
+            //Node::IF(bcond,bstmt),
+            _ => Type::UNKNOWN,
         }
     }
 }
