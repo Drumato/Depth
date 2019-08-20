@@ -2,7 +2,6 @@ extern crate yaml_rust;
 #[macro_use]
 extern crate clap;
 use clap::App;
-extern crate drumatech;
 
 extern crate colored;
 use colored::*;
@@ -41,7 +40,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
 }
 
 fn lex_phase(matches: &clap::ArgMatches) -> Vec<tok::Token> {
-    let filecontent: String = drumatech::fileu::content_or_raw(matches.value_of("source").unwrap());
+    let filecontent: String = read_file(matches.value_of("source").unwrap());
     let tokens: Vec<tok::Token> = lex::lexing::lexing(filecontent);
     if matches.is_present("dump-token") {
         eprintln!("{}", "--------dumptoken--------".blue().bold());
@@ -71,4 +70,17 @@ fn genx64_phase(matches: &clap::ArgMatches, manager: Manager) {
         println!(".global main");
     }
     manager.genx64();
+}
+
+fn read_file(s: &str) -> String {
+    use std::fs;
+    use std::path::Path;
+    let filepath: &Path = Path::new(s);
+    if filepath.exists() && filepath.is_file() {
+        return fs::read_to_string(s).unwrap();
+    }
+    if filepath.is_dir() {
+        eprintln!("{} is directory.", filepath.to_str().unwrap());
+    }
+    s.to_string()
 }
