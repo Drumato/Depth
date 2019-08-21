@@ -5,6 +5,7 @@ priority -> **`T1` > `T2`**
 ```
 T1 -> -(T)
 T2 -> num
+T2 -> ident
 T2 -> ( E )
 
 ```
