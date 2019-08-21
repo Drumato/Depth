@@ -6,6 +6,7 @@ use clap::App;
 extern crate colored;
 use colored::*;
 
+use std::collections::HashMap;
 mod token;
 use token::token as tok;
 mod lex;
@@ -25,8 +26,17 @@ fn main() -> Result<(), Box<std::error::Error>> {
         functions: funcs,
         hirs: Vec::new(),
         regnum: 0,
+        labelnum: 0,
+        stack_offset: 0,
+        var_table: HashMap::new(),
     };
     manager.semantics();
+    if matches.is_present("dump-symbol") {
+        eprintln!("{}", "--------symbol_table".green().bold());
+        for (_, symbol) in manager.var_table.iter() {
+            eprintln!("{}", symbol.string());
+        }
+    }
     manager.gen_irs();
     if matches.is_present("dump-hir") {
         eprintln!("{}", "--------dumphir--------".blue().bold());

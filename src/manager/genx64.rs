@@ -1,7 +1,6 @@
 use super::super::ir::hi::HIR;
 use super::manager::Manager;
 const FREE_REG: [&str; 6] = ["r10", "r11", "r12", "r13", "r14", "r15"];
-static mut LABEL: usize = 1;
 fn gr(num: &usize) -> String {
     FREE_REG[*num].to_string()
 }
@@ -68,19 +67,21 @@ impl Manager {
                     println!("  pop rbp");
                     println!("  ret");
                 }
-                HIR::FUNCNAME(name) => {
+                HIR::SYMBOL(name) => {
                     println!("{}:", name);
                 }
-                HIR::JUMP => {
-                    println!("  jmp .L{}", self.get_label() + 1);
+                HIR::JUMP(label) => {
+                    println!("  jmp .L{}", label);
                 }
-                HIR::LABEL => {
-                    println!(".L{}:", self.get_label());
-                    self.inc_label();
+                HIR::LABEL(label) => {
+                    println!(".L{}:", label);
                 }
-                HIR::CMP(reg) => {
+                HIR::CMP(reg, label) => {
                     println!("  cmp {}, 0", gr(reg));
-                    println!("  je .L{}", self.get_label());
+                    println!("  je .L{}", label);
+                }
+                HIR::STORE(offset, reg) => {
+                    println!("  mov -{}[rbp], {}", offset, gr(reg));
                 }
             }
         }
@@ -94,20 +95,5 @@ impl Manager {
         println!("  cmp {}, {}", gr(lr), gr(rr));
         println!("  {} al", inst);
         println!("  movzx {}, al", gr(lr));
-    }
-    fn inc_label(&self) {
-        unsafe {
-            LABEL += 1;
-        }
-    }
-    /*
-    fn dec_label(&self) {
-        unsafe {
-            LABEL -= 1;
-        }
-    }
-    */
-    fn get_label(&self) -> usize {
-        unsafe { LABEL }
     }
 }

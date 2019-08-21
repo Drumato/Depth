@@ -32,20 +32,17 @@ impl Parser {
             stmts: Vec::new(),
         };
         self.next_token();
-        let t: &Token = self.cur_token();
-        if let Token::IDENT(name) = t {
-            f.name = name.to_string();
-            self.next_token();
-            self.expect(&Token::LPAREN);
-            self.expect(&Token::RPAREN);
-            self.expect(&Token::LBRACE);
-            let mut t: Token = self.get_token();
-            while let Some(_) = Token::start_stmt(&t) {
-                let stmt: Node = self.stmt();
-                f.stmts.push(stmt);
-                self.consume(&Token::RBRACE);
-                t = self.get_token();
-            }
+        let ident_name: String = self.consume_ident();
+        f.name = ident_name.to_string();
+        self.expect(&Token::LPAREN);
+        self.expect(&Token::RPAREN);
+        self.expect(&Token::LBRACE);
+        let mut t: Token = self.get_token();
+        while let Some(_) = Token::start_stmt(&t) {
+            let stmt: Node = self.stmt();
+            f.stmts.push(stmt);
+            self.consume(&Token::RBRACE);
+            t = self.get_token();
         }
         f
     }
@@ -58,6 +55,9 @@ impl Parser {
         }
         if let Token::LBRACE = self.cur_token() {
             return self.parse_block();
+        }
+        if let Token::LET = self.cur_token() {
+            return self.parse_let();
         }
         self.expr()
     }
@@ -91,6 +91,18 @@ impl Parser {
     }
     fn parse_block(&mut self) -> Node {
         self.compound_stmt()
+    }
+    fn parse_let(&mut self) -> Node {
+        self.next_token();
+        let ident_name: String = self.consume_ident();
+        if !self.consume(&Token::COLON) {
+            Error::PARSE.found(&format!("expected colon before declaring type"));
+        }
+        let typename: Token = self.consume_typename();
+        if !self.consume(&Token::ASSIGN) {
+            Error::PARSE.found(&format!("expected assign after declaring type"));
+        }
+        Node::LET(ident_name, typename, Box::new(self.expr()))
     }
     fn compound_stmt(&mut self) -> Node {
         self.next_token();
@@ -226,6 +238,26 @@ impl Parser {
             return true;
         }
         false
+    }
+    fn consume_ident(&self) -> String {
+        if let Token::IDENT(name) = self.cur_token() {
+            self.next_token();
+            return name.to_string();
+        }
+        Error::PARSE.found(&format!(
+            "expected identifier but got {}",
+            self.cur_token().string()
+        ));
+        String::new()
+    }
+    fn consume_typename(&mut self) -> Token {
+        let t: Token = self.get_token();
+        if let Token::I8 = t {
+            self.next_token();
+            return t;
+        }
+        Error::PARSE.found(&format!("expected typename but got {}", t.string()));
+        return Token::EOF;
     }
     fn expect(&self, t: &Token) -> bool {
         if self.peek_token() == t {

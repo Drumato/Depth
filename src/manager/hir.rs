@@ -12,7 +12,7 @@ impl Manager {
                 break;
             }
             let f: node::Func = self.functions[idx].clone();
-            self.hirs.push(HIR::FUNCNAME(f.name));
+            self.hirs.push(HIR::SYMBOL(f.name));
             self.hirs.push(HIR::PROLOGUE);
             for n in f.stmts {
                 self.gen_stmt(n);
@@ -31,19 +31,21 @@ impl Manager {
             node::Node::IF(bcond, bstmt, oalter) => {
                 let cond: node::Node = unsafe { Box::into_raw(bcond).read() };
                 let cmp_reg: usize = self.gen_expr(cond) - 1;
-                self.hirs.push(HIR::CMP(cmp_reg));
+                self.hirs.push(HIR::CMP(cmp_reg, self.labelnum));
                 let stmt: node::Node = unsafe { Box::into_raw(bstmt).read() };
                 self.gen_stmt(stmt);
                 match oalter {
                     Some(balter) => {
-                        self.hirs.push(HIR::JUMP);
-                        self.hirs.push(HIR::LABEL);
+                        self.hirs.push(HIR::JUMP(self.labelnum + 1));
+                        self.hirs.push(HIR::LABEL(self.labelnum));
+                        self.labelnum += 1;
                         let alter: node::Node = unsafe { Box::into_raw(balter).read() };
                         self.gen_stmt(alter);
                     }
                     None => (),
                 }
-                self.hirs.push(HIR::LABEL);
+                self.hirs.push(HIR::LABEL(self.labelnum));
+                self.labelnum += 1;
             }
             node::Node::BLOCK(bstmts) => {
                 let stmts: Vec<node::Node> = bstmts
@@ -53,6 +55,15 @@ impl Manager {
                 for st in stmts {
                     self.gen_stmt(st);
                 }
+            }
+            node::Node::LET(ident_name, _, bexpr) => {
+                let expr: node::Node = unsafe { Box::into_raw(bexpr).read() };
+                self.gen_expr(expr);
+                self.regnum -= 1;
+                self.hirs.push(HIR::STORE(
+                    self.var_table.get(&ident_name).unwrap().stack_offset,
+                    self.regnum,
+                ));
             }
             _ => (),
         }

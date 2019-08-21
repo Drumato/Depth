@@ -17,10 +17,11 @@ pub enum HIR {
     NTEQ(usize, usize),
     NEGATIVE(usize),
     RETURN(usize),
-    FUNCNAME(String),
-    LABEL,
-    CMP(usize),
-    JUMP,
+    SYMBOL(String),
+    LABEL(usize),
+    CMP(usize, usize),
+    JUMP(usize),
+    STORE(usize, usize),
 }
 
 impl HIR {
@@ -44,10 +45,11 @@ impl HIR {
             HIR::NTEQ(lr, rr) => format!("{} not equal {}", lr, rr),
             HIR::NEGATIVE(reg) => format!("negative {} ", reg),
             HIR::RETURN(reg) => format!("return {}", reg),
-            HIR::FUNCNAME(name) => format!("function of {}", name),
-            HIR::LABEL => "LABEL".to_string(),
-            HIR::CMP(reg) => format!("compare between {} and 0, then jump", reg),
-            HIR::JUMP => "JUMP".to_string(),
+            HIR::SYMBOL(name) => format!("symbol '{}'", name),
+            HIR::LABEL(num) => format!("LABEL {}", num),
+            HIR::CMP(reg, label) => format!("compare between {} and 0, then jump {}", reg, label),
+            HIR::JUMP(num) => format!("JUMP {}", num),
+            HIR::STORE(offset, reg) => format!("STORE into -{}[rbp] from {}", offset, reg),
         }
     }
 }

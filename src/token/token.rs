@@ -7,6 +7,7 @@ pub enum Token {
     STAR,
     SLASH,
     PERCENT,
+    ASSIGN,
     LPAREN,
     RPAREN,
     LBRACE,
@@ -19,12 +20,15 @@ pub enum Token {
     GTEQ,
     EQ,
     NTEQ,
+    COLON,
 
     FUNC,
     IDENT(String),
     RETURN,
     IF,
     ELSE,
+    LET,
+    I8,
     EOF,
     BLANK,
     LF,
@@ -38,6 +42,7 @@ impl Token {
             Token::STAR => "STAR".to_string(),
             Token::SLASH => "SLASH".to_string(),
             Token::PERCENT => "PERCENT".to_string(),
+            Token::ASSIGN => "ASSIGN".to_string(),
             Token::LPAREN => "LPAREN".to_string(),
             Token::RPAREN => "RPAREN".to_string(),
             Token::LBRACE => "LBRACE".to_string(),
@@ -50,20 +55,26 @@ impl Token {
             Token::GTEQ => "GREATERTHANEQUAL".to_string(),
             Token::EQ => "EQUAL".to_string(),
             Token::NTEQ => "NOTEQUAL".to_string(),
+            Token::COLON => "COLON".to_string(),
             Token::RETURN => "RETURN".to_string(),
             Token::EOF => "EOF".to_string(),
             Token::FUNC => "FUNCTION".to_string(),
             Token::IDENT(name) => format!("IDENTIFIER<{}>", name),
             Token::IF => "IF".to_string(),
             Token::ELSE => "ELSE".to_string(),
+            Token::LET => "LET".to_string(),
+            Token::I8 => "i8".to_string(),
             _ => "".to_string(),
         }
     }
     pub fn start_stmt(token: &Token) -> Option<()> {
         match token {
-            Token::LBRACE | Token::RETURN | Token::IF | Token::LPAREN | Token::INTEGER(_) => {
-                Some(())
-            }
+            Token::LET
+            | Token::LBRACE
+            | Token::RETURN
+            | Token::IF
+            | Token::LPAREN
+            | Token::INTEGER(_) => Some(()),
             t => {
                 if t == &Token::EOF {
                     return None;

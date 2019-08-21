@@ -35,6 +35,7 @@ E6 -> E5 != T
 ```
 S -> E
 S -> return E
-S -> if E S
+S -> if E S (else S)
+S -> let T : T = E
 S -> { S*n }
 ```

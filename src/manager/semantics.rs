@@ -1,5 +1,6 @@
 use super::super::parse::node::{Func, Node};
-use super::manager::Manager;
+use super::super::token::token::Token;
+use super::manager::{Manager, Variable};
 
 type TypeSize = usize;
 type Pointer = Option<Box<Type>>;
@@ -7,6 +8,21 @@ type Pointer = Option<Box<Type>>;
 pub enum Type {
     INTEGER(i128, TypeSize, Pointer), // INTEGER(INTTYPE) in future
     UNKNOWN,                          // INTEGER(INTTYPE) in future
+}
+
+impl Type {
+    pub fn string(&self) -> String {
+        match self {
+            Type::INTEGER(int, _, _) => format!("INTEGER<{}>", int),
+            Type::UNKNOWN => "UNKNOWN".to_string(),
+        }
+    }
+    pub fn from_type(t: Token) -> Type {
+        match t {
+            Token::I8 => Type::INTEGER(0, 8, None),
+            _ => Type::UNKNOWN,
+        }
+    }
 }
 
 impl Manager {
@@ -30,6 +46,16 @@ impl Manager {
             Node::NUMBER(ty) => ty,
             //Node::RETURN(bstmt),
             //Node::IF(bcond,bstmt),
+            Node::LET(ident_name, type_name, _) => {
+                if let Type::INTEGER(_, size, _) = Type::from_type(type_name.clone()) {
+                    self.stack_offset += size;
+                }
+                self.var_table.insert(
+                    ident_name.clone(),
+                    Variable::new(ident_name, self.stack_offset, type_name),
+                );
+                Type::UNKNOWN
+            }
             _ => Type::UNKNOWN,
         }
     }

@@ -55,6 +55,8 @@ fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
         '}' => Some((Token::RBRACE, 1)),
         '<' => Some((Token::LT, 1)),
         '>' => Some((Token::GT, 1)),
+        ':' => Some((Token::COLON, 1)),
+        '=' => Some((Token::ASSIGN, 1)),
         ' ' => Some((Token::BLANK, count_len(input, |c| c == &' '))),
         '\n' => Some((Token::LF, 1)),
         '\0' => Some((Token::EOF, 1)),
@@ -65,9 +67,16 @@ fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
     }
 }
 fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
-    let length: usize = count_len(input, |c| c.is_alphabetic());
-    let keywords: Vec<&str> = vec!["return", "if", "else", "func"];
-    let types: Vec<Token> = vec![Token::RETURN, Token::IF, Token::ELSE, Token::FUNC];
+    let length: usize = count_len(input, |c| c.is_digit(10) || c == &'_' || c.is_alphabetic());
+    let keywords: Vec<&str> = vec!["return", "if", "else", "func", "let", "i8"];
+    let types: Vec<Token> = vec![
+        Token::RETURN,
+        Token::IF,
+        Token::ELSE,
+        Token::FUNC,
+        Token::LET,
+        Token::I8,
+    ];
     for (idx, k) in keywords.iter().enumerate() {
         if input.starts_with(k) {
             return Some((types[idx].clone(), length));

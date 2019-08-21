@@ -5,9 +5,11 @@ pub enum Node {
     BINOP(Token, Box<Node>, Box<Node>, Option<Type>),
     UNARY(Token, Box<Node>, Option<Type>),
     NUMBER(Type),
+    IDENT(String, Type),
     RETURN(Box<Node>),
     IF(Box<Node>, Box<Node>, Option<Box<Node>>), // condition, block,else
     BLOCK(Vec<Box<Node>>),
+    LET(String, Token, Box<Node>), // ident_name,type,expression
     INVALID,
 }
 impl Node {
@@ -36,6 +38,10 @@ impl Node {
                 format!("BLOCK({})", stmts)
             }
             Node::INVALID => "INVALID".to_string(),
+            Node::LET(ident_name, ty, expr) => {
+                format!("LET {} <- {} ({})", ident_name, ty.string(), expr.string())
+            }
+            Node::IDENT(ident_name, ty) => format!("IDENT<{}> ({})", ident_name, ty.string()),
         }
     }
 }
