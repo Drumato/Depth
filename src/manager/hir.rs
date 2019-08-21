@@ -88,13 +88,20 @@ impl Manager {
             }
             node::Node::NUMBER(ty) => match ty {
                 Type::INTEGER(int, _, _) => {
-                    let load_reg: usize = self.regnum;
-                    self.hirs.push(HIR::LOAD(load_reg, int));
+                    self.hirs.push(HIR::IMM(self.regnum, int));
                     self.regnum += 1;
                     self.regnum
                 }
                 _ => self.regnum,
             },
+            node::Node::IDENT(ident_name) => {
+                self.hirs.push(HIR::LOAD(
+                    self.regnum,
+                    self.var_table.get(&ident_name).unwrap().stack_offset,
+                ));
+                self.regnum += 1;
+                self.regnum
+            }
             _ => 42,
         }
     }

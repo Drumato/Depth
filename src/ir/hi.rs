@@ -1,7 +1,7 @@
 pub enum HIR {
     PROLOGUE,
     EPILOGUE,
-    LOAD(usize, i128),
+    IMM(usize, i128),
     ADD(usize, usize),
     SUB(usize, usize),
     MUL(usize, usize),
@@ -22,6 +22,7 @@ pub enum HIR {
     CMP(usize, usize),
     JUMP(usize),
     STORE(usize, usize),
+    LOAD(usize, usize),
 }
 
 impl HIR {
@@ -29,7 +30,7 @@ impl HIR {
         match self {
             HIR::PROLOGUE => format!("function prologue"),
             HIR::EPILOGUE => format!("function epilogue"),
-            HIR::LOAD(reg, val) => format!("load {} to {}", val, reg),
+            HIR::IMM(reg, val) => format!("immediate {} to {}", val, reg),
             HIR::ADD(lr, rr) => format!("{} plus {}", lr, rr),
             HIR::SUB(lr, rr) => format!("{} minus {}", lr, rr),
             HIR::MUL(lr, rr) => format!("{} multiply {}", lr, rr),
@@ -50,6 +51,7 @@ impl HIR {
             HIR::CMP(reg, label) => format!("compare between {} and 0, then jump {}", reg, label),
             HIR::JUMP(num) => format!("JUMP {}", num),
             HIR::STORE(offset, reg) => format!("STORE into -{}[rbp] from {}", offset, reg),
+            HIR::LOAD(reg, offset) => format!("LOAD into {} from -{}[rbp]", reg, offset),
         }
     }
 }

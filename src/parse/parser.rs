@@ -223,6 +223,10 @@ impl Parser {
             self.next_token();
             return Node::NUMBER(Type::INTEGER(*int, 8, None));
         }
+        if let Token::IDENT(ident_name) = t {
+            self.next_token();
+            return Node::IDENT(ident_name.to_string());
+        }
         Error::PARSE.found(&format!("unexpected {} while parsing term", t.string(),));
         Node::INVALID
     }

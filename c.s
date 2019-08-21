@@ -3,22 +3,17 @@
 main:
   push rbp
   mov rbp, rsp
-  mov r10, 1
-  mov r11, 0
-  cmp r10, r11
-  setl al
-  movzx r10, al
-  cmp r10, 0
-  je .L0
+  mov r10, 30
   mov r11, 30
-  mov rax, r11
+  add r10, r11
+  mov -8[rbp], r10
+  mov r10, 10
+  mov -16[rbp], r10
+  mov r10, -8[rbp]
+  mov r11, -16[rbp]
+  add r10, r11
+  mov rax, r10
   call .Lend
-  jmp .L1
-.L0:
-  mov r12, 20
-  mov rax, r12
-  call .Lend
-.L1:
 .Lend:
   mov rsp, rbp
   pop rbp

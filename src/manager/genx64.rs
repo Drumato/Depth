@@ -49,7 +49,7 @@ impl Manager {
                 HIR::NTEQ(lr, rr) => {
                     self.compare(lr, rr, "setne");
                 }
-                HIR::LOAD(reg, val) => println!("  mov {}, {}", gr(reg), val),
+                HIR::IMM(reg, val) => println!("  mov {}, {}", gr(reg), val),
                 HIR::NEGATIVE(reg) => {
                     println!("  neg {}", gr(reg));
                 }
@@ -82,6 +82,9 @@ impl Manager {
                 }
                 HIR::STORE(offset, reg) => {
                     println!("  mov -{}[rbp], {}", offset, gr(reg));
+                }
+                HIR::LOAD(reg, offset) => {
+                    println!("  mov {}, -{}[rbp]", gr(reg), offset);
                 }
             }
         }
