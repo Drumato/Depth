@@ -57,9 +57,12 @@ impl Manager {
                     println!("  mov rax, {}", gr(reg));
                     println!("  call .Lend");
                 }
-                HIR::PROLOGUE => {
+                HIR::PROLOGUE(size) => {
                     println!("  push rbp");
                     println!("  mov rbp, rsp");
+                    if size != &0 {
+                        println!("  sub rsp, {}", size);
+                    }
                 }
                 HIR::EPILOGUE => {
                     println!(".Lend:");

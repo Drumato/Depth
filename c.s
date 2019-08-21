@@ -3,6 +3,7 @@
 main:
   push rbp
   mov rbp, rsp
+  sub rsp, 16
   mov r10, 30
   mov r11, 30
   add r10, r11

@@ -1,34 +1,36 @@
+type Offset = usize;
+type Reg = usize;
 pub enum HIR {
-    PROLOGUE,
+    PROLOGUE(usize),
     EPILOGUE,
-    IMM(usize, i128),
-    ADD(usize, usize),
-    SUB(usize, usize),
-    MUL(usize, usize),
-    DIV(usize, usize),
-    MOD(usize, usize),
-    LSHIFT(usize, usize),
-    RSHIFT(usize, usize),
-    LT(usize, usize),
-    LTEQ(usize, usize),
-    GT(usize, usize),
-    GTEQ(usize, usize),
-    EQ(usize, usize),
-    NTEQ(usize, usize),
-    NEGATIVE(usize),
-    RETURN(usize),
+    IMM(Reg, i128),
+    ADD(Reg, Reg),
+    SUB(Reg, Reg),
+    MUL(Reg, Reg),
+    DIV(Reg, Reg),
+    MOD(Reg, Reg),
+    LSHIFT(Reg, Reg),
+    RSHIFT(Reg, Reg),
+    LT(Reg, Reg),
+    LTEQ(Reg, Reg),
+    GT(Reg, Reg),
+    GTEQ(Reg, Reg),
+    EQ(Reg, Reg),
+    NTEQ(Reg, Reg),
+    NEGATIVE(Reg),
+    RETURN(Reg),
     SYMBOL(String),
     LABEL(usize),
-    CMP(usize, usize),
+    CMP(Reg, usize),
     JUMP(usize),
-    STORE(usize, usize, usize), //offset,reg,size
-    LOAD(usize, usize, usize),  //reg,offset,size
+    STORE(Offset, Reg, usize), //offset,reg,size
+    LOAD(Reg, Offset, usize),  //reg,offset,size
 }
 
 impl HIR {
     pub fn string(&self) -> String {
         match self {
-            HIR::PROLOGUE => format!("function prologue"),
+            HIR::PROLOGUE(size) => format!("function prologue<allocate {}>", size),
             HIR::EPILOGUE => format!("function epilogue"),
             HIR::IMM(reg, val) => format!("immediate {} to {}", val, reg),
             HIR::ADD(lr, rr) => format!("{} plus {}", lr, rr),

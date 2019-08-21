@@ -14,7 +14,7 @@ impl Manager {
             }
             let f: node::Func = self.functions[idx].clone();
             self.hirs.push(HIR::SYMBOL(f.name));
-            self.hirs.push(HIR::PROLOGUE);
+            self.hirs.push(HIR::PROLOGUE(self.stack_offset));
             for n in f.stmts {
                 self.gen_stmt(n);
             }
