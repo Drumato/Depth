@@ -32,7 +32,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
     };
     manager.semantics();
     if matches.is_present("dump-symbol") {
-        eprintln!("{}", "--------symbol_table".green().bold());
+        eprintln!("{}", "--------symbol_table--------".green().bold());
         for (_, symbol) in manager.var_table.iter() {
             eprintln!("{}", symbol.string());
         }

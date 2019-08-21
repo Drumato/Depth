@@ -21,8 +21,8 @@ pub enum HIR {
     LABEL(usize),
     CMP(usize, usize),
     JUMP(usize),
-    STORE(usize, usize),
-    LOAD(usize, usize),
+    STORE(usize, usize, usize), //offset,reg,size
+    LOAD(usize, usize, usize),  //reg,offset,size
 }
 
 impl HIR {
@@ -50,8 +50,12 @@ impl HIR {
             HIR::LABEL(num) => format!("LABEL {}", num),
             HIR::CMP(reg, label) => format!("compare between {} and 0, then jump {}", reg, label),
             HIR::JUMP(num) => format!("JUMP {}", num),
-            HIR::STORE(offset, reg) => format!("STORE into -{}[rbp] from {}", offset, reg),
-            HIR::LOAD(reg, offset) => format!("LOAD into {} from -{}[rbp]", reg, offset),
+            HIR::STORE(offset, reg, size) => {
+                format!("STORE<{}> into -{}[rbp] from {}", size, offset, reg)
+            }
+            HIR::LOAD(reg, offset, size) => {
+                format!("LOAD<{}> into {} from -{}[rbp]", size, reg, offset)
+            }
         }
     }
 }

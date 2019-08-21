@@ -80,11 +80,15 @@ impl Manager {
                     println!("  cmp {}, 0", gr(reg));
                     println!("  je .L{}", label);
                 }
-                HIR::STORE(offset, reg) => {
-                    println!("  mov -{}[rbp], {}", offset, gr(reg));
+                HIR::STORE(offset, reg, size) => {
+                    if size == &8 {
+                        println!("  mov -{}[rbp], {}", offset, gr(reg));
+                    }
                 }
-                HIR::LOAD(reg, offset) => {
-                    println!("  mov {}, -{}[rbp]", gr(reg), offset);
+                HIR::LOAD(reg, offset, size) => {
+                    if size == &8 {
+                        println!("  mov {}, -{}[rbp]", gr(reg), offset);
+                    }
                 }
             }
         }

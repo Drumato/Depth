@@ -1,3 +1,4 @@
+use super::super::ce::types::Error;
 use super::super::ir::hi::HIR;
 use super::super::parse::node;
 use super::super::token::token::Token;
@@ -60,10 +61,19 @@ impl Manager {
                 let expr: node::Node = unsafe { Box::into_raw(bexpr).read() };
                 self.gen_expr(expr);
                 self.regnum -= 1;
-                self.hirs.push(HIR::STORE(
-                    self.var_table.get(&ident_name).unwrap().stack_offset,
-                    self.regnum,
-                ));
+                if let Some(var) = self.var_table.get(&ident_name) {
+                    if let Type::INTEGER(int_type) = &var.ty {
+                        self.hirs.push(HIR::STORE(
+                            var.stack_offset,
+                            self.regnum,
+                            int_type.type_size,
+                        ));
+                    } else {
+                        Error::PARSE.found(&"type unknown".to_string());
+                    }
+                } else {
+                    Error::PARSE.found(&format!("undefined such an identifier '{}'", ident_name));
+                }
             }
             _ => (),
         }
@@ -87,18 +97,27 @@ impl Manager {
                 self.regnum
             }
             node::Node::NUMBER(ty) => match ty {
-                Type::INTEGER(int, _, _) => {
-                    self.hirs.push(HIR::IMM(self.regnum, int));
+                Type::INTEGER(int_type) => {
+                    self.hirs.push(HIR::IMM(self.regnum, int_type.val.unwrap()));
                     self.regnum += 1;
                     self.regnum
                 }
                 _ => self.regnum,
             },
             node::Node::IDENT(ident_name) => {
-                self.hirs.push(HIR::LOAD(
-                    self.regnum,
-                    self.var_table.get(&ident_name).unwrap().stack_offset,
-                ));
+                if let Some(var) = self.var_table.get(&ident_name) {
+                    if let Type::INTEGER(int_type) = &var.ty {
+                        self.hirs.push(HIR::LOAD(
+                            self.regnum,
+                            var.stack_offset,
+                            int_type.type_size,
+                        ));
+                    } else {
+                        Error::PARSE.found(&"type unknown".to_string());
+                    }
+                } else {
+                    Error::PARSE.found(&format!("undefined such an identifier '{}'", ident_name));
+                }
                 self.regnum += 1;
                 self.regnum
             }

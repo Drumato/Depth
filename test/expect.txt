@@ -20,3 +20,4 @@ s.dep 1
 t.dep 1
 u.dep 30
 v.dep 20
+w.dep 70

@@ -20,7 +20,7 @@ impl Node {
             }
             Node::UNARY(op, inner, _) => format!("{}({})", op.string(), inner.string()),
             Node::NUMBER(ty) => match ty {
-                Type::INTEGER(val, _, _) => format!("INT-Node<{}>", val),
+                Type::INTEGER(int_type) => format!("INT-Node<{}>", int_type.val.unwrap()),
                 _ => format!("UNKNOWN"),
             },
             Node::RETURN(expr) => format!("RETURN({})", expr.string()),

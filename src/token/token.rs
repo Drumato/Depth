@@ -1,4 +1,3 @@
-use super::super::ce::types::Error;
 #[derive(Eq, PartialEq, Clone)]
 pub enum Token {
     INTEGER(i128),
@@ -29,6 +28,9 @@ pub enum Token {
     ELSE,
     LET,
     I8,
+    I16,
+    I32,
+    I64,
     EOF,
     BLANK,
     LF,
@@ -64,6 +66,9 @@ impl Token {
             Token::ELSE => "ELSE".to_string(),
             Token::LET => "LET".to_string(),
             Token::I8 => "i8".to_string(),
+            Token::I16 => "i16".to_string(),
+            Token::I32 => "i32".to_string(),
+            Token::I64 => "i64".to_string(),
             _ => "".to_string(),
         }
     }
@@ -79,10 +84,6 @@ impl Token {
                 if t == &Token::EOF {
                     return None;
                 }
-                Error::PARSE.found(&format!(
-                    "unexpected {} while parsing statement",
-                    token.string()
-                ));
                 None
             }
         }

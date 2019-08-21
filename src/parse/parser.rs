@@ -1,5 +1,5 @@
 use super::super::ce::types::Error;
-use super::super::manager::semantics::Type;
+use super::super::manager::semantics::{IntType, Type};
 use super::super::token::token::Token;
 use super::node::{Func, Node};
 struct Parser {
@@ -221,7 +221,11 @@ impl Parser {
         }
         if let Token::INTEGER(int) = t {
             self.next_token();
-            return Node::NUMBER(Type::INTEGER(*int, 8, None));
+            return Node::NUMBER(Type::INTEGER(IntType {
+                val: Some(*int),
+                type_size: 8,
+                ptr_to: None,
+            }));
         }
         if let Token::IDENT(ident_name) = t {
             self.next_token();
@@ -256,12 +260,16 @@ impl Parser {
     }
     fn consume_typename(&mut self) -> Token {
         let t: Token = self.get_token();
-        if let Token::I8 = t {
-            self.next_token();
-            return t;
+        match t {
+            Token::I8 | Token::I16 | Token::I32 | Token::I64 => {
+                self.next_token();
+                t
+            }
+            _ => {
+                Error::PARSE.found(&format!("expected typename but got {}", t.string()));
+                Token::EOF
+            }
         }
-        Error::PARSE.found(&format!("expected typename but got {}", t.string()));
-        return Token::EOF;
     }
     fn expect(&self, t: &Token) -> bool {
         if self.peek_token() == t {
