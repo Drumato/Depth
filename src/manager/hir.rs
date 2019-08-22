@@ -26,12 +26,13 @@ impl Manager {
         match n {
             node::Node::RETURN(bexpr) => {
                 let expr: node::Node = unsafe { Box::into_raw(bexpr).read() };
-                let return_reg: usize = self.gen_expr(expr) - 1;
-                self.hirs.push(HIR::RETURN(return_reg));
+                self.gen_expr(expr);
+                self.regnum -= 1;
+                self.hirs.push(HIR::RETURN(self.regnum));
             }
             node::Node::IF(bcond, bstmt, oalter) => {
                 let cond: node::Node = unsafe { Box::into_raw(bcond).read() };
-                let cmp_reg: usize = self.gen_expr(cond) - 1;
+                let cmp_reg: usize = self.gen_expr(cond);
                 self.hirs.push(HIR::CMP(cmp_reg, self.labelnum));
                 let stmt: node::Node = unsafe { Box::into_raw(bstmt).read() };
                 self.gen_stmt(stmt);
@@ -88,8 +89,8 @@ impl Manager {
                 Token::MINUS => {
                     let inner: node::Node = unsafe { Box::into_raw(binner).read() };
                     let rr: usize = self.gen_expr(inner.clone());
-                    self.hirs.push(HIR::NEGATIVE(rr - 1));
-                    self.regnum
+                    self.hirs.push(HIR::NEGATIVE(rr));
+                    rr
                 }
                 Token::AMPERSAND => {
                     let inner: node::Node = unsafe { Box::into_raw(binner).read() };
@@ -125,13 +126,14 @@ impl Manager {
                 let rr: usize = self.gen_expr(rhs);
                 self.gen_binop(t, lr, rr);
                 self.regnum -= 1;
-                self.regnum
+                lr
             }
             node::Node::NUMBER(ty) => match ty {
                 Type::INTEGER(int_type) => {
                     self.hirs.push(HIR::IMM(self.regnum, int_type.val.unwrap()));
+                    let return_reg: usize = self.regnum;
                     self.regnum += 1;
-                    self.regnum
+                    return_reg
                 }
                 _ => self.regnum,
             },
@@ -153,8 +155,9 @@ impl Manager {
                     Error::UNDEFINED
                         .found(&format!("undefined such an identifier '{}'", ident_name));
                 }
+                let return_reg: usize = self.regnum;
                 self.regnum += 1;
-                self.regnum
+                return_reg
             }
             _ => 42,
         }
@@ -162,43 +165,43 @@ impl Manager {
     fn gen_binop(&mut self, t: Token, lr: usize, rr: usize) {
         match t {
             Token::PLUS => {
-                self.hirs.push(HIR::ADD(lr - 1, rr - 1));
+                self.hirs.push(HIR::ADD(lr, rr));
             }
             Token::MINUS => {
-                self.hirs.push(HIR::SUB(lr - 1, rr - 1));
+                self.hirs.push(HIR::SUB(lr, rr));
             }
             Token::STAR => {
-                self.hirs.push(HIR::MUL(lr - 1, rr - 1));
+                self.hirs.push(HIR::MUL(lr, rr));
             }
             Token::SLASH => {
-                self.hirs.push(HIR::DIV(lr - 1, rr - 1));
+                self.hirs.push(HIR::DIV(lr, rr));
             }
             Token::PERCENT => {
-                self.hirs.push(HIR::MOD(lr - 1, rr - 1));
+                self.hirs.push(HIR::MOD(lr, rr));
             }
             Token::LSHIFT => {
-                self.hirs.push(HIR::LSHIFT(lr - 1, rr - 1));
+                self.hirs.push(HIR::LSHIFT(lr, rr));
             }
             Token::RSHIFT => {
-                self.hirs.push(HIR::RSHIFT(lr - 1, rr - 1));
+                self.hirs.push(HIR::RSHIFT(lr, rr));
             }
             Token::LT => {
-                self.hirs.push(HIR::LT(lr - 1, rr - 1));
+                self.hirs.push(HIR::LT(lr, rr));
             }
             Token::GT => {
-                self.hirs.push(HIR::GT(lr - 1, rr - 1));
+                self.hirs.push(HIR::GT(lr, rr));
             }
             Token::LTEQ => {
-                self.hirs.push(HIR::LTEQ(lr - 1, rr - 1));
+                self.hirs.push(HIR::LTEQ(lr, rr));
             }
             Token::GTEQ => {
-                self.hirs.push(HIR::GTEQ(lr - 1, rr - 1));
+                self.hirs.push(HIR::GTEQ(lr, rr));
             }
             Token::EQ => {
-                self.hirs.push(HIR::EQ(lr - 1, rr - 1));
+                self.hirs.push(HIR::EQ(lr, rr));
             }
             Token::NTEQ => {
-                self.hirs.push(HIR::NTEQ(lr - 1, rr - 1));
+                self.hirs.push(HIR::NTEQ(lr, rr));
             }
             _ => (),
         }

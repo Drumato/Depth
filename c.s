@@ -31,8 +31,8 @@ main:
   jmp .L1
 .L0:
   #start IR::LOAD
-  mov r12, -16[rbp]
-  mov rax, r12
+  mov r11, -16[rbp]
+  mov rax, r11
   call .Lend
 .L1:
 .Lend:
