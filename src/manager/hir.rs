@@ -69,6 +69,11 @@ impl Manager {
                             expr_reg,
                             int_type.type_size,
                         )),
+                        Type::CHAR(char_type) => self.hirs.push(HIR::STORE(
+                            var.stack_offset,
+                            expr_reg,
+                            char_type.type_size,
+                        )),
                         Type::POINTER(_, size) => {
                             self.hirs
                                 .push(HIR::STORE(var.stack_offset, expr_reg, *size))
@@ -116,10 +121,7 @@ impl Manager {
                     }
                     rr
                 }
-                _ => {
-                    eprintln!("corner case {}", self.regnum);
-                    self.regnum
-                }
+                _ => self.regnum,
             },
             node::Node::BINOP(t, blhs, brhs, _) => {
                 let lhs: node::Node = unsafe { Box::into_raw(blhs).read() };
@@ -127,7 +129,6 @@ impl Manager {
 
                 let lr: usize = self.gen_expr(lhs);
                 let rr: usize = self.gen_expr(rhs);
-                eprintln!("{} lreg {} rreg {}", t.string(), lr, rr);
                 self.gen_binop(t, lr, rr);
                 self.regnum -= 1;
                 lr
@@ -149,6 +150,16 @@ impl Manager {
                                 self.regnum,
                                 var.stack_offset,
                                 int_type.type_size,
+                            ));
+                            let return_reg: usize = self.regnum;
+                            self.regnum += 1;
+                            return_reg
+                        }
+                        Type::CHAR(char_type) => {
+                            self.hirs.push(HIR::LOAD(
+                                self.regnum,
+                                var.stack_offset,
+                                char_type.type_size,
                             ));
                             let return_reg: usize = self.regnum;
                             self.regnum += 1;

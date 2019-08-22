@@ -70,7 +70,7 @@ fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
 fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
     let length: usize = count_len(input, |c| c.is_digit(10) || c == &'_' || c.is_alphabetic());
     let keywords: Vec<&str> = vec![
-        "return", "if", "else", "func", "let", "i8", "i16", "i32", "i64", "Pointer",
+        "return", "if", "else", "func", "let", "i8", "i16", "i32", "i64", "Pointer", "ch",
     ];
     let types: Vec<Token> = vec![
         Token::RETURN,

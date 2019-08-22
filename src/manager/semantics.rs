@@ -6,12 +6,18 @@ use super::manager::{Manager, Variable};
 #[derive(Clone, Eq, PartialEq)]
 pub enum Type {
     INTEGER(IntType),
+    CHAR(CharType),
     POINTER(Box<Type>, usize), // type_size
     UNKNOWN,
 }
 #[derive(Clone, Eq, PartialEq)]
 pub struct IntType {
     pub val: Option<i128>,
+    pub type_size: usize,
+}
+#[derive(Clone, Eq, PartialEq)]
+pub struct CharType {
+    pub val: Option<char>,
     pub type_size: usize,
 }
 
@@ -25,6 +31,7 @@ impl Type {
                 _ => "i64".to_string(),
             },
             Type::POINTER(ptr_to, _) => format!("POINTER<{}>", ptr_to.string()),
+            Type::CHAR(char_type) => format!("CHAR<{}>", char_type.val.unwrap()),
             Type::UNKNOWN => "UNKNOWN".to_string(),
         }
     }
@@ -79,6 +86,14 @@ impl Manager {
                     Type::UNKNOWN
                 }
             }
+            Node::BINOP(_, blhs, brhs, _) => {
+                let lhs: Node = unsafe { Box::into_raw(blhs).read() };
+                let rhs: Node = unsafe { Box::into_raw(brhs).read() };
+                let ltype: Type = self.walk(lhs);
+                let rtype: Type = self.walk(rhs);
+                self.check_type(ltype.clone(), rtype);
+                ltype
+            }
             Node::UNARY(op, binner, _) => {
                 let inner: Node = unsafe { Box::into_raw(binner).read() };
                 let inner_type: Type = self.walk(inner);
@@ -113,6 +128,11 @@ impl Manager {
                         self.check_type(Type::POINTER(binner, type_size), expr_type);
                         self.stack_offset += type_size;
                     }
+                    Type::CHAR(char_type) => {
+                        let expr_type: Type = self.walk(expr);
+                        self.check_type(Type::CHAR(char_type.clone()), expr_type);
+                        self.stack_offset += char_type.type_size;
+                    }
                     _ => (),
                 }
                 self.var_table.insert(
@@ -145,6 +165,17 @@ impl Manager {
                     let lptr_to: Type = unsafe { Box::into_raw(lbptr_to).read() };
                     let rptr_to: Type = unsafe { Box::into_raw(rbptr_to).read() };
                     self.check_builtin_type(lptr_to, rptr_to);
+                } else {
+                    Error::TYPE.found(&format!(
+                        "difference type between {} and {}",
+                        ltype.string(),
+                        rtype.string()
+                    ));
+                }
+            }
+            Type::CHAR(_) => {
+                if let Type::CHAR(_) = rtype {
+                    ();
                 } else {
                     Error::TYPE.found(&format!(
                         "difference type between {} and {}",

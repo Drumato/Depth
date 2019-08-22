@@ -3,6 +3,8 @@ use super::super::parse::node::Func;
 use super::super::token::token::Token;
 use super::semantics::Type;
 use std::collections::HashMap;
+extern crate colored;
+use colored::*;
 pub struct Manager {
     pub functions: Vec<Func>,
     pub hirs: Vec<HIR>,
@@ -29,9 +31,9 @@ impl Variable {
     pub fn string(&self) -> String {
         format!(
             "name->{} offset->{} ty->{}",
-            self.name,
+            self.name.green().bold(),
             self.stack_offset,
-            self.ty.string()
+            self.ty.string().blue().bold()
         )
     }
 }
