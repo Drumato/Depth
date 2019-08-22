@@ -1,35 +1,44 @@
 use super::super::ir::hi::HIR;
 use super::manager::Manager;
 const FREE_REG: [&str; 6] = ["r10", "r11", "r12", "r13", "r14", "r15"];
-fn gr(num: &usize) -> String {
-    FREE_REG[*num].to_string()
+const FREE_REG32: [&str; 6] = ["r10d", "r11d", "r12d", "r13d", "r14d", "r15d"];
+const FREE_REG16: [&str; 6] = ["r10w", "r11w", "r12w", "r13w", "r14w", "r15w"];
+const FREE_REG8: [&str; 6] = ["r10b", "r11b", "r12b", "r13b", "r14b", "r15b"];
+fn gr(num: &usize, size: usize) -> String {
+    match size {
+        8 => FREE_REG[*num].to_string(),
+        4 => FREE_REG32[*num].to_string(),
+        2 => FREE_REG16[*num].to_string(),
+        1 => FREE_REG8[*num].to_string(),
+        _ => FREE_REG[*num].to_string(),
+    }
 }
 impl Manager {
     pub fn genx64(&self) {
         for ir in self.hirs.iter() {
             match ir {
-                HIR::ADD(lr, rr) => println!("  add {}, {}", gr(lr), gr(rr)),
-                HIR::SUB(lr, rr) => println!("  sub {}, {}", gr(lr), gr(rr)),
+                HIR::ADD(lr, rr) => println!("  add {}, {}", gr(lr, 64), gr(rr, 64)),
+                HIR::SUB(lr, rr) => println!("  sub {}, {}", gr(lr, 64), gr(rr, 64)),
                 HIR::MUL(lr, rr) => {
-                    println!("  mov rax, {}", gr(lr));
-                    println!("  imul {}", gr(rr));
-                    println!("  mov {}, rax", gr(lr));
+                    println!("  mov rax, {}", gr(lr, 8));
+                    println!("  imul {}", gr(rr, 8));
+                    println!("  mov {}, rax", gr(lr, 8));
                 }
                 HIR::DIV(lr, rr) => {
                     self.division(lr, rr);
-                    println!("  mov {}, rax", gr(lr));
+                    println!("  mov {}, rax", gr(lr, 8));
                 }
                 HIR::MOD(lr, rr) => {
                     self.division(lr, rr);
-                    println!("  mov {}, rdx", gr(lr));
+                    println!("  mov {}, rdx", gr(lr, 8));
                 }
                 HIR::LSHIFT(lr, rr) => {
-                    println!("  mov rcx, {}", gr(rr));
-                    println!("  sal {}, cl", gr(lr))
+                    println!("  mov rcx, {}", gr(rr, 8));
+                    println!("  sal {}, cl", gr(lr, 8))
                 }
                 HIR::RSHIFT(lr, rr) => {
-                    println!("  mov rcx, {}", gr(rr));
-                    println!("  sar {}, cl", gr(lr));
+                    println!("  mov rcx, {}", gr(rr, 8));
+                    println!("  sar {}, cl", gr(lr, 8));
                 }
                 HIR::LT(lr, rr) => {
                     self.compare(lr, rr, "setl");
@@ -49,12 +58,12 @@ impl Manager {
                 HIR::NTEQ(lr, rr) => {
                     self.compare(lr, rr, "setne");
                 }
-                HIR::IMM(reg, val) => println!("  mov {}, {}", gr(reg), val),
+                HIR::IMM(reg, val) => println!("  mov {}, {}", gr(reg, 8), val),
                 HIR::NEGATIVE(reg) => {
-                    println!("  neg {}", gr(reg));
+                    println!("  neg {}", gr(reg, 8));
                 }
                 HIR::RETURN(reg) => {
-                    println!("  mov rax, {}", gr(reg));
+                    println!("  mov rax, {}", gr(reg, 8));
                     println!("  call .Lend");
                 }
                 HIR::PROLOGUE(size) => {
@@ -80,30 +89,26 @@ impl Manager {
                     println!(".L{}:", label);
                 }
                 HIR::CMP(reg, label) => {
-                    println!("  cmp {}, 0", gr(reg));
+                    println!("  cmp {}, 0", gr(reg, 8));
                     println!("  je .L{}", label);
                 }
                 HIR::STORE(offset, reg, size) => {
-                    if size == &8 {
-                        println!("  mov -{}[rbp], {}", offset, gr(reg));
-                    }
+                    println!("  mov -{}[rbp], {}", !7 & offset + 7, gr(reg, *size));
                 }
                 HIR::LOAD(reg, offset, size) => {
-                    if size == &8 {
-                        println!("  mov {}, -{}[rbp]", gr(reg), offset);
-                    }
+                    println!("  mov {}, -{}[rbp]", gr(reg, *size), !7 & offset + 7);
                 }
             }
         }
     }
     fn division(&self, lr: &usize, rr: &usize) {
-        println!("  mov rax, {}", gr(lr));
+        println!("  mov rax, {}", gr(lr, 8));
         println!("  cqo");
-        println!("  idiv {}", gr(rr));
+        println!("  idiv {}", gr(rr, 8));
     }
     fn compare(&self, lr: &usize, rr: &usize, inst: &str) {
-        println!("  cmp {}, {}", gr(lr), gr(rr));
+        println!("  cmp {}, {}", gr(lr, 8), gr(rr, 8));
         println!("  {} al", inst);
-        println!("  movzx {}, al", gr(lr));
+        println!("  movzx {}, al", gr(lr, 8));
     }
 }

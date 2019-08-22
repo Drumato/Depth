@@ -31,6 +31,7 @@ pub enum Token {
     I16,
     I32,
     I64,
+    POINTER(Box<Token>),
     EOF,
     BLANK,
     LF,
@@ -69,6 +70,7 @@ impl Token {
             Token::I16 => "i16".to_string(),
             Token::I32 => "i32".to_string(),
             Token::I64 => "i64".to_string(),
+            Token::POINTER(ptr_to) => format!("POINTER<{}>", ptr_to.string()),
             _ => "".to_string(),
         }
     }

@@ -62,17 +62,21 @@ impl Manager {
                 self.gen_expr(expr);
                 self.regnum -= 1;
                 if let Some(var) = self.var_table.get(&ident_name) {
-                    if let Type::INTEGER(int_type) = &var.ty {
-                        self.hirs.push(HIR::STORE(
+                    match &var.ty {
+                        Type::INTEGER(int_type) => self.hirs.push(HIR::STORE(
                             var.stack_offset,
                             self.regnum,
                             int_type.type_size,
-                        ));
-                    } else {
-                        Error::PARSE.found(&"type unknown".to_string());
+                        )),
+                        Type::POINTER(_, size) => {
+                            self.hirs
+                                .push(HIR::STORE(var.stack_offset, self.regnum, *size))
+                        }
+                        _ => Error::TYPE.found(&"type unknown".to_string()),
                     }
                 } else {
-                    Error::PARSE.found(&format!("undefined such an identifier '{}'", ident_name));
+                    Error::UNDEFINED
+                        .found(&format!("undefined such an identifier '{}'", ident_name));
                 }
             }
             _ => (),
@@ -106,17 +110,21 @@ impl Manager {
             },
             node::Node::IDENT(ident_name) => {
                 if let Some(var) = self.var_table.get(&ident_name) {
-                    if let Type::INTEGER(int_type) = &var.ty {
-                        self.hirs.push(HIR::LOAD(
+                    match &var.ty {
+                        Type::INTEGER(int_type) => self.hirs.push(HIR::LOAD(
                             self.regnum,
                             var.stack_offset,
                             int_type.type_size,
-                        ));
-                    } else {
-                        Error::PARSE.found(&"type unknown".to_string());
+                        )),
+                        Type::POINTER(_, size) => {
+                            self.hirs
+                                .push(HIR::STORE(var.stack_offset, self.regnum, *size))
+                        }
+                        _ => Error::TYPE.found(&"type unknown".to_string()),
                     }
                 } else {
-                    Error::PARSE.found(&format!("undefined such an identifier '{}'", ident_name));
+                    Error::UNDEFINED
+                        .found(&format!("undefined such an identifier '{}'", ident_name));
                 }
                 self.regnum += 1;
                 self.regnum

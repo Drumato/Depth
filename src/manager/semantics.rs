@@ -1,24 +1,25 @@
+use super::super::ce::types::Error;
 use super::super::parse::node::{Func, Node};
 use super::super::token::token::Token;
 use super::manager::{Manager, Variable};
 
-type Pointer = Option<Box<Type>>;
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq)]
 pub enum Type {
-    INTEGER(IntType), // INTEGER(INTTYPE) in future
-    UNKNOWN,          // INTEGER(INTTYPE) in future
+    INTEGER(IntType),
+    POINTER(Box<Type>, usize), // type_size
+    UNKNOWN,
 }
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct IntType {
     pub val: Option<i128>,
     pub type_size: usize,
-    pub ptr_to: Pointer,
 }
 
 impl Type {
     pub fn string(&self) -> String {
         match self {
-            Type::INTEGER(int_type) => format!("INTEGER<{}>", int_type.type_size),
+            Type::INTEGER(_) => "INTEGER".to_string(),
+            Type::POINTER(ptr_to, _) => format!("POINTER<{}>", ptr_to.string()),
             Type::UNKNOWN => "UNKNOWN".to_string(),
         }
     }
@@ -27,23 +28,23 @@ impl Type {
             Token::I8 => Type::INTEGER(IntType {
                 val: None,
                 type_size: 1,
-                ptr_to: None,
             }),
             Token::I16 => Type::INTEGER(IntType {
                 val: None,
                 type_size: 2,
-                ptr_to: None,
             }),
             Token::I32 => Type::INTEGER(IntType {
                 val: None,
                 type_size: 4,
-                ptr_to: None,
             }),
             Token::I64 => Type::INTEGER(IntType {
                 val: None,
                 type_size: 8,
-                ptr_to: None,
             }),
+            Token::POINTER(bptr_to) => {
+                let ptr_to: Token = unsafe { Box::into_raw(bptr_to).read() };
+                Type::POINTER(Box::new(Type::from_type(ptr_to)), 8)
+            }
             _ => Type::UNKNOWN,
         }
     }
@@ -70,9 +71,20 @@ impl Manager {
             Node::NUMBER(ty) => ty,
             //Node::RETURN(bstmt),
             //Node::IF(bcond,bstmt),
-            Node::LET(ident_name, type_name, _) => {
-                if let Type::INTEGER(ty) = Type::from_type(type_name.clone()) {
-                    self.stack_offset += ty.type_size;
+            Node::LET(ident_name, type_name, bexpr) => {
+                let expr: Node = unsafe { Box::into_raw(bexpr).read() };
+                match Type::from_type(type_name.clone()) {
+                    Type::INTEGER(int_type) => {
+                        let expr_type: Type = self.walk(expr);
+                        self.check_type(Type::INTEGER(int_type.clone()), expr_type);
+                        self.stack_offset += int_type.type_size;
+                    }
+                    Type::POINTER(binner, type_size) => {
+                        let expr_type: Type = self.walk(expr);
+                        self.check_type(Type::POINTER(binner, type_size), expr_type);
+                        self.stack_offset += type_size;
+                    }
+                    _ => (),
                 }
                 self.var_table.insert(
                     ident_name.clone(),
@@ -81,6 +93,15 @@ impl Manager {
                 Type::UNKNOWN
             }
             _ => Type::UNKNOWN,
+        }
+    }
+    fn check_type(&self, ltype: Type, rtype: Type) {
+        if ltype != rtype {
+            Error::TYPE.found(&format!(
+                "difference between {} and {}",
+                ltype.string(),
+                rtype.string()
+            ));
         }
     }
 }

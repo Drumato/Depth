@@ -96,11 +96,17 @@ impl Parser {
         self.next_token();
         let ident_name: String = self.consume_ident();
         if !self.consume(&Token::COLON) {
-            Error::PARSE.found(&format!("expected colon before declaring type"));
+            Error::PARSE.found(&format!(
+                "expected colon before declaring type but got {}",
+                self.cur_token().string()
+            ));
         }
         let typename: Token = self.consume_typename();
         if !self.consume(&Token::ASSIGN) {
-            Error::PARSE.found(&format!("expected assign after declaring type"));
+            Error::PARSE.found(&format!(
+                "expected assign after declaring type but got {}",
+                self.cur_token().string()
+            ));
         }
         Node::LET(ident_name, typename, Box::new(self.expr()))
     }
@@ -224,7 +230,6 @@ impl Parser {
             return Node::NUMBER(Type::INTEGER(IntType {
                 val: Some(*int),
                 type_size: 8,
-                ptr_to: None,
             }));
         }
         if let Token::IDENT(ident_name) = t {
@@ -264,6 +269,13 @@ impl Parser {
             Token::I8 | Token::I16 | Token::I32 | Token::I64 => {
                 self.next_token();
                 t
+            }
+            Token::POINTER(_ptr_to) => {
+                self.next_token();
+                self.expect(&Token::LT);
+                let inner: Token = self.consume_typename();
+                self.expect(&Token::GT);
+                Token::POINTER(Box::new(inner))
             }
             _ => {
                 Error::PARSE.found(&format!("expected typename but got {}", t.string()));
