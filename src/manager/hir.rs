@@ -60,18 +60,18 @@ impl Manager {
             }
             node::Node::LET(ident_name, _, bexpr) => {
                 let expr: node::Node = unsafe { Box::into_raw(bexpr).read() };
-                self.gen_expr(expr);
+                let expr_reg: usize = self.gen_expr(expr);
                 self.regnum -= 1;
                 if let Some(var) = self.var_table.get(&ident_name) {
                     match &var.ty {
                         Type::INTEGER(int_type) => self.hirs.push(HIR::STORE(
                             var.stack_offset,
-                            self.regnum,
+                            expr_reg,
                             int_type.type_size,
                         )),
                         Type::POINTER(_, size) => {
                             self.hirs
-                                .push(HIR::STORE(var.stack_offset, self.regnum, *size))
+                                .push(HIR::STORE(var.stack_offset, expr_reg, *size))
                         }
                         _ => Error::TYPE.found(&"type unknown".to_string()),
                     }
@@ -102,7 +102,7 @@ impl Manager {
                         Error::UNDEFINED
                             .found(&format!("undefined such an identifier '{}'", ident_name));
                     }
-                    self.regnum
+                    rr
                 }
                 Token::STAR => {
                     let inner: node::Node = unsafe { Box::into_raw(binner).read() };
@@ -114,9 +114,12 @@ impl Manager {
                         Error::UNDEFINED
                             .found(&format!("undefined such an identifier '{}'", ident_name));
                     }
+                    rr
+                }
+                _ => {
+                    eprintln!("corner case {}", self.regnum);
                     self.regnum
                 }
-                _ => self.regnum,
             },
             node::Node::BINOP(t, blhs, brhs, _) => {
                 let lhs: node::Node = unsafe { Box::into_raw(blhs).read() };
@@ -124,6 +127,7 @@ impl Manager {
 
                 let lr: usize = self.gen_expr(lhs);
                 let rr: usize = self.gen_expr(rhs);
+                eprintln!("{} lreg {} rreg {}", t.string(), lr, rr);
                 self.gen_binop(t, lr, rr);
                 self.regnum -= 1;
                 lr
@@ -140,24 +144,33 @@ impl Manager {
             node::Node::IDENT(ident_name) => {
                 if let Some(var) = self.var_table.get(&ident_name) {
                     match &var.ty {
-                        Type::INTEGER(int_type) => self.hirs.push(HIR::LOAD(
-                            self.regnum,
-                            var.stack_offset,
-                            int_type.type_size,
-                        )),
+                        Type::INTEGER(int_type) => {
+                            self.hirs.push(HIR::LOAD(
+                                self.regnum,
+                                var.stack_offset,
+                                int_type.type_size,
+                            ));
+                            let return_reg: usize = self.regnum;
+                            self.regnum += 1;
+                            return_reg
+                        }
                         Type::POINTER(_, size) => {
                             self.hirs
-                                .push(HIR::STORE(var.stack_offset, self.regnum, *size))
+                                .push(HIR::LOAD(self.regnum, var.stack_offset, *size));
+                            let return_reg: usize = self.regnum;
+                            self.regnum += 1;
+                            return_reg
                         }
-                        _ => Error::TYPE.found(&"type unknown".to_string()),
+                        _ => {
+                            Error::TYPE.found(&"type unknown".to_string());
+                            self.regnum
+                        }
                     }
                 } else {
                     Error::UNDEFINED
                         .found(&format!("undefined such an identifier '{}'", ident_name));
+                    self.regnum
                 }
-                let return_reg: usize = self.regnum;
-                self.regnum += 1;
-                return_reg
             }
             _ => 42,
         }

@@ -66,8 +66,9 @@ impl Manager {
                     println!("  #start IR::ADDRESS");
                     println!("  lea {}, -{}[rbp]", gr(reg, 8), offset);
                 }
-                HIR::DEREFERENCE(reg, _offset) => {
+                HIR::DEREFERENCE(reg, offset) => {
                     println!("  #start IR::DEREFERENCE");
+                    println!("  mov {}, -{}[rbp]", gr(reg, 8), offset);
                     println!("  mov {}, [{}]", gr(reg, 8), gr(reg, 8));
                 }
                 HIR::RETURN(reg) => {
