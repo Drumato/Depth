@@ -62,6 +62,14 @@ impl Manager {
                 HIR::NEGATIVE(reg) => {
                     println!("  neg {}", gr(reg, 8));
                 }
+                HIR::ADDRESS(reg, offset) => {
+                    println!("  #start IR::ADDRESS");
+                    println!("  lea {}, -{}[rbp]", gr(reg, 8), offset);
+                }
+                HIR::DEREFERENCE(reg, _offset) => {
+                    println!("  #start IR::DEREFERENCE");
+                    println!("  mov {}, [{}]", gr(reg, 8), gr(reg, 8));
+                }
                 HIR::RETURN(reg) => {
                     println!("  mov rax, {}", gr(reg, 8));
                     println!("  call .Lend");
@@ -93,10 +101,12 @@ impl Manager {
                     println!("  je .L{}", label);
                 }
                 HIR::STORE(offset, reg, size) => {
-                    println!("  mov -{}[rbp], {}", !7 & offset + 7, gr(reg, *size));
+                    println!("  #start IR::STORE");
+                    println!("  mov -{}[rbp], {}", offset, gr(reg, *size));
                 }
                 HIR::LOAD(reg, offset, size) => {
-                    println!("  mov {}, -{}[rbp]", gr(reg, *size), !7 & offset + 7);
+                    println!("  #start IR::LOAD");
+                    println!("  mov {}, -{}[rbp]", gr(reg, *size), offset);
                 }
             }
         }

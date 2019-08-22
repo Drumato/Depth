@@ -84,12 +84,38 @@ impl Manager {
     }
     fn gen_expr(&mut self, n: node::Node) -> usize {
         match n {
-            node::Node::UNARY(_t, binner, _) => {
-                let inner: node::Node = unsafe { Box::into_raw(binner).read() };
-                let rr: usize = self.gen_expr(inner);
-                self.hirs.push(HIR::NEGATIVE(rr - 1));
-                self.regnum
-            }
+            node::Node::UNARY(op, binner, _) => match op {
+                Token::MINUS => {
+                    let inner: node::Node = unsafe { Box::into_raw(binner).read() };
+                    let rr: usize = self.gen_expr(inner.clone());
+                    self.hirs.push(HIR::NEGATIVE(rr - 1));
+                    self.regnum
+                }
+                Token::AMPERSAND => {
+                    let inner: node::Node = unsafe { Box::into_raw(binner).read() };
+                    let ident_name: String = self.get_ident_name(inner);
+                    if let Some(var) = self.var_table.get(&ident_name) {
+                        self.hirs.push(HIR::ADDRESS(self.regnum, var.stack_offset));
+                    } else {
+                        Error::UNDEFINED
+                            .found(&format!("undefined such an identifier '{}'", ident_name));
+                    }
+                    self.regnum
+                }
+                Token::STAR => {
+                    let inner: node::Node = unsafe { Box::into_raw(binner).read() };
+                    let ident_name: String = self.get_ident_name(inner);
+                    if let Some(var) = self.var_table.get(&ident_name) {
+                        self.hirs
+                            .push(HIR::DEREFERENCE(self.regnum, var.stack_offset));
+                    } else {
+                        Error::UNDEFINED
+                            .found(&format!("undefined such an identifier '{}'", ident_name));
+                    }
+                    self.regnum
+                }
+                _ => self.regnum,
+            },
             node::Node::BINOP(t, blhs, brhs, _) => {
                 let lhs: node::Node = unsafe { Box::into_raw(blhs).read() };
                 let rhs: node::Node = unsafe { Box::into_raw(brhs).read() };
@@ -175,5 +201,12 @@ impl Manager {
             }
             _ => (),
         }
+    }
+    fn get_ident_name(&self, n: node::Node) -> String {
+        if let node::Node::IDENT(ident_name) = n {
+            return ident_name;
+        }
+        Error::TYPE.found(&format!("unexpected '{}'", n.string()));
+        "".to_string()
     }
 }
