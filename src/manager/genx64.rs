@@ -61,7 +61,7 @@ impl Manager {
                     println!("  push rbp");
                     println!("  mov rbp, rsp");
                     if size != &0 {
-                        println!("  sub rsp, {}", size);
+                        println!("  sub rsp, {}", !7 & size + 7);
                     }
                 }
                 HIR::EPILOGUE => {
