@@ -20,6 +20,7 @@ pub enum Token {
     EQ,
     NTEQ,
     COLON,
+    AMPERSAND,
 
     FUNC,
     IDENT(String),
@@ -59,6 +60,7 @@ impl Token {
             Token::EQ => "EQUAL".to_string(),
             Token::NTEQ => "NOTEQUAL".to_string(),
             Token::COLON => "COLON".to_string(),
+            Token::AMPERSAND => "AMPERSAND".to_string(),
             Token::RETURN => "RETURN".to_string(),
             Token::EOF => "EOF".to_string(),
             Token::FUNC => "FUNCTION".to_string(),

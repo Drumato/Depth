@@ -49,6 +49,7 @@ fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
         '*' => Some((Token::STAR, 1)),
         '/' => Some((Token::SLASH, 1)),
         '%' => Some((Token::PERCENT, 1)),
+        '&' => Some((Token::AMPERSAND, 1)),
         '(' => Some((Token::LPAREN, 1)),
         ')' => Some((Token::RPAREN, 1)),
         '{' => Some((Token::LBRACE, 1)),

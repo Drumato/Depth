@@ -101,12 +101,35 @@ impl Manager {
         }
     }
     fn check_type(&self, ltype: Type, rtype: Type) {
-        if ltype != rtype {
-            Error::TYPE.found(&format!(
-                "difference between {} and {}",
-                ltype.string(),
-                rtype.string()
-            ));
+        self.check_builtin_type(ltype, rtype);
+    }
+    fn check_builtin_type(&self, ltype: Type, rtype: Type) {
+        match ltype.clone() {
+            Type::INTEGER(_) => {
+                if let Type::INTEGER(_) = rtype {
+                    ();
+                } else {
+                    Error::TYPE.found(&format!(
+                        "difference type between {} and {}",
+                        ltype.string(),
+                        rtype.string()
+                    ));
+                }
+            }
+            Type::POINTER(lbptr_to, _) => {
+                if let Type::POINTER(rbptr_to, _) = rtype {
+                    let lptr_to: Type = unsafe { Box::into_raw(lbptr_to).read() };
+                    let rptr_to: Type = unsafe { Box::into_raw(rbptr_to).read() };
+                    self.check_builtin_type(lptr_to, rptr_to);
+                } else {
+                    Error::TYPE.found(&format!(
+                        "difference type between {} and {}",
+                        ltype.string(),
+                        rtype.string()
+                    ));
+                }
+            }
+            _ => (),
         }
     }
 }

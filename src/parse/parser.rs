@@ -211,11 +211,14 @@ impl Parser {
         lhs
     }
     fn unary(&mut self) -> Node {
-        if self.consume(&Token::MINUS) {
-            let op: Token = self.get_token();
-            return Node::UNARY(op, Box::new(self.term()), None);
+        let op: Token = self.get_token();
+        match op {
+            Token::STAR | Token::AMPERSAND | Token::MINUS => {
+                self.next_token();
+                Node::UNARY(op, Box::new(self.term()), None)
+            }
+            _ => self.term(),
         }
-        self.term()
     }
     fn term(&mut self) -> Node {
         let t: &Token = self.cur_token();
