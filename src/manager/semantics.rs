@@ -18,7 +18,12 @@ pub struct IntType {
 impl Type {
     pub fn string(&self) -> String {
         match self {
-            Type::INTEGER(_) => "INTEGER".to_string(),
+            Type::INTEGER(int_type) => match int_type.type_size {
+                1 => "i8".to_string(),
+                2 => "i16".to_string(),
+                4 => "i32".to_string(),
+                _ => "i64".to_string(),
+            },
             Type::POINTER(ptr_to, _) => format!("POINTER<{}>", ptr_to.string()),
             Type::UNKNOWN => "UNKNOWN".to_string(),
         }
