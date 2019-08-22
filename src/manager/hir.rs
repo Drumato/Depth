@@ -69,11 +69,7 @@ impl Manager {
                             expr_reg,
                             int_type.type_size,
                         )),
-                        Type::CHAR(char_type) => self.hirs.push(HIR::STORE(
-                            var.stack_offset,
-                            expr_reg,
-                            char_type.type_size,
-                        )),
+                        Type::CHAR(_) => self.hirs.push(HIR::STORE(var.stack_offset, expr_reg, 4)),
                         Type::POINTER(_, size) => {
                             self.hirs
                                 .push(HIR::STORE(var.stack_offset, expr_reg, *size))
@@ -142,6 +138,12 @@ impl Manager {
                 }
                 _ => self.regnum,
             },
+            node::Node::CHARLIT(char_val) => {
+                self.hirs.push(HIR::IMMCHAR(self.regnum, char_val));
+                let return_reg: usize = self.regnum;
+                self.regnum += 1;
+                return_reg
+            }
             node::Node::IDENT(ident_name) => {
                 if let Some(var) = self.var_table.get(&ident_name) {
                     match &var.ty {
@@ -155,12 +157,8 @@ impl Manager {
                             self.regnum += 1;
                             return_reg
                         }
-                        Type::CHAR(char_type) => {
-                            self.hirs.push(HIR::LOAD(
-                                self.regnum,
-                                var.stack_offset,
-                                char_type.type_size,
-                            ));
+                        Type::CHAR(_) => {
+                            self.hirs.push(HIR::LOAD(self.regnum, var.stack_offset, 4));
                             let return_reg: usize = self.regnum;
                             self.regnum += 1;
                             return_reg

@@ -59,6 +59,9 @@ impl Manager {
                     self.compare(lr, rr, "setne");
                 }
                 HIR::IMM(reg, val) => println!("  mov {}, {}", gr(reg, 8), val),
+                HIR::IMMCHAR(reg, char_val) => {
+                    println!("  mov {}, {}", gr(reg, 4), *char_val as u32)
+                }
                 HIR::NEGATIVE(reg) => {
                     println!("  neg {}", gr(reg, 8));
                 }

@@ -6,18 +6,13 @@ use super::manager::{Manager, Variable};
 #[derive(Clone, Eq, PartialEq)]
 pub enum Type {
     INTEGER(IntType),
-    CHAR(CharType),
+    CHAR(Option<char>),
     POINTER(Box<Type>, usize), // type_size
     UNKNOWN,
 }
 #[derive(Clone, Eq, PartialEq)]
 pub struct IntType {
     pub val: Option<i128>,
-    pub type_size: usize,
-}
-#[derive(Clone, Eq, PartialEq)]
-pub struct CharType {
-    pub val: Option<char>,
     pub type_size: usize,
 }
 
@@ -31,7 +26,10 @@ impl Type {
                 _ => "i64".to_string(),
             },
             Type::POINTER(ptr_to, _) => format!("POINTER<{}>", ptr_to.string()),
-            Type::CHAR(char_type) => format!("CHAR<{}>", char_type.val.unwrap()),
+            Type::CHAR(ochar_val) => match ochar_val {
+                Some(char_val) => format!("CHAR<{}>", char_val),
+                None => "CHAR".to_string(),
+            },
             Type::UNKNOWN => "UNKNOWN".to_string(),
         }
     }
@@ -113,6 +111,7 @@ impl Manager {
                 }
             }
             Node::NUMBER(ty) => ty,
+            Node::CHARLIT(char_val) => Type::CHAR(Some(char_val)),
             //Node::RETURN(bstmt),
             //Node::IF(bcond,bstmt),
             Node::LET(ident_name, type_name, bexpr) => {
@@ -128,10 +127,10 @@ impl Manager {
                         self.check_type(Type::POINTER(binner, type_size), expr_type);
                         self.stack_offset += type_size;
                     }
-                    Type::CHAR(char_type) => {
+                    Type::CHAR(ochar_val) => {
                         let expr_type: Type = self.walk(expr);
-                        self.check_type(Type::CHAR(char_type.clone()), expr_type);
-                        self.stack_offset += char_type.type_size;
+                        self.check_type(Type::CHAR(ochar_val), expr_type);
+                        self.stack_offset += 4;
                     }
                     _ => (),
                 }

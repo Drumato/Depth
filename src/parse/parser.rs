@@ -222,25 +222,33 @@ impl Parser {
     }
     fn term(&mut self) -> Node {
         let t: &Token = self.cur_token();
-        if let Token::LPAREN = t {
-            self.next_token();
-            let expr: Node = self.expr();
-            self.next_token();
-            return expr;
+        match t {
+            Token::LPAREN => {
+                self.next_token();
+                let expr: Node = self.expr();
+                self.next_token();
+                expr
+            }
+            Token::INTEGER(int) => {
+                self.next_token();
+                Node::NUMBER(Type::INTEGER(IntType {
+                    val: Some(*int),
+                    type_size: 8,
+                }))
+            }
+            Token::IDENT(ident_name) => {
+                self.next_token();
+                Node::IDENT(ident_name.to_string())
+            }
+            Token::CHARLIT(char_val) => {
+                self.next_token();
+                Node::CHARLIT(*char_val)
+            }
+            _ => {
+                Error::PARSE.found(&format!("unexpected {} while parsing term", t.string(),));
+                Node::INVALID
+            }
         }
-        if let Token::INTEGER(int) = t {
-            self.next_token();
-            return Node::NUMBER(Type::INTEGER(IntType {
-                val: Some(*int),
-                type_size: 8,
-            }));
-        }
-        if let Token::IDENT(ident_name) = t {
-            self.next_token();
-            return Node::IDENT(ident_name.to_string());
-        }
-        Error::PARSE.found(&format!("unexpected {} while parsing term", t.string(),));
-        Node::INVALID
     }
     fn check_invalid(&mut self, n: &Node) {
         if let &Node::INVALID = n {

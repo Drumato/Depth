@@ -5,6 +5,7 @@ pub enum Node {
     BINOP(Token, Box<Node>, Box<Node>, Option<Type>),
     UNARY(Token, Box<Node>, Option<Type>),
     NUMBER(Type),
+    CHARLIT(char),
     IDENT(String),
     RETURN(Box<Node>),
     IF(Box<Node>, Box<Node>, Option<Box<Node>>), // condition, block,else
@@ -41,6 +42,7 @@ impl Node {
             Node::LET(ident_name, ty, expr) => {
                 format!("LET {} <- {} ({})", ident_name, ty.string(), expr.string())
             }
+            Node::CHARLIT(char_val) => format!("CHARLIT<{}>", char_val),
             Node::IDENT(ident_name) => format!("IDENT<{}>", ident_name),
         }
     }

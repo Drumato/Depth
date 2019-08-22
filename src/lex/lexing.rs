@@ -32,6 +32,10 @@ fn tokenize(input: &String) -> Option<(Token, usize)> {
                 length,
             ))
         }
+        '\'' => {
+            let char_val: char = input[1..].as_bytes()[0] as char;
+            Some((Token::CHARLIT(char_val), 3))
+        }
         ' ' => Some((Token::BLANK, count_len(input, |c| c == &' '))),
         _ => tokenize_symbols(input),
     }
@@ -83,6 +87,7 @@ fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
         Token::I32,
         Token::I64,
         Token::POINTER(Box::new(Token::EOF)),
+        Token::CHAR,
     ];
     for (idx, k) in keywords.iter().enumerate() {
         if input.starts_with(k) {
