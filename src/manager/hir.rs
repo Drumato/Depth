@@ -93,9 +93,10 @@ impl Manager {
                 }
                 Token::AMPERSAND => {
                     let inner: node::Node = unsafe { Box::into_raw(binner).read() };
+                    let rr: usize = self.gen_expr(inner.clone());
                     let ident_name: String = self.get_ident_name(inner);
                     if let Some(var) = self.var_table.get(&ident_name) {
-                        self.hirs.push(HIR::ADDRESS(self.regnum, var.stack_offset));
+                        self.hirs.push(HIR::ADDRESS(rr, var.stack_offset));
                     } else {
                         Error::UNDEFINED
                             .found(&format!("undefined such an identifier '{}'", ident_name));
@@ -104,10 +105,10 @@ impl Manager {
                 }
                 Token::STAR => {
                     let inner: node::Node = unsafe { Box::into_raw(binner).read() };
+                    let rr: usize = self.gen_expr(inner.clone());
                     let ident_name: String = self.get_ident_name(inner);
                     if let Some(var) = self.var_table.get(&ident_name) {
-                        self.hirs
-                            .push(HIR::DEREFERENCE(self.regnum, var.stack_offset));
+                        self.hirs.push(HIR::DEREFERENCE(rr, var.stack_offset));
                     } else {
                         Error::UNDEFINED
                             .found(&format!("undefined such an identifier '{}'", ident_name));

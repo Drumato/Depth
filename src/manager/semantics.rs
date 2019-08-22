@@ -72,7 +72,31 @@ impl Manager {
     }
     fn walk(&mut self, n: Node) -> Type {
         match n {
-            //Node::UNARY(op,binner,otype),
+            Node::IDENT(ident_name) => {
+                if let Some(var) = self.var_table.get(&ident_name) {
+                    var.ty.clone()
+                } else {
+                    Type::UNKNOWN
+                }
+            }
+            Node::UNARY(op, binner, _) => {
+                let inner: Node = unsafe { Box::into_raw(binner).read() };
+                let inner_type: Type = self.walk(inner);
+                match op {
+                    Token::MINUS => inner_type,
+                    Token::AMPERSAND => Type::POINTER(Box::new(inner_type), 8),
+                    Token::STAR => {
+                        if let Type::POINTER(_, _) = inner_type.clone() {
+                            return inner_type;
+                        } else {
+                            Error::TYPE
+                                .found(&format!("can't dereference {}", inner_type.string()));
+                        }
+                        Type::UNKNOWN
+                    }
+                    _ => Type::UNKNOWN,
+                }
+            }
             Node::NUMBER(ty) => ty,
             //Node::RETURN(bstmt),
             //Node::IF(bcond,bstmt),
