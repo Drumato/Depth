@@ -15,6 +15,7 @@ P -> i16
 P -> i32
 P -> i64
 P -> Pointer<P>
+P -> Array<P,T>
 ```
 
 # expr

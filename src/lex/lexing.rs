@@ -58,9 +58,12 @@ fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
         ')' => Some((Token::RPAREN, 1)),
         '{' => Some((Token::LBRACE, 1)),
         '}' => Some((Token::RBRACE, 1)),
+        '[' => Some((Token::LBRACKET, 1)),
+        ']' => Some((Token::RBRACKET, 1)),
         '<' => Some((Token::LT, 1)),
         '>' => Some((Token::GT, 1)),
         ':' => Some((Token::COLON, 1)),
+        ',' => Some((Token::COMMA, 1)),
         '=' => Some((Token::ASSIGN, 1)),
         ' ' => Some((Token::BLANK, count_len(input, |c| c == &' '))),
         '\n' => Some((Token::LF, 1)),
@@ -74,7 +77,7 @@ fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
 fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
     let length: usize = count_len(input, |c| c.is_digit(10) || c == &'_' || c.is_alphabetic());
     let keywords: Vec<&str> = vec![
-        "return", "if", "else", "func", "let", "i8", "i16", "i32", "i64", "Pointer", "ch",
+        "return", "if", "else", "func", "let", "i8", "i16", "i32", "i64", "Pointer", "Array", "ch",
     ];
     let types: Vec<Token> = vec![
         Token::RETURN,
@@ -87,6 +90,7 @@ fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
         Token::I32,
         Token::I64,
         Token::POINTER(Box::new(Token::EOF)),
+        Token::ARRAY(Box::new(Token::EOF), Box::new(Token::EOF)),
         Token::CHAR,
     ];
     for (idx, k) in keywords.iter().enumerate() {

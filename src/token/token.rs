@@ -11,6 +11,8 @@ pub enum Token {
     RPAREN,
     LBRACE,
     RBRACE,
+    LBRACKET,
+    RBRACKET,
     LSHIFT,
     RSHIFT,
     LT,
@@ -20,6 +22,7 @@ pub enum Token {
     EQ,
     NTEQ,
     COLON,
+    COMMA,
     AMPERSAND,
 
     FUNC,
@@ -33,6 +36,7 @@ pub enum Token {
     I32,
     I64,
     POINTER(Box<Token>),
+    ARRAY(Box<Token>, Box<Token>),
     CHAR,
     CHARLIT(char),
     EOF,
@@ -53,6 +57,8 @@ impl Token {
             Token::RPAREN => "RPAREN".to_string(),
             Token::LBRACE => "LBRACE".to_string(),
             Token::RBRACE => "RBRACE".to_string(),
+            Token::LBRACKET => "LBRACKET".to_string(),
+            Token::RBRACKET => "RBRACKET".to_string(),
             Token::LSHIFT => "LSHIFT".to_string(),
             Token::RSHIFT => "RSHIFT".to_string(),
             Token::LT => "LESSTHAN".to_string(),
@@ -62,6 +68,7 @@ impl Token {
             Token::EQ => "EQUAL".to_string(),
             Token::NTEQ => "NOTEQUAL".to_string(),
             Token::COLON => "COLON".to_string(),
+            Token::COMMA => "COMMA".to_string(),
             Token::AMPERSAND => "AMPERSAND".to_string(),
             Token::RETURN => "RETURN".to_string(),
             Token::EOF => "EOF".to_string(),
@@ -75,6 +82,9 @@ impl Token {
             Token::I32 => "i32".to_string(),
             Token::I64 => "i64".to_string(),
             Token::POINTER(ptr_to) => format!("POINTER<{}>", ptr_to.string()),
+            Token::ARRAY(elem_type, ary_size) => {
+                format!("ARRAY<{},{}>", elem_type.string(), ary_size.string(),)
+            }
             Token::CHAR => "CHAR".to_string(),
             Token::CHARLIT(char_val) => format!("CHARLIT<{}>", char_val),
             _ => "".to_string(),

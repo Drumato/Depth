@@ -69,10 +69,17 @@ impl Manager {
                             expr_reg,
                             int_type.type_size,
                         )),
-                        Type::CHAR(_) => self.hirs.push(HIR::STORE(var.stack_offset, expr_reg, 4)),
+                        Type::CHAR(_) => {
+                            self.hirs.push(HIR::STORE(var.stack_offset, expr_reg, 4));
+                        }
                         Type::POINTER(_, size) => {
                             self.hirs
                                 .push(HIR::STORE(var.stack_offset, expr_reg, *size))
+                        }
+                        Type::ARRAY(belem, _, _) => {
+                            let elem: Type = unsafe { Box::into_raw(belem.clone()).read() };
+                            self.hirs
+                                .push(HIR::STORE(var.stack_offset, expr_reg, elem.size()));
                         }
                         _ => Error::TYPE.found(&"type unknown".to_string()),
                     }
@@ -147,25 +154,29 @@ impl Manager {
             node::Node::IDENT(ident_name) => {
                 if let Some(var) = self.var_table.get(&ident_name) {
                     match &var.ty {
-                        Type::INTEGER(int_type) => {
-                            self.hirs.push(HIR::LOAD(
-                                self.regnum,
-                                var.stack_offset,
-                                int_type.type_size,
-                            ));
+                        Type::INTEGER(_) => {
+                            self.hirs
+                                .push(HIR::LOAD(self.regnum, var.stack_offset, var.ty.size()));
                             let return_reg: usize = self.regnum;
                             self.regnum += 1;
                             return_reg
                         }
                         Type::CHAR(_) => {
-                            self.hirs.push(HIR::LOAD(self.regnum, var.stack_offset, 4));
+                            self.hirs
+                                .push(HIR::LOAD(self.regnum, var.stack_offset, var.ty.size()));
                             let return_reg: usize = self.regnum;
                             self.regnum += 1;
                             return_reg
                         }
-                        Type::POINTER(_, size) => {
+                        Type::POINTER(_, _) => {
                             self.hirs
-                                .push(HIR::LOAD(self.regnum, var.stack_offset, *size));
+                                .push(HIR::LOAD(self.regnum, var.stack_offset, var.ty.size()));
+                            let return_reg: usize = self.regnum;
+                            self.regnum += 1;
+                            return_reg
+                        }
+                        Type::ARRAY(_, _, _) => {
+                            self.hirs.push(HIR::LOAD(self.regnum, var.stack_offset, 8));
                             let return_reg: usize = self.regnum;
                             self.regnum += 1;
                             return_reg

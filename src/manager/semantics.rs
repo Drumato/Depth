@@ -7,7 +7,8 @@ use super::manager::{Manager, Variable};
 pub enum Type {
     INTEGER(IntType),
     CHAR(Option<char>),
-    POINTER(Box<Type>, usize), // type_size
+    POINTER(Box<Type>, usize),      // type_size
+    ARRAY(Box<Type>, usize, usize), // elem_type,ary_size,size
     UNKNOWN,
 }
 #[derive(Clone, Eq, PartialEq)]
@@ -30,7 +31,17 @@ impl Type {
                 Some(char_val) => format!("CHAR<{}>", char_val),
                 None => "CHAR".to_string(),
             },
+            Type::ARRAY(elem, ary_size, _) => format!("ARRAY<{},{}>", elem.string(), ary_size),
             Type::UNKNOWN => "UNKNOWN".to_string(),
+        }
+    }
+    pub fn size(&self) -> usize {
+        match self {
+            Type::INTEGER(int_type) => int_type.type_size,
+            Type::POINTER(_, size) => *size,
+            Type::CHAR(_) => 4,
+            Type::ARRAY(elem, ary_size, _) => elem.size() * ary_size,
+            Type::UNKNOWN => 42,
         }
     }
     pub fn from_type(t: Token) -> Type {
@@ -55,6 +66,20 @@ impl Type {
                 let ptr_to: Token = unsafe { Box::into_raw(bptr_to).read() };
                 Type::POINTER(Box::new(Type::from_type(ptr_to)), 8)
             }
+            Token::ARRAY(belem_type, bary_size) => {
+                let elem_typet: Token = unsafe { Box::into_raw(belem_type).read() };
+                let ary_size: Token = unsafe { Box::into_raw(bary_size).read() };
+                let elem_type: Type = Type::from_type(elem_typet);
+                if let Token::INTEGER(int) = ary_size {
+                    return Type::ARRAY(
+                        Box::new(elem_type.clone()),
+                        int as usize,
+                        int as usize * elem_type.size(),
+                    );
+                }
+                Type::ARRAY(Box::new(elem_type), 0, 0)
+            }
+            Token::CHAR => Type::CHAR(None),
             _ => Type::UNKNOWN,
         }
     }
@@ -132,6 +157,11 @@ impl Manager {
                         self.check_type(Type::CHAR(ochar_val), expr_type);
                         self.stack_offset += 4;
                     }
+                    Type::ARRAY(belem, ary_size, size) => {
+                        let expr_type: Type = self.walk(expr);
+                        self.check_type(Type::ARRAY(belem, ary_size, size), expr_type);
+                        self.stack_offset += size;
+                    }
                     _ => (),
                 }
                 self.var_table.insert(
@@ -174,6 +204,20 @@ impl Manager {
             }
             Type::CHAR(_) => {
                 if let Type::CHAR(_) = rtype {
+                    ();
+                } else {
+                    Error::TYPE.found(&format!(
+                        "difference type between {} and {}",
+                        ltype.string(),
+                        rtype.string()
+                    ));
+                }
+            }
+            Type::ARRAY(blelem, _, _) => {
+                if let Type::ARRAY(brelem, _, _) = rtype {
+                    let lelem: Type = unsafe { Box::into_raw(blelem).read() };
+                    let relem: Type = unsafe { Box::into_raw(brelem).read() };
+                    self.check_builtin_type(lelem, relem);
                     ();
                 } else {
                     Error::TYPE.found(&format!(

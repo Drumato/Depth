@@ -288,6 +288,16 @@ impl Parser {
                 self.expect(&Token::GT);
                 Token::POINTER(Box::new(inner))
             }
+            Token::ARRAY(_, _) => {
+                self.next_token();
+                self.expect(&Token::LT);
+                let elem_type: Token = self.consume_typename();
+                self.expect(&Token::COMMA);
+                let ary_size: Token = self.get_token();
+                self.next_token();
+                self.expect(&Token::GT);
+                Token::ARRAY(Box::new(elem_type), Box::new(ary_size))
+            }
             _ => {
                 Error::PARSE.found(&format!("expected typename but got {}", t.string()));
                 Token::EOF
