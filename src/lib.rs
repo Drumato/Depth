@@ -1,4 +1,5 @@
 pub mod ce;
+pub mod elf;
 pub mod ir;
 pub mod lex;
 pub mod manager;

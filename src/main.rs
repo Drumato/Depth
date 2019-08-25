@@ -16,10 +16,18 @@ mod ir;
 mod manager;
 use manager::manager::Manager;
 mod ce;
+mod elf;
 
 fn main() -> Result<(), Box<std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
+    if matches.is_present("elf") {
+        match parse_elf(matches.value_of("source").unwrap()) {
+            Ok(()) => (),
+            Err(e) => eprintln!("{}", e),
+        }
+        std::process::exit(0);
+    }
     let tokens: Vec<tok::Token> = lex_phase(&matches);
     let funcs: Vec<node::Func> = parse_phase(&matches, tokens);
     let mut manager: Manager = Manager {
@@ -92,4 +100,13 @@ fn read_file(s: &str) -> String {
         eprintln!("{} is directory.", filepath.to_str().unwrap());
     }
     s.to_string()
+}
+fn parse_elf(s: &str) -> Result<(), Box<std::error::Error>> {
+    use std::fs::File;
+    use std::io::Read;
+    let mut file: File = File::open(s)?;
+    let mut content = Vec::new();
+    file.read_to_end(&mut content)?;
+    elf::elf64::dump_elf_in_detail(content);
+    Ok(())
 }

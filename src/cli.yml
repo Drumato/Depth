@@ -7,25 +7,13 @@ args:
         help: Sets the input file to use
         required: true
         index: 1
-    - test:
-        long: test
-        required: false
-        index: 2
+        multiple: true
     - dump-source:
         long: dump-source
         help: dump source that inputed
     - dump-token:
         long: dump-token
         help: dump tokens with lexer
-    - dump-asmtoken:
-        long: dump-asmtoken
-        help: dump asmtokens with lexer
-    - dump-ast:
-        long: dump-ast
-        help: dump ast nodes with parser
-    - dump-asmast:
-        long: dump-asmast
-        help: dump asmast nodes with parser
     - dump-symbol:
         long: dump-symbol
         help: dump symbol-tables each environments
@@ -42,3 +30,6 @@ args:
         short: i
         long: intel
         help: append prefix when generating assembly-code
+    - elf:
+        short: elf
+        long: elf
