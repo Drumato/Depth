@@ -108,6 +108,14 @@ impl Manager {
                 HIR::LOAD(reg, offset, size) => {
                     println!("  mov {}, -{}[rbp]", gr(reg, *size), offset);
                 }
+                HIR::INDEXLOAD(reg1, reg2, index, size) => {
+                    println!(
+                        "  mov {}, [{} + {}]",
+                        gr(reg1, *size),
+                        gr(reg2, *size),
+                        index * (*size as i128)
+                    );
+                }
             }
         }
     }

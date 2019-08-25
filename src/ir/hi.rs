@@ -26,8 +26,9 @@ pub enum HIR {
     LABEL(usize),
     CMP(Reg, usize),
     JUMP(usize),
-    STORE(Offset, Reg, usize), //offset,reg,size
-    LOAD(Reg, Offset, usize),  //reg,offset,size
+    STORE(Offset, Reg, usize),        //offset,reg,size
+    LOAD(Reg, Offset, usize),         //reg,offset,size
+    INDEXLOAD(Reg, Reg, i128, usize), //reg,reg,index,size
 }
 
 impl HIR {
@@ -61,6 +62,10 @@ impl HIR {
             HIR::STORE(offset, reg, size) => {
                 format!("STORE<{}> into -{}[rbp] from {}", size, offset, reg)
             }
+            HIR::INDEXLOAD(reg1, reg2, index, size) => format!(
+                "INDEXLOAD into {} from [{} + {} * {}]",
+                reg1, reg2, index, size
+            ),
             HIR::LOAD(reg, offset, size) => {
                 format!("LOAD<{}> into {} from -{}[rbp]", size, reg, offset)
             }

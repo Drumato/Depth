@@ -3,6 +3,7 @@
 priority -> **`T1` > `T2`**
 
 ```
+T1 -> ident[E]
 T1 -> -T
 T1 -> *T
 T1 -> &T

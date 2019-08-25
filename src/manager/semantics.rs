@@ -134,6 +134,13 @@ impl Manager {
                 }
             }
             Node::NUMBER(ty) => ty,
+            Node::INDEX(ident_name, _) => {
+                if let Some(var) = self.var_table.get(&ident_name) {
+                    var.ty.clone()
+                } else {
+                    Type::UNKNOWN
+                }
+            }
             Node::CHARLIT(char_val) => Type::CHAR(Some(char_val)),
             Node::ARRAYLIT(ref mut elems) => {
                 let mut fin_type: Type = Type::UNKNOWN;

@@ -1,8 +1,9 @@
+#[allow(mutable_borrow_reservation_conflict)]
 use super::super::ce::types::Error;
 use super::super::ir::hi::HIR;
 use super::super::parse::node;
 use super::super::token::token::Token;
-use super::manager::Manager;
+use super::manager::{Manager, Variable};
 use super::semantics::Type;
 impl Manager {
     pub fn gen_irs(&mut self) {
@@ -62,26 +63,21 @@ impl Manager {
                 let expr: node::Node = unsafe { Box::into_raw(bexpr).read() };
                 let expr_reg: usize = self.gen_expr(expr);
                 self.regnum -= 1;
-                if let Some(var) = self.var_table.get(&ident_name) {
-                    match &var.ty {
-                        Type::INTEGER(int_type) => self.hirs.push(HIR::STORE(
-                            var.stack_offset,
-                            expr_reg,
-                            int_type.type_size,
-                        )),
-                        Type::CHAR(_) => {
-                            self.hirs.push(HIR::STORE(var.stack_offset, expr_reg, 4));
-                        }
-                        Type::POINTER(_, size) => {
-                            self.hirs
-                                .push(HIR::STORE(var.stack_offset, expr_reg, *size))
-                        }
-                        Type::ARRAY(_, _, _) => {}
-                        _ => Error::TYPE.found(&"type unknown".to_string()),
+                let var: &Variable = self.get_var(&ident_name).unwrap();
+                match &var.ty {
+                    Type::INTEGER(int_type) => {
+                        self.hirs
+                            .push(HIR::STORE(var.stack_offset, expr_reg, int_type.type_size))
                     }
-                } else {
-                    Error::UNDEFINED
-                        .found(&format!("undefined such an identifier '{}'", ident_name));
+                    Type::CHAR(_) => {
+                        self.hirs.push(HIR::STORE(var.stack_offset, expr_reg, 4));
+                    }
+                    Type::POINTER(_, size) => {
+                        self.hirs
+                            .push(HIR::STORE(var.stack_offset, expr_reg, *size))
+                    }
+                    Type::ARRAY(_, _, _) => {}
+                    _ => Error::TYPE.found(&"type unknown".to_string()),
                 }
             }
             _ => (),
@@ -100,24 +96,16 @@ impl Manager {
                     let inner: node::Node = unsafe { Box::into_raw(binner).read() };
                     let rr: usize = self.gen_expr(inner.clone());
                     let ident_name: String = self.get_ident_name(inner);
-                    if let Some(var) = self.var_table.get(&ident_name) {
-                        self.hirs.push(HIR::ADDRESS(rr, var.stack_offset));
-                    } else {
-                        Error::UNDEFINED
-                            .found(&format!("undefined such an identifier '{}'", ident_name));
-                    }
+                    let var: &Variable = self.get_var(&ident_name).unwrap();
+                    self.hirs.push(HIR::ADDRESS(rr, var.stack_offset));
                     rr
                 }
                 Token::STAR => {
                     let inner: node::Node = unsafe { Box::into_raw(binner).read() };
                     let rr: usize = self.gen_expr(inner.clone());
                     let ident_name: String = self.get_ident_name(inner);
-                    if let Some(var) = self.var_table.get(&ident_name) {
-                        self.hirs.push(HIR::DEREFERENCE(rr, var.stack_offset));
-                    } else {
-                        Error::UNDEFINED
-                            .found(&format!("undefined such an identifier '{}'", ident_name));
-                    }
+                    let var: &Variable = self.get_var(&ident_name).unwrap();
+                    self.hirs.push(HIR::DEREFERENCE(rr, var.stack_offset));
                     rr
                 }
                 _ => self.regnum,
@@ -131,6 +119,25 @@ impl Manager {
                 self.gen_binop(t, lr, rr);
                 self.regnum -= 1;
                 lr
+            }
+            node::Node::INDEX(ident_name, bexpr) => {
+                let var: &Variable = self.get_var(&ident_name).unwrap();
+                let address_reg: usize = self.regnum;
+                self.hirs.push(HIR::ADDRESS(address_reg, var.stack_offset));
+                self.regnum += 1;
+                let expr: node::Node = unsafe { Box::into_raw(bexpr).read() };
+                if let node::Node::NUMBER(Type::INTEGER(int_type)) = expr {
+                    self.hirs.push(HIR::INDEXLOAD(
+                        self.regnum,
+                        address_reg,
+                        int_type.val.unwrap(),
+                        int_type.type_size,
+                    ));
+                    self.regnum += 1;
+                    return self.regnum;
+                }
+                let expr_reg: usize = self.gen_expr(expr);
+                expr_reg
             }
             node::Node::NUMBER(ty) => match ty {
                 Type::INTEGER(int_type) => {
@@ -159,13 +166,12 @@ impl Manager {
                     };
                     let expr_reg: usize = self.gen_expr(elem.1);
                     if let Some(ident_name) = elem.0 {
-                        if let Some(var) = self.var_table.get(&ident_name) {
-                            self.hirs.push(HIR::STORE(
-                                var.stack_offset - total_size,
-                                expr_reg,
-                                elem_size,
-                            ));
-                        }
+                        let var: &Variable = self.get_var(&ident_name).unwrap();
+                        self.hirs.push(HIR::STORE(
+                            var.stack_offset - total_size,
+                            expr_reg,
+                            elem_size,
+                        ));
                     }
                     total_size += elem_size;
                 }
@@ -173,47 +179,42 @@ impl Manager {
                 self.regnum
             }
             node::Node::IDENT(ident_name) => {
-                if let Some(var) = self.var_table.get(&ident_name) {
-                    match &var.ty {
-                        Type::INTEGER(_) => {
-                            self.hirs
-                                .push(HIR::LOAD(self.regnum, var.stack_offset, var.ty.size()));
-                            let return_reg: usize = self.regnum;
-                            self.regnum += 1;
-                            return_reg
-                        }
-                        Type::CHAR(_) => {
-                            self.hirs
-                                .push(HIR::LOAD(self.regnum, var.stack_offset, var.ty.size()));
-                            let return_reg: usize = self.regnum;
-                            self.regnum += 1;
-                            return_reg
-                        }
-                        Type::POINTER(_, _) => {
-                            self.hirs
-                                .push(HIR::LOAD(self.regnum, var.stack_offset, var.ty.size()));
-                            let return_reg: usize = self.regnum;
-                            self.regnum += 1;
-                            return_reg
-                        }
-                        Type::ARRAY(_, _, _) => {
-                            self.hirs.push(HIR::LOAD(self.regnum, var.stack_offset, 8));
-                            let return_reg: usize = self.regnum;
-                            self.regnum += 1;
-                            return_reg
-                        }
-                        _ => {
-                            Error::TYPE.found(&"type unknown".to_string());
-                            self.regnum
-                        }
+                let var: &Variable = self.get_var(&ident_name).unwrap();
+                match &var.ty {
+                    Type::INTEGER(_) => {
+                        self.hirs
+                            .push(HIR::LOAD(self.regnum, var.stack_offset, var.ty.size()));
+                        let return_reg: usize = self.regnum;
+                        self.regnum += 1;
+                        return_reg
                     }
-                } else {
-                    Error::UNDEFINED
-                        .found(&format!("undefined such an identifier '{}'", ident_name));
-                    self.regnum
+                    Type::CHAR(_) => {
+                        self.hirs
+                            .push(HIR::LOAD(self.regnum, var.stack_offset, var.ty.size()));
+                        let return_reg: usize = self.regnum;
+                        self.regnum += 1;
+                        return_reg
+                    }
+                    Type::POINTER(_, _) => {
+                        self.hirs
+                            .push(HIR::LOAD(self.regnum, var.stack_offset, var.ty.size()));
+                        let return_reg: usize = self.regnum;
+                        self.regnum += 1;
+                        return_reg
+                    }
+                    Type::ARRAY(_, _, _) => {
+                        self.hirs.push(HIR::LOAD(self.regnum, var.stack_offset, 8));
+                        let return_reg: usize = self.regnum;
+                        self.regnum += 1;
+                        return_reg
+                    }
+                    _ => {
+                        Error::TYPE.found(&"type unknown".to_string());
+                        self.regnum
+                    }
                 }
             }
-            _ => 42,
+            _ => self.regnum,
         }
     }
     fn gen_binop(&mut self, t: Token, lr: usize, rr: usize) {
@@ -266,5 +267,12 @@ impl Manager {
         }
         Error::TYPE.found(&format!("unexpected '{}'", n.string()));
         "".to_string()
+    }
+    fn get_var(&self, ident_name: &String) -> Option<&Variable> {
+        if let Some(var) = self.var_table.get(ident_name) {
+            return Some(var);
+        }
+        Error::UNDEFINED.found(&format!("undefined such an identifier '{}'", ident_name));
+        None
     }
 }

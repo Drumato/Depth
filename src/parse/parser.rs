@@ -242,10 +242,7 @@ impl Parser {
                     type_size: 8,
                 }))
             }
-            Token::IDENT(ident_name) => {
-                self.next_token();
-                Node::IDENT(ident_name.to_string())
-            }
+            Token::IDENT(_) => self.parse_ident(),
             Token::CHARLIT(char_val) => {
                 self.next_token();
                 Node::CHARLIT(*char_val)
@@ -269,6 +266,19 @@ impl Parser {
                 Error::PARSE.found(&format!("unexpected {} while parsing term", t.string(),));
                 Node::INVALID
             }
+        }
+    }
+    fn parse_ident(&mut self) -> Node {
+        let ident_name: String = self.consume_ident();
+        let tok: &Token = self.cur_token();
+        match tok {
+            &Token::LBRACKET => {
+                self.next_token();
+                let expr: Node = self.expr();
+                self.consume(&Token::RBRACKET);
+                Node::INDEX(ident_name.clone(), Box::new(expr))
+            }
+            _ => Node::IDENT(ident_name.to_string()),
         }
     }
     fn check_invalid(&mut self, n: &Node) {
