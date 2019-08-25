@@ -9,6 +9,7 @@ T1 -> &T
 T2 -> num
 T2 -> ident
 T2 -> ( E )
+T2 -> [ E*n ] (0 <= n)
 
 P -> i8
 P -> i16

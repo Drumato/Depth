@@ -98,7 +98,7 @@ impl Manager {
             idx += 1;
         }
     }
-    fn walk(&mut self, n: Node) -> Type {
+    fn walk(&mut self, mut n: Node) -> Type {
         match n {
             Node::IDENT(ident_name) => {
                 if let Some(var) = self.var_table.get(&ident_name) {
@@ -135,21 +135,15 @@ impl Manager {
             }
             Node::NUMBER(ty) => ty,
             Node::CHARLIT(char_val) => Type::CHAR(Some(char_val)),
-            Node::ARRAYLIT(ref mut belems) => {
-                eprintln!("{:?}", unsafe { belems.as_ptr() });
+            Node::ARRAYLIT(ref mut elems) => {
                 let mut fin_type: Type = Type::UNKNOWN;
                 let mut total_size: usize = 0;
-                let length: usize = belems.len();
-                let mut return_belems: Vec<Box<(Node, usize)>> = Vec::new();
-                for belem in belems.iter() {
-                    let mut elem: (Node, usize) = unsafe { Box::into_raw(belem.clone()).read() };
-                    let elem_type: Type = self.walk(elem.0.clone());
-                    fin_type = elem_type.clone();
+                let length: usize = elems.len();
+                for elem in elems.iter() {
+                    let elem_type: Type = self.walk(elem.1.clone());
                     total_size += elem_type.size();
-                    elem.1 = self.stack_offset + total_size;
-                    return_belems.push(Box::new(elem));
+                    fin_type = elem_type;
                 }
-                *belems = return_belems;
                 Type::ARRAY(Box::new(fin_type), length, total_size)
             }
             //Node::RETURN(bstmt),

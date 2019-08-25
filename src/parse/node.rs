@@ -6,7 +6,7 @@ pub enum Node {
     UNARY(Token, Box<Node>, Option<Type>),
     NUMBER(Type),
     CHARLIT(char),
-    ARRAYLIT(Vec<Box<(Node, usize)>>), //(Element, offset)
+    ARRAYLIT(Vec<(Option<String>, Node)>), //(ident_name, expression)
     IDENT(String),
     RETURN(Box<Node>),
     IF(Box<Node>, Box<Node>, Option<Box<Node>>), // condition, block,else
@@ -47,7 +47,7 @@ impl Node {
             Node::ARRAYLIT(elems) => {
                 let elems_string: String = elems
                     .into_iter()
-                    .map(|b| b.0.string() + ",")
+                    .map(|b| b.1.string() + ",")
                     .collect::<String>();
                 format!("ARRAY({})", elems_string)
             }

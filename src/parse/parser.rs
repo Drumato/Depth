@@ -108,7 +108,13 @@ impl Parser {
                 self.cur_token().string()
             ));
         }
-        Node::LET(ident_name, typename, Box::new(self.expr()))
+        let mut expr: Node = self.expr();
+        if let Node::ARRAYLIT(ref mut v) = expr {
+            for elem in v.iter_mut() {
+                *elem = (Some(ident_name.clone()), elem.1.clone());
+            }
+        }
+        Node::LET(ident_name, typename, Box::new(expr))
     }
     fn compound_stmt(&mut self) -> Node {
         self.next_token();
@@ -246,12 +252,12 @@ impl Parser {
             }
             Token::LBRACKET => {
                 self.next_token();
-                let mut elems: Vec<Box<(Node, usize)>> = Vec::new();
+                let mut elems: Vec<(Option<String>, Node)> = Vec::new();
                 loop {
                     if let &Token::RBRACKET = self.cur_token() {
                         break;
                     }
-                    elems.push(Box::new((self.expr(), 0)));
+                    elems.push((None, self.expr()));
                     if !self.consume(&Token::COMMA) {
                         self.expect(&Token::RBRACKET);
                         break;

@@ -76,11 +76,7 @@ impl Manager {
                             self.hirs
                                 .push(HIR::STORE(var.stack_offset, expr_reg, *size))
                         }
-                        Type::ARRAY(belem, _, _) => {
-                            let elem: Type = unsafe { Box::into_raw(belem.clone()).read() };
-                            self.hirs
-                                .push(HIR::STORE(var.stack_offset, expr_reg, elem.size()));
-                        }
+                        Type::ARRAY(_, _, _) => {}
                         _ => Error::TYPE.found(&"type unknown".to_string()),
                     }
                 } else {
@@ -151,11 +147,29 @@ impl Manager {
                 self.regnum += 1;
                 return_reg
             }
-            node::Node::ARRAYLIT(belems) => {
-                eprintln!("{:?}", unsafe { belems.as_ptr() });
-                for belem in belems {
-                    let elem: (node::Node, usize) = unsafe { Box::into_raw(belem).read() };
+            node::Node::ARRAYLIT(elems) => {
+                let mut total_size: usize = 0;
+                let length: usize = elems.len();
+                for elem in elems {
+                    let elem_size: usize = match &elem.1 {
+                        node::Node::BINOP(_, _, _, otype) => otype.clone().unwrap().size(),
+                        node::Node::UNARY(_, _, otype) => otype.clone().unwrap().size(),
+                        node::Node::NUMBER(ty) => ty.size(),
+                        _ => 0,
+                    };
+                    let expr_reg: usize = self.gen_expr(elem.1);
+                    if let Some(ident_name) = elem.0 {
+                        if let Some(var) = self.var_table.get(&ident_name) {
+                            self.hirs.push(HIR::STORE(
+                                var.stack_offset - total_size,
+                                expr_reg,
+                                elem_size,
+                            ));
+                        }
+                    }
+                    total_size += elem_size;
                 }
+                self.regnum -= length - 1;
                 self.regnum
             }
             node::Node::IDENT(ident_name) => {
