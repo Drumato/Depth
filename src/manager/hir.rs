@@ -151,6 +151,13 @@ impl Manager {
                 self.regnum += 1;
                 return_reg
             }
+            node::Node::ARRAYLIT(belems) => {
+                eprintln!("{:?}", unsafe { belems.as_ptr() });
+                for belem in belems {
+                    let elem: (node::Node, usize) = unsafe { Box::into_raw(belem).read() };
+                }
+                self.regnum
+            }
             node::Node::IDENT(ident_name) => {
                 if let Some(var) = self.var_table.get(&ident_name) {
                     match &var.ty {

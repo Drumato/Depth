@@ -14,6 +14,9 @@ args:
     - dump-token:
         long: dump-token
         help: dump tokens with lexer
+    - dump-ast:
+        long: dump-ast
+        help: dump ast with parser
     - dump-symbol:
         long: dump-symbol
         help: dump symbol-tables each environments

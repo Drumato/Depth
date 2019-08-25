@@ -70,14 +70,12 @@ impl Type {
                 let elem_typet: Token = unsafe { Box::into_raw(belem_type).read() };
                 let ary_size: Token = unsafe { Box::into_raw(bary_size).read() };
                 let elem_type: Type = Type::from_type(elem_typet);
+                let size: usize = elem_type.size();
+                let belem: Box<Type> = Box::new(elem_type);
                 if let Token::INTEGER(int) = ary_size {
-                    return Type::ARRAY(
-                        Box::new(elem_type.clone()),
-                        int as usize,
-                        int as usize * elem_type.size(),
-                    );
+                    return Type::ARRAY(belem, int as usize, int as usize * size);
                 }
-                Type::ARRAY(Box::new(elem_type), 0, 0)
+                Type::ARRAY(belem, 0, 0)
             }
             Token::CHAR => Type::CHAR(None),
             _ => Type::UNKNOWN,
@@ -137,6 +135,23 @@ impl Manager {
             }
             Node::NUMBER(ty) => ty,
             Node::CHARLIT(char_val) => Type::CHAR(Some(char_val)),
+            Node::ARRAYLIT(ref mut belems) => {
+                eprintln!("{:?}", unsafe { belems.as_ptr() });
+                let mut fin_type: Type = Type::UNKNOWN;
+                let mut total_size: usize = 0;
+                let length: usize = belems.len();
+                let mut return_belems: Vec<Box<(Node, usize)>> = Vec::new();
+                for belem in belems.iter() {
+                    let mut elem: (Node, usize) = unsafe { Box::into_raw(belem.clone()).read() };
+                    let elem_type: Type = self.walk(elem.0.clone());
+                    fin_type = elem_type.clone();
+                    total_size += elem_type.size();
+                    elem.1 = self.stack_offset + total_size;
+                    return_belems.push(Box::new(elem));
+                }
+                *belems = return_belems;
+                Type::ARRAY(Box::new(fin_type), length, total_size)
+            }
             //Node::RETURN(bstmt),
             //Node::IF(bcond,bstmt),
             Node::LET(ident_name, type_name, bexpr) => {

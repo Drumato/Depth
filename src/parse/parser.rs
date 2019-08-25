@@ -244,6 +244,21 @@ impl Parser {
                 self.next_token();
                 Node::CHARLIT(*char_val)
             }
+            Token::LBRACKET => {
+                self.next_token();
+                let mut elems: Vec<Box<(Node, usize)>> = Vec::new();
+                loop {
+                    if let &Token::RBRACKET = self.cur_token() {
+                        break;
+                    }
+                    elems.push(Box::new((self.expr(), 0)));
+                    if !self.consume(&Token::COMMA) {
+                        self.expect(&Token::RBRACKET);
+                        break;
+                    }
+                }
+                Node::ARRAYLIT(elems)
+            }
             _ => {
                 Error::PARSE.found(&format!("unexpected {} while parsing term", t.string(),));
                 Node::INVALID
