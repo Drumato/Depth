@@ -30,12 +30,22 @@ impl Parser {
         let mut f: Func = Func {
             name: String::new(),
             stmts: Vec::new(),
+            args: Vec::new(),
         };
         self.next_token();
         let ident_name: String = self.consume_ident();
         f.name = ident_name.to_string();
         self.expect(&Token::LPAREN);
-        self.expect(&Token::RPAREN);
+        loop {
+            if self.consume(&Token::RPAREN) {
+                break;
+            }
+            f.args.push(self.defarg());
+            if !self.consume(&Token::COMMA) {
+                self.expect(&Token::RPAREN);
+                break;
+            }
+        }
         self.expect(&Token::LBRACE);
         let mut t: Token = self.get_token();
         while let Some(_) = Token::start_stmt(&t) {
@@ -226,6 +236,12 @@ impl Parser {
             _ => self.term(),
         }
     }
+    fn defarg(&mut self) -> Node {
+        let arg_name: String = self.consume_ident();
+        self.expect(&Token::COLON);
+        let ty: Token = self.consume_typename();
+        Node::DEFARG(arg_name, ty)
+    }
     fn term(&mut self) -> Node {
         let t: &Token = self.cur_token();
         match t {
@@ -277,6 +293,21 @@ impl Parser {
                 let expr: Node = self.expr();
                 self.consume(&Token::RBRACKET);
                 Node::INDEX(ident_name.clone(), Box::new(expr))
+            }
+            &Token::LPAREN => {
+                self.next_token();
+                let mut args: Vec<Box<Node>> = Vec::new();
+                loop {
+                    if self.consume(&Token::RPAREN) {
+                        break;
+                    }
+                    args.push(Box::new(self.expr()));
+                    if !self.consume(&Token::COMMA) {
+                        self.expect(&Token::RPAREN);
+                        break;
+                    }
+                }
+                Node::CALL(ident_name.clone(), args)
             }
             _ => Node::IDENT(ident_name.to_string()),
         }

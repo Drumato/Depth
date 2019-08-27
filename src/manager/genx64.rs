@@ -4,6 +4,13 @@ const FREE_REG: [&str; 6] = ["r10", "r11", "r12", "r13", "r14", "r15"];
 const FREE_REG32: [&str; 6] = ["r10d", "r11d", "r12d", "r13d", "r14d", "r15d"];
 const FREE_REG16: [&str; 6] = ["r10w", "r11w", "r12w", "r13w", "r14w", "r15w"];
 const FREE_REG8: [&str; 6] = ["r10b", "r11b", "r12b", "r13b", "r14b", "r15b"];
+const ARG_REG: [&str; 6] = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"];
+fn argr(num: usize, size: usize) -> String {
+    match size {
+        8 => ARG_REG[num].to_string(),
+        _ => ARG_REG[num].to_string(),
+    }
+}
 fn gr(num: &usize, size: usize) -> String {
     match size {
         8 => FREE_REG[*num].to_string(),
@@ -72,8 +79,10 @@ impl Manager {
                     println!("  mov {}, -{}[rbp]", gr(reg, 8), offset);
                     println!("  mov {}, [{}]", gr(reg, 8), gr(reg, 8));
                 }
-                HIR::RETURN(reg) => {
+                HIR::RETREG(reg) => {
                     println!("  mov rax, {}", gr(reg, 8));
+                }
+                HIR::RETURN => {
                     println!("  call .Lend");
                 }
                 HIR::PROLOGUE(size) => {
@@ -107,6 +116,12 @@ impl Manager {
                 }
                 HIR::LOAD(reg, offset, size) => {
                     println!("  mov {}, -{}[rbp]", gr(reg, *size), offset);
+                }
+                HIR::CALL(func_name, regs) => {
+                    for (idx, reg) in regs.iter().enumerate() {
+                        println!("  mov {}, {}", argr(idx, 8), gr(reg, 8))
+                    }
+                    println!("  call {}", func_name);
                 }
                 HIR::INDEXLOAD(reg1, reg2, index, size) => {
                     println!(

@@ -6,6 +6,7 @@ pub enum Node {
     UNARY(Token, Box<Node>, Option<Type>),
     NUMBER(Type),
     INDEX(String, Box<Node>),
+    CALL(String, Vec<Box<Node>>),
     CHARLIT(char),
     ARRAYLIT(Vec<(Option<String>, Node)>), //(ident_name, expression)
     IDENT(String),
@@ -13,6 +14,7 @@ pub enum Node {
     IF(Box<Node>, Box<Node>, Option<Box<Node>>), // condition, block,else
     BLOCK(Vec<Box<Node>>),
     LET(String, Token, Box<Node>), // ident_name,type,expression
+    DEFARG(String, Token),
     INVALID,
 }
 impl Node {
@@ -41,6 +43,13 @@ impl Node {
                 let stmts: String = bstmts.into_iter().map(|st| st.string()).collect::<String>();
                 format!("BLOCK({})", stmts)
             }
+            Node::CALL(ident, bargs) => {
+                let args: String = bargs
+                    .into_iter()
+                    .map(|a| a.string() + ",")
+                    .collect::<String>();
+                format!("CALL({})", args)
+            }
             Node::INVALID => "INVALID".to_string(),
             Node::LET(ident_name, ty, expr) => {
                 format!("LET {} <- {} ({})", ident_name, ty.string(), expr.string())
@@ -54,6 +63,7 @@ impl Node {
                 format!("ARRAY({})", elems_string)
             }
             Node::IDENT(ident_name) => format!("IDENT<{}>", ident_name),
+            Node::DEFARG(arg, ty) => format!("DEFARG<{},{}>", arg, ty.string()),
         }
     }
 }
@@ -62,4 +72,5 @@ impl Node {
 pub struct Func {
     pub name: String,
     pub stmts: Vec<Node>,
+    pub args: Vec<Node>,
 }

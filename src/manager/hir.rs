@@ -14,12 +14,14 @@ impl Manager {
                 break;
             }
             let f: node::Func = self.functions[idx].clone();
-            self.hirs.push(HIR::SYMBOL(f.name));
+            self.hirs.push(HIR::SYMBOL(f.name.clone()));
             self.hirs.push(HIR::PROLOGUE(self.stack_offset));
             for n in f.stmts {
                 self.gen_stmt(n);
             }
-            self.hirs.push(HIR::EPILOGUE);
+            if f.name == "main" {
+                self.hirs.push(HIR::EPILOGUE);
+            }
             idx += 1;
         }
     }
@@ -27,9 +29,12 @@ impl Manager {
         match n {
             node::Node::RETURN(bexpr) => {
                 let expr: node::Node = unsafe { Box::into_raw(bexpr).read() };
-                self.gen_expr(expr);
-                self.regnum -= 1;
-                self.hirs.push(HIR::RETURN(self.regnum));
+                let expr_reg: usize = self.gen_expr(expr);
+                if expr_reg != 42 {
+                    self.regnum -= 1;
+                    self.hirs.push(HIR::RETREG(self.regnum));
+                }
+                self.hirs.push(HIR::RETURN);
             }
             node::Node::IF(bcond, bstmt, oalter) => {
                 let cond: node::Node = unsafe { Box::into_raw(bcond).read() };
@@ -119,6 +124,18 @@ impl Manager {
                 self.gen_binop(t, lr, rr);
                 self.regnum -= 1;
                 lr
+            }
+            node::Node::CALL(func_name, bargs) => {
+                let mut regs: Vec<usize> = vec![0; bargs.len()];
+                for barg in bargs {
+                    let arg: node::Node = unsafe { Box::into_raw(barg.clone()).read() };
+                    regs.push(self.gen_expr(arg));
+                }
+                if regs.len() > 0 {
+                    self.regnum -= regs.len() - 1;
+                }
+                self.hirs.push(HIR::CALL(func_name, regs));
+                42
             }
             node::Node::INDEX(ident_name, bexpr) => {
                 let var: &Variable = self.get_var(&ident_name).unwrap();

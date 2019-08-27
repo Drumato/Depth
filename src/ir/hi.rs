@@ -21,7 +21,8 @@ pub enum HIR {
     NEGATIVE(Reg),
     DEREFERENCE(Reg, Offset),
     ADDRESS(Reg, Offset),
-    RETURN(Reg),
+    RETREG(Reg),
+    RETURN,
     SYMBOL(String),
     LABEL(usize),
     CMP(Reg, usize),
@@ -29,6 +30,7 @@ pub enum HIR {
     STORE(Offset, Reg, usize),        //offset,reg,size
     LOAD(Reg, Offset, usize),         //reg,offset,size
     INDEXLOAD(Reg, Reg, i128, usize), //reg,reg,index,size
+    CALL(String, Vec<Reg>),
 }
 
 impl HIR {
@@ -54,11 +56,13 @@ impl HIR {
             HIR::NEGATIVE(reg) => format!("negative {} ", reg),
             HIR::ADDRESS(reg, offset) => format!("address of {} from {}", reg, offset),
             HIR::DEREFERENCE(reg, offset) => format!("dereference of {} from {}", reg, offset),
-            HIR::RETURN(reg) => format!("return {}", reg),
+            HIR::RETREG(reg) => format!("mov retreg, {}", reg),
+            HIR::RETURN => "return".to_string(),
             HIR::SYMBOL(name) => format!("symbol '{}'", name),
             HIR::LABEL(num) => format!("LABEL {}", num),
             HIR::CMP(reg, label) => format!("compare between {} and 0, then jump {}", reg, label),
             HIR::JUMP(num) => format!("JUMP {}", num),
+            HIR::CALL(func, _) => format!("CALL {}", func),
             HIR::STORE(offset, reg, size) => {
                 format!("STORE<{}> into -{}[rbp] from {}", size, offset, reg)
             }
