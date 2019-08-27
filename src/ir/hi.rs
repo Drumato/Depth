@@ -31,6 +31,7 @@ pub enum HIR {
     LOAD(Reg, Offset, usize),         //reg,offset,size
     INDEXLOAD(Reg, Reg, i128, usize), //reg,reg,index,size
     CALL(String, Vec<Reg>),
+    PUSHARG(Reg),
 }
 
 impl HIR {
@@ -73,6 +74,7 @@ impl HIR {
             HIR::LOAD(reg, offset, size) => {
                 format!("LOAD<{}> into {} from -{}[rbp]", size, reg, offset)
             }
+            HIR::PUSHARG(_) => "push argument".to_string(),
         }
     }
 }

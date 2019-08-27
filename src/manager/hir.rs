@@ -15,7 +15,15 @@ impl Manager {
             }
             let f: node::Func = self.functions[idx].clone();
             self.hirs.push(HIR::SYMBOL(f.name.clone()));
+            for arg in f.args.iter() {
+                if let node::Node::DEFARG(_, ty) = arg {
+                    self.stack_offset -= Type::from_type(ty.clone()).size();
+                }
+            }
             self.hirs.push(HIR::PROLOGUE(self.stack_offset));
+            for (idx, arg) in f.args.iter().enumerate() {
+                self.hirs.push(HIR::PUSHARG(idx));
+            }
             for n in f.stmts {
                 self.gen_stmt(n);
             }

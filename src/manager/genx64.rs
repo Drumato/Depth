@@ -123,6 +123,7 @@ impl Manager {
                     }
                     println!("  call {}", func_name);
                 }
+                HIR::PUSHARG(reg) => println!("  push {}", argr(*reg, 8)),
                 HIR::INDEXLOAD(reg1, reg2, index, size) => {
                     println!(
                         "  mov {}, [{} + {}]",

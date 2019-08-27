@@ -51,3 +51,9 @@ S -> if E S (else S)
 S -> let T : P = E
 S -> { S*n }
 ```
+
+# func
+
+```
+func <ident_name> ( (<arg_name> : <type_name> )*n ) S (0 <= n && S -> { S*n } )
+```

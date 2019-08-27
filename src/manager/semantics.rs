@@ -92,6 +92,18 @@ impl Manager {
                 break;
             }
             let f: Func = self.functions[idx].clone();
+            for arg in f.args {
+                match arg {
+                    Node::DEFARG(arg_name, ty) => {
+                        self.stack_offset += Type::from_type(ty.clone()).size();
+                        self.var_table.insert(
+                            arg_name.clone(),
+                            Variable::new(arg_name, self.stack_offset, ty),
+                        );
+                    }
+                    _ => (),
+                }
+            }
             for n in f.stmts {
                 self.walk(n);
             }
