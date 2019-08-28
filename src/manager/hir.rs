@@ -24,6 +24,7 @@ impl Manager {
             for (idx, arg) in f.args.iter().enumerate() {
                 self.hirs.push(HIR::PUSHARG(idx));
             }
+            self.regnum = 0;
             for n in f.stmts {
                 self.gen_stmt(n);
             }
@@ -38,11 +39,8 @@ impl Manager {
             node::Node::RETURN(bexpr) => {
                 let expr: node::Node = unsafe { Box::into_raw(bexpr).read() };
                 let expr_reg: usize = self.gen_expr(expr);
-                if expr_reg != 42 {
-                    self.regnum -= 1;
-                    self.hirs.push(HIR::RETREG(self.regnum));
-                }
-                self.hirs.push(HIR::RETURN);
+                self.regnum -= 1;
+                self.hirs.push(HIR::RETURN(self.regnum));
             }
             node::Node::IF(bcond, bstmt, oalter) => {
                 let cond: node::Node = unsafe { Box::into_raw(bcond).read() };
@@ -135,15 +133,17 @@ impl Manager {
             }
             node::Node::CALL(func_name, bargs) => {
                 let mut regs: Vec<usize> = vec![0; bargs.len()];
-                for barg in bargs {
+                for (idx, barg) in bargs.iter().enumerate() {
                     let arg: node::Node = unsafe { Box::into_raw(barg.clone()).read() };
-                    regs.push(self.gen_expr(arg));
+                    regs[idx] = self.gen_expr(arg);
                 }
                 if regs.len() > 0 {
                     self.regnum -= regs.len() - 1;
                 }
-                self.hirs.push(HIR::CALL(func_name, regs));
-                42
+                let expr_reg: usize = self.regnum;
+                self.hirs.push(HIR::CALL(func_name, regs, Some(expr_reg)));
+                self.regnum += 1;
+                expr_reg
             }
             node::Node::INDEX(ident_name, bexpr) => {
                 let var: &Variable = self.get_var(&ident_name).unwrap();

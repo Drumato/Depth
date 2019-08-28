@@ -133,11 +133,10 @@ impl Parser {
         while let Some(_) = Token::start_stmt(&t) {
             let stmt: Node = self.stmt();
             stmts.push(Box::new(stmt));
-            self.consume(&Token::RBRACE);
-            t = self.get_token();
             if self.consume(&Token::RBRACE) {
                 return Node::BLOCK(stmts);
             }
+            t = self.get_token();
         }
         Node::BLOCK(stmts)
     }

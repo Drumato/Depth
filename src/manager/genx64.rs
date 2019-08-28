@@ -79,14 +79,16 @@ impl Manager {
                     println!("  mov {}, -{}[rbp]", gr(reg, 8), offset);
                     println!("  mov {}, [{}]", gr(reg, 8), gr(reg, 8));
                 }
-                HIR::RETREG(reg) => {
+                HIR::RETURN(reg) => {
                     println!("  mov rax, {}", gr(reg, 8));
-                }
-                HIR::RETURN => {
                     println!("  call .Lend");
                 }
                 HIR::PROLOGUE(size) => {
                     println!("  push rbp");
+                    println!("  push r12");
+                    println!("  push r13");
+                    println!("  push r14");
+                    println!("  push r15");
                     println!("  mov rbp, rsp");
                     if size != &0 {
                         println!("  sub rsp, {}", !7 & size + 7);
@@ -95,6 +97,10 @@ impl Manager {
                 HIR::EPILOGUE => {
                     println!(".Lend:");
                     println!("  mov rsp, rbp");
+                    println!("  pop r15");
+                    println!("  pop r14");
+                    println!("  pop r13");
+                    println!("  pop r12");
                     println!("  pop rbp");
                     println!("  ret");
                 }
@@ -117,11 +123,14 @@ impl Manager {
                 HIR::LOAD(reg, offset, size) => {
                     println!("  mov {}, -{}[rbp]", gr(reg, *size), offset);
                 }
-                HIR::CALL(func_name, regs) => {
+                HIR::CALL(func_name, regs, retreg) => {
                     for (idx, reg) in regs.iter().enumerate() {
                         println!("  mov {}, {}", argr(idx, 8), gr(reg, 8))
                     }
                     println!("  call {}", func_name);
+                    if let Some(reg) = retreg {
+                        println!("  mov {}, rax", gr(reg, 8));
+                    }
                 }
                 HIR::PUSHARG(reg) => println!("  push {}", argr(*reg, 8)),
                 HIR::INDEXLOAD(reg1, reg2, index, size) => {

@@ -32,15 +32,18 @@ impl Node {
             Node::RETURN(expr) => format!("RETURN({})", expr.string()),
             Node::IF(cond, stmt, alter) => match alter {
                 Some(else_block) => format!(
-                    "IF({}) ({}) ELSE({})",
+                    "IF({}) \n\t({}) ELSE \n\t({})",
                     cond.string(),
                     stmt.string(),
                     else_block.string(),
                 ),
-                None => format!("IF({}) ({}) ", cond.string(), stmt.string()),
+                None => format!("IF({}) \n\t({}) ", cond.string(), stmt.string()),
             },
             Node::BLOCK(bstmts) => {
-                let stmts: String = bstmts.into_iter().map(|st| st.string()).collect::<String>();
+                let stmts: String = bstmts
+                    .into_iter()
+                    .map(|st| "\n\t".to_owned() + &st.string())
+                    .collect::<String>();
                 format!("BLOCK({})", stmts)
             }
             Node::CALL(ident, bargs) => {
@@ -51,9 +54,12 @@ impl Node {
                 format!("CALL({})", args)
             }
             Node::INVALID => "INVALID".to_string(),
-            Node::LET(ident_name, ty, expr) => {
-                format!("LET {} <- {} ({})", ident_name, ty.string(), expr.string())
-            }
+            Node::LET(ident_name, ty, expr) => format!(
+                "LET {} <- {} \n\t({})",
+                ident_name,
+                ty.string(),
+                expr.string()
+            ),
             Node::CHARLIT(char_val) => format!("CHARLIT<{}>", char_val),
             Node::ARRAYLIT(elems) => {
                 let elems_string: String = elems
