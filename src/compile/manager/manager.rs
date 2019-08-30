@@ -1,6 +1,6 @@
+use super::super::frontend::parse::node::Func;
+use super::super::frontend::token::token::Token;
 use super::super::ir::hi::HIR;
-use super::super::parse::node::Func;
-use super::super::token::token::Token;
 use super::semantics::Type;
 use std::collections::HashMap;
 extern crate colored;

@@ -1,8 +1,8 @@
 #[allow(mutable_borrow_reservation_conflict)]
 use super::super::ce::types::Error;
+use super::super::frontend::parse::node;
+use super::super::frontend::token::token::Token;
 use super::super::ir::hi::HIR;
-use super::super::parse::node;
-use super::super::token::token::Token;
 use super::manager::{Manager, Variable};
 use super::semantics::Type;
 impl Manager {

@@ -1,5 +1,5 @@
-use super::super::ce::types::Error;
-use super::super::manager::semantics::{IntType, Type};
+use super::super::super::ce::types::Error;
+use super::super::super::manager::semantics::{IntType, Type};
 use super::super::token::token::Token;
 use super::node::{Func, Node};
 struct Parser {

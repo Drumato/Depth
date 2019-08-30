@@ -1,6 +1,6 @@
 use super::super::ce::types::Error;
-use super::super::parse::node::{Func, Node};
-use super::super::token::token::Token;
+use super::super::frontend::parse::node::{Func, Node};
+use super::super::frontend::token::token::Token;
 use super::manager::{Manager, Variable};
 
 #[derive(Clone, Eq, PartialEq)]

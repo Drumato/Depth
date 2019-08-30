@@ -1,4 +1,4 @@
-use super::super::manager::semantics::Type;
+use super::super::super::manager::semantics::Type;
 use super::super::token::token::Token;
 #[derive(Clone)]
 pub enum Node {

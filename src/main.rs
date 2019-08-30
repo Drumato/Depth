@@ -7,16 +7,14 @@ extern crate colored;
 use colored::*;
 
 use std::collections::HashMap;
-mod token;
-use token::token as tok;
-mod lex;
-mod parse;
-use parse::{node, parser};
-mod ir;
-mod manager;
-use manager::manager::Manager;
-mod ce;
-mod elf;
+mod compile;
+use compile::frontend::lex;
+use compile::frontend::parse::node;
+use compile::frontend::parse::parser;
+use compile::frontend::token::token as tok;
+use compile::manager::manager::Manager;
+mod object;
+use object::elf;
 
 fn main() -> Result<(), Box<std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
