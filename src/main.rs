@@ -8,10 +8,7 @@ use colored::*;
 
 use std::collections::HashMap;
 mod compile;
-use compile::frontend::lex;
-use compile::frontend::parse::node;
-use compile::frontend::parse::parser;
-use compile::frontend::token::token as tok;
+use compile::frontend as f;
 use compile::manager::manager::Manager;
 mod object;
 use object::elf;
@@ -26,8 +23,8 @@ fn main() -> Result<(), Box<std::error::Error>> {
         }
         std::process::exit(0);
     }
-    let tokens: Vec<tok::Token> = lex_phase(&matches);
-    let funcs: Vec<node::Func> = parse_phase(&matches, tokens);
+    let tokens: Vec<f::token::token::Token> = lex_phase(&matches);
+    let funcs: Vec<f::parse::node::Func> = parse_phase(&matches, tokens);
     let mut manager: Manager = Manager {
         functions: funcs,
         hirs: Vec::new(),
@@ -54,9 +51,9 @@ fn main() -> Result<(), Box<std::error::Error>> {
     Ok(())
 }
 
-fn lex_phase(matches: &clap::ArgMatches) -> Vec<tok::Token> {
+fn lex_phase(matches: &clap::ArgMatches) -> Vec<f::token::token::Token> {
     let filecontent: String = read_file(matches.value_of("source").unwrap());
-    let tokens: Vec<tok::Token> = lex::lexing::lexing(filecontent);
+    let tokens: Vec<f::token::token::Token> = f::lex::lexing::lexing(filecontent);
     if matches.is_present("dump-token") {
         eprintln!("{}", "--------dumptoken--------".blue().bold());
         for t in tokens.iter() {
@@ -66,13 +63,16 @@ fn lex_phase(matches: &clap::ArgMatches) -> Vec<tok::Token> {
     tokens
 }
 
-fn parse_phase(matches: &clap::ArgMatches, tokens: Vec<tok::Token>) -> Vec<node::Func> {
-    let funcs: Vec<node::Func> = parser::parsing(tokens);
+fn parse_phase(
+    matches: &clap::ArgMatches,
+    tokens: Vec<f::token::token::Token>,
+) -> Vec<f::parse::node::Func> {
+    let funcs: Vec<f::parse::node::Func> = f::parse::parser::parsing(tokens);
     if matches.is_present("dump-ast") {
         eprintln!("{}", "--------dumpast--------".blue().bold());
-        for f in funcs.iter() {
-            eprintln!("{}'s stmts:", f.name);
-            for n in f.stmts.iter() {
+        for fu in funcs.iter() {
+            eprintln!("{}'s stmts:", fu.name);
+            for n in fu.stmts.iter() {
                 eprintln!("{}", n.string().green().bold());
             }
         }
