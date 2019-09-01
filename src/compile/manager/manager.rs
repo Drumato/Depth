@@ -11,29 +11,34 @@ pub struct Manager {
     pub regnum: usize,
     pub labelnum: usize,
     pub stack_offset: usize,
-    pub var_table: HashMap<String, Variable>,
+    pub cur_env: Env,
 }
 
-pub struct Variable {
-    pub name: String,
+#[derive(Clone)]
+pub struct Env {
+    pub table: HashMap<String, Symbol>,
+    pub prev: Option<Box<Env>>,
+}
+impl Env {
+    pub fn new() -> Env {
+        Env {
+            table: HashMap::new(),
+            prev: None,
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct Symbol {
     pub stack_offset: usize,
     pub ty: Type,
 }
 
-impl Variable {
-    pub fn new(n: String, offset: usize, ty: Token) -> Variable {
-        Variable {
-            name: n,
+impl Symbol {
+    pub fn new(offset: usize, ty: Token) -> Symbol {
+        Symbol {
             stack_offset: offset,
             ty: Type::from_type(ty),
         }
-    }
-    pub fn string(&self) -> String {
-        format!(
-            "name->{} offset->{} ty->{}",
-            self.name.green().bold(),
-            self.stack_offset,
-            self.ty.string().blue().bold()
-        )
     }
 }

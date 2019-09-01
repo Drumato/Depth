@@ -1,7 +1,7 @@
 use super::super::super::ce::types::Error;
 use super::super::frontend::parse::node::{Func, Node};
 use super::super::frontend::token::token::Token;
-use super::manager::{Manager, Variable};
+use super::manager::{Manager, Symbol};
 
 #[derive(Clone, Eq, PartialEq)]
 pub enum Type {
@@ -91,15 +91,15 @@ impl Manager {
             if idx == func_num {
                 break;
             }
-            let f: Func = self.functions[idx].clone();
+            let mut f: Func = self.functions[idx].clone();
+            self.cur_env = f.env.clone();
             for arg in f.args {
                 match arg {
                     Node::DEFARG(arg_name, ty) => {
                         self.stack_offset += Type::from_type(ty.clone()).size();
-                        self.var_table.insert(
-                            arg_name.clone(),
-                            Variable::new(arg_name, self.stack_offset, ty),
-                        );
+                        if let Some(ref mut arg) = self.cur_env.table.get_mut(&arg_name) {
+                            arg.stack_offset = self.stack_offset;
+                        }
                     }
                     _ => (),
                 }
@@ -107,13 +107,14 @@ impl Manager {
             for n in f.stmts {
                 self.walk(n);
             }
+            self.functions[idx].env = self.cur_env.clone();
             idx += 1;
         }
     }
     fn walk(&mut self, mut n: Node) -> Type {
         match n {
             Node::IDENT(ident_name) => {
-                if let Some(var) = self.var_table.get(&ident_name) {
+                if let Some(var) = self.cur_env.table.get(&ident_name) {
                     var.ty.clone()
                 } else {
                     Type::UNKNOWN
@@ -147,7 +148,7 @@ impl Manager {
             }
             Node::NUMBER(ty) => ty,
             Node::INDEX(ident_name, _) => {
-                if let Some(var) = self.var_table.get(&ident_name) {
+                if let Some(var) = self.cur_env.table.get(&ident_name) {
                     var.ty.clone()
                 } else {
                     Type::UNKNOWN
@@ -192,10 +193,9 @@ impl Manager {
                     }
                     _ => (),
                 }
-                self.var_table.insert(
-                    ident_name.clone(),
-                    Variable::new(ident_name, self.stack_offset, type_name),
-                );
+                if let Some(ref mut symbol) = self.cur_env.table.get_mut(&ident_name) {
+                    symbol.stack_offset = self.stack_offset;
+                }
                 Type::UNKNOWN
             }
             _ => Type::UNKNOWN,

@@ -1,3 +1,4 @@
+use super::super::super::manager::manager::Env;
 use super::super::super::manager::semantics::Type;
 use super::super::token::token::Token;
 #[derive(Clone)]
@@ -79,4 +80,5 @@ pub struct Func {
     pub name: String,
     pub stmts: Vec<Node>,
     pub args: Vec<Node>,
+    pub env: Env,
 }
