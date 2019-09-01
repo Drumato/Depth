@@ -40,7 +40,12 @@ fn main() -> Result<(), Box<std::error::Error>> {
         for f in manager.functions.iter() {
             eprintln!("{}'s symbols:", f.name);
             for (name, symbol) in f.env.table.iter() {
-                eprintln!("{}: {} {}", name, symbol.stack_offset, symbol.ty.string());
+                eprintln!(
+                    "{}:offset->{} type->{}",
+                    name.bold().green(),
+                    symbol.stack_offset,
+                    symbol.ty.string().bold().blue()
+                );
             }
         }
     }

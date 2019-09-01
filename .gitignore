@@ -211,3 +211,6 @@ GRTAGS
 GTAGS
 GPATH
 test/*.dep
+*.txt
+*.s
+a.out
