@@ -1,5 +1,5 @@
 #[allow(mutable_borrow_reservation_conflict)]
-use super::super::ce::types::Error;
+use super::super::super::ce::types::Error;
 use super::super::frontend::parse::node;
 use super::super::frontend::token::token::Token;
 use super::super::ir::hi::HIR;

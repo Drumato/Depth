@@ -1,5 +1,5 @@
 extern crate colored;
-use super::super::super::compile::ce::types::Error;
+use super::super::super::ce::types::Error;
 use colored::*;
 type Elf64Half = u16;
 type Elf64Word = u32;

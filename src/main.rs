@@ -12,6 +12,7 @@ use compile::frontend as f;
 use compile::manager::manager::Manager;
 mod object;
 use object::elf;
+mod ce;
 
 fn main() -> Result<(), Box<std::error::Error>> {
     let yaml = load_yaml!("cli.yml");

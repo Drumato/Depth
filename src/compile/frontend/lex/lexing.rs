@@ -1,4 +1,4 @@
-use super::super::super::ce::types::Error;
+use super::super::super::super::ce::types::Error;
 use super::super::token::token::Token;
 
 pub fn lexing(mut input: String) -> Vec<Token> {
