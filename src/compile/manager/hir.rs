@@ -3,7 +3,7 @@ use super::super::super::ce::types::Error;
 use super::super::frontend::parse::node;
 use super::super::frontend::token::token::Token;
 use super::super::ir::hi::HIR;
-use super::manager::{Manager, Variable};
+use super::manager::{Manager, Symbol};
 use super::semantics::Type;
 impl Manager {
     pub fn gen_irs(&mut self) {
@@ -14,6 +14,7 @@ impl Manager {
                 break;
             }
             let f: node::Func = self.functions[idx].clone();
+            self.cur_env = f.env;
             self.hirs.push(HIR::SYMBOL(f.name.clone()));
             for arg in f.args.iter() {
                 if let node::Node::DEFARG(_, ty) = arg {
@@ -74,7 +75,7 @@ impl Manager {
                 let expr: node::Node = unsafe { Box::into_raw(bexpr).read() };
                 let expr_reg: usize = self.gen_expr(expr);
                 self.regnum -= 1;
-                let var: &Variable = self.get_var(&ident_name).unwrap();
+                let var: &Symbol = self.get_var(&ident_name).unwrap();
                 match &var.ty {
                     Type::INTEGER(int_type) => {
                         self.hirs
@@ -107,7 +108,7 @@ impl Manager {
                     let inner: node::Node = unsafe { Box::into_raw(binner).read() };
                     let rr: usize = self.gen_expr(inner.clone());
                     let ident_name: String = self.get_ident_name(inner);
-                    let var: &Variable = self.get_var(&ident_name).unwrap();
+                    let var: &Symbol = self.get_var(&ident_name).unwrap();
                     self.hirs.push(HIR::ADDRESS(rr, var.stack_offset));
                     rr
                 }
@@ -115,7 +116,7 @@ impl Manager {
                     let inner: node::Node = unsafe { Box::into_raw(binner).read() };
                     let rr: usize = self.gen_expr(inner.clone());
                     let ident_name: String = self.get_ident_name(inner);
-                    let var: &Variable = self.get_var(&ident_name).unwrap();
+                    let var: &Symbol = self.get_var(&ident_name).unwrap();
                     self.hirs.push(HIR::DEREFERENCE(rr, var.stack_offset));
                     rr
                 }
@@ -146,7 +147,7 @@ impl Manager {
                 expr_reg
             }
             node::Node::INDEX(ident_name, bexpr) => {
-                let var: &Variable = self.get_var(&ident_name).unwrap();
+                let var: &Symbol = self.get_var(&ident_name).unwrap();
                 let address_reg: usize = self.regnum;
                 self.hirs.push(HIR::ADDRESS(address_reg, var.stack_offset));
                 self.regnum += 1;
@@ -191,7 +192,7 @@ impl Manager {
                     };
                     let expr_reg: usize = self.gen_expr(elem.1);
                     if let Some(ident_name) = elem.0 {
-                        let var: &Variable = self.get_var(&ident_name).unwrap();
+                        let var: &Symbol = self.get_var(&ident_name).unwrap();
                         self.hirs.push(HIR::STORE(
                             var.stack_offset - total_size,
                             expr_reg,
@@ -204,7 +205,7 @@ impl Manager {
                 self.regnum
             }
             node::Node::IDENT(ident_name) => {
-                let var: &Variable = self.get_var(&ident_name).unwrap();
+                let var: &Symbol = self.get_var(&ident_name).unwrap();
                 match &var.ty {
                     Type::INTEGER(_) => {
                         self.hirs
@@ -293,8 +294,8 @@ impl Manager {
         Error::TYPE.found(&format!("unexpected '{}'", n.string()));
         "".to_string()
     }
-    fn get_var(&self, ident_name: &String) -> Option<&Variable> {
-        if let Some(var) = self.var_table.get(ident_name) {
+    fn get_var(&self, ident_name: &String) -> Option<&Symbol> {
+        if let Some(var) = self.cur_env.table.get(ident_name) {
             return Some(var);
         }
         Error::UNDEFINED.found(&format!("undefined such an identifier '{}'", ident_name));

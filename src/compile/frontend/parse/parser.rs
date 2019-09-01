@@ -1,13 +1,16 @@
 use super::super::super::super::ce::types::Error;
+use super::super::super::manager::manager::{Env, Symbol};
 use super::super::super::manager::semantics::{IntType, Type};
 use super::super::token::token::Token;
 use super::node::{Func, Node};
+use std::collections::HashMap;
 struct Parser {
     tokens: Vec<Token>,
     funcs: Vec<Func>,
+    cur_env: Env,
 }
 static mut CUR: usize = 0;
-static mut NEXT: usize = 0;
+static mut NEXT: usize = 1;
 pub fn parsing(tokens: Vec<Token>) -> Vec<Func> {
     let mut parser: Parser = Parser::new(tokens);
     parser.toplevel();
@@ -18,11 +21,14 @@ impl Parser {
         Parser {
             tokens: tokens,
             funcs: Vec::new(),
+            cur_env: Env::new(),
         }
     }
     fn toplevel(&mut self) {
+        let global: Env = Env::new();
         while let Token::FUNC = self.cur_token() {
-            let func: Func = self.func();
+            let mut func: Func = self.func();
+            func.env.prev = Some(Box::new(global.clone()));
             self.funcs.push(func);
         }
     }
@@ -31,22 +37,24 @@ impl Parser {
             name: String::new(),
             stmts: Vec::new(),
             args: Vec::new(),
+            env: Env::new(),
         };
+        self.cur_env = f.env.clone();
         self.next_token();
         let ident_name: String = self.consume_ident();
         f.name = ident_name.to_string();
-        self.expect(&Token::LPAREN);
+        self.consume(&Token::LPAREN);
         loop {
             if self.consume(&Token::RPAREN) {
                 break;
             }
             f.args.push(self.defarg());
             if !self.consume(&Token::COMMA) {
-                self.expect(&Token::RPAREN);
+                self.consume(&Token::RPAREN);
                 break;
             }
         }
-        self.expect(&Token::LBRACE);
+        self.consume(&Token::LBRACE);
         let mut t: Token = self.get_token();
         while let Some(_) = Token::start_stmt(&t) {
             let stmt: Node = self.stmt();
@@ -54,6 +62,7 @@ impl Parser {
             self.consume(&Token::RBRACE);
             t = self.get_token();
         }
+        f.env = self.cur_env.clone();
         f
     }
     fn stmt(&mut self) -> Node {
@@ -124,6 +133,9 @@ impl Parser {
                 *elem = (Some(ident_name.clone()), elem.1.clone());
             }
         }
+        self.cur_env
+            .table
+            .insert(ident_name.clone(), Symbol::new(0, typename.clone()));
         Node::LET(ident_name, typename, Box::new(expr))
     }
     fn compound_stmt(&mut self) -> Node {
@@ -237,8 +249,11 @@ impl Parser {
     }
     fn defarg(&mut self) -> Node {
         let arg_name: String = self.consume_ident();
-        self.expect(&Token::COLON);
+        self.consume(&Token::COLON);
         let ty: Token = self.consume_typename();
+        self.cur_env
+            .table
+            .insert(arg_name.clone(), Symbol::new(0, ty.clone()));
         Node::DEFARG(arg_name, ty)
     }
     fn term(&mut self) -> Node {
@@ -271,7 +286,7 @@ impl Parser {
                     }
                     elems.push((None, self.expr()));
                     if !self.consume(&Token::COMMA) {
-                        self.expect(&Token::RBRACKET);
+                        self.consume(&Token::RBRACKET);
                         break;
                     }
                 }
@@ -302,7 +317,7 @@ impl Parser {
                     }
                     args.push(Box::new(self.expr()));
                     if !self.consume(&Token::COMMA) {
-                        self.expect(&Token::RPAREN);
+                        self.consume(&Token::RPAREN);
                         break;
                     }
                 }
@@ -344,19 +359,19 @@ impl Parser {
             }
             Token::POINTER(_ptr_to) => {
                 self.next_token();
-                self.expect(&Token::LT);
+                self.consume(&Token::LT);
                 let inner: Token = self.consume_typename();
-                self.expect(&Token::GT);
+                self.consume(&Token::GT);
                 Token::POINTER(Box::new(inner))
             }
             Token::ARRAY(_, _) => {
                 self.next_token();
-                self.expect(&Token::LT);
+                self.consume(&Token::LT);
                 let elem_type: Token = self.consume_typename();
-                self.expect(&Token::COMMA);
+                self.consume(&Token::COMMA);
                 let ary_size: Token = self.get_token();
                 self.next_token();
-                self.expect(&Token::GT);
+                self.consume(&Token::GT);
                 Token::ARRAY(Box::new(elem_type), Box::new(ary_size))
             }
             _ => {
@@ -364,18 +379,6 @@ impl Parser {
                 Token::EOF
             }
         }
-    }
-    fn expect(&self, t: &Token) -> bool {
-        if self.peek_token() == t {
-            self.next_token();
-            return true;
-        }
-        Error::PARSE.found(&format!(
-            "{} expected but got {}",
-            t.string(),
-            self.cur_token().string()
-        ));
-        false
     }
     fn peek_token(&self) -> &Token {
         unsafe {

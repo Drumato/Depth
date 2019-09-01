@@ -9,7 +9,7 @@ use colored::*;
 use std::collections::HashMap;
 mod compile;
 use compile::frontend as f;
-use compile::manager::manager::Manager;
+use compile::manager::manager::{Env, Manager};
 mod object;
 use object::elf;
 mod ce;
@@ -32,13 +32,16 @@ fn main() -> Result<(), Box<std::error::Error>> {
         regnum: 0,
         labelnum: 0,
         stack_offset: 0,
-        var_table: HashMap::new(),
+        cur_env: Env::new(),
     };
     manager.semantics();
     if matches.is_present("dump-symbol") {
         eprintln!("{}", "--------symbol_table--------".green().bold());
-        for (_, symbol) in manager.var_table.iter() {
-            eprintln!("{}", symbol.string());
+        for f in manager.functions.iter() {
+            eprintln!("{}'s symbols:", f.name);
+            for (name, symbol) in f.env.table.iter() {
+                eprintln!("{}: {} {}", name, symbol.stack_offset, symbol.ty.string());
+            }
         }
     }
     manager.gen_irs();
