@@ -3,7 +3,6 @@ use super::super::super::manager::manager::{Env, Symbol};
 use super::super::super::manager::semantics::{IntType, Type};
 use super::super::token::token::Token;
 use super::node::{Func, Node};
-use std::collections::HashMap;
 struct Parser {
     tokens: Vec<Token>,
     funcs: Vec<Func>,
@@ -378,14 +377,6 @@ impl Parser {
                 Error::PARSE.found(&format!("expected typename but got {}", t.string()));
                 Token::EOF
             }
-        }
-    }
-    fn peek_token(&self) -> &Token {
-        unsafe {
-            if CUR == self.tokens.len() {
-                return &Token::EOF;
-            }
-            &self.tokens[NEXT]
         }
     }
     fn cur_token(&self) -> &Token {

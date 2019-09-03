@@ -56,7 +56,7 @@ impl HIR {
             HIR::NEGATIVE(reg) => format!("negative {} ", reg),
             HIR::ADDRESS(reg, offset) => format!("address of {} from {}", reg, offset),
             HIR::DEREFERENCE(reg, offset) => format!("dereference of {} from {}", reg, offset),
-            HIR::RETURN(reg) => "return".to_string(),
+            HIR::RETURN(_) => "return".to_string(),
             HIR::SYMBOL(name) => format!("symbol '{}'", name),
             HIR::LABEL(num) => format!("label {}", num),
             HIR::CMP(reg, label) => format!("compare between {} and 0, then jump {}", reg, label),

@@ -1,6 +1,8 @@
 use super::super::super::manager::manager::Env;
 use super::super::super::manager::semantics::Type;
 use super::super::token::token::Token;
+extern crate colored;
+use colored::*;
 #[derive(Clone)]
 pub enum Node {
     BINOP(Token, Box<Node>, Box<Node>, Option<Type>),
@@ -52,7 +54,7 @@ impl Node {
                     .into_iter()
                     .map(|a| a.string() + ",")
                     .collect::<String>();
-                format!("CALL({})", args)
+                format!("CALL {}({})", ident, args)
             }
             Node::INVALID => "INVALID".to_string(),
             Node::LET(ident_name, ty, expr) => format!(
@@ -81,4 +83,14 @@ pub struct Func {
     pub stmts: Vec<Node>,
     pub args: Vec<Node>,
     pub env: Env,
+}
+
+pub fn dump_ast(funcs: &Vec<Func>) {
+    eprintln!("{}", "--------dumpast--------".blue().bold());
+    for fu in funcs.iter() {
+        eprintln!("{}'s stmts:", fu.name);
+        for n in fu.stmts.iter() {
+            eprintln!("{}", n.string().green().bold());
+        }
+    }
 }

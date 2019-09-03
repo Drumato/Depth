@@ -1,7 +1,7 @@
 use super::super::super::ce::types::Error;
 use super::super::frontend::parse::node::{Func, Node};
 use super::super::frontend::token::token::Token;
-use super::manager::{Manager, Symbol};
+use super::manager::Manager;
 
 #[derive(Clone, Eq, PartialEq)]
 pub enum Type {
@@ -91,7 +91,7 @@ impl Manager {
             if idx == func_num {
                 break;
             }
-            let mut f: Func = self.functions[idx].clone();
+            let f: Func = self.functions[idx].clone();
             self.cur_env = f.env.clone();
             for arg in f.args {
                 match arg {

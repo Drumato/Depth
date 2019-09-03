@@ -6,12 +6,13 @@ use clap::App;
 extern crate colored;
 use colored::*;
 
-use std::collections::HashMap;
 mod compile;
 use compile::frontend as f;
-use compile::manager::manager::{Env, Manager};
+use compile::manager::manager::Manager;
 mod object;
 use object::elf;
+mod assemble;
+use assemble as a;
 mod ce;
 
 fn main() -> Result<(), Box<std::error::Error>> {
@@ -24,40 +25,29 @@ fn main() -> Result<(), Box<std::error::Error>> {
         }
         std::process::exit(0);
     }
+    compile(&matches);
+    if matches.is_present("stop-s") {
+        std::process::exit(0);
+    }
+    assemble(&matches);
+    Ok(())
+}
+fn compile(matches: &clap::ArgMatches) {
     let tokens: Vec<f::token::token::Token> = lex_phase(&matches);
     let funcs: Vec<f::parse::node::Func> = parse_phase(&matches, tokens);
-    let mut manager: Manager = Manager {
-        functions: funcs,
-        hirs: Vec::new(),
-        regnum: 0,
-        labelnum: 0,
-        stack_offset: 0,
-        cur_env: Env::new(),
-    };
+    let mut manager: Manager = Manager::new(funcs);
     manager.semantics();
     if matches.is_present("dump-symbol") {
-        eprintln!("{}", "--------symbol_table--------".green().bold());
-        for f in manager.functions.iter() {
-            eprintln!("{}'s symbols:", f.name);
-            for (name, symbol) in f.env.table.iter() {
-                eprintln!(
-                    "{}:offset->{} type->{}",
-                    name.bold().green(),
-                    symbol.stack_offset,
-                    symbol.ty.string().bold().blue()
-                );
-            }
-        }
+        manager.dump_symbol();
     }
     manager.gen_irs();
     if matches.is_present("dump-hir") {
-        eprintln!("{}", "--------dumphir--------".blue().bold());
-        for ir in manager.hirs.iter() {
-            eprintln!("{}", ir.string().green().bold());
-        }
+        manager.dump_hir();
     }
     genx64_phase(&matches, manager);
-    Ok(())
+}
+fn assemble(_matches: &clap::ArgMatches) {
+    let _tokens: Vec<a::parse::Token> = a::parse::lexing(read_file("c.s"));
 }
 
 fn lex_phase(matches: &clap::ArgMatches) -> Vec<f::token::token::Token> {
@@ -78,13 +68,7 @@ fn parse_phase(
 ) -> Vec<f::parse::node::Func> {
     let funcs: Vec<f::parse::node::Func> = f::parse::parser::parsing(tokens);
     if matches.is_present("dump-ast") {
-        eprintln!("{}", "--------dumpast--------".blue().bold());
-        for fu in funcs.iter() {
-            eprintln!("{}'s stmts:", fu.name);
-            for n in fu.stmts.iter() {
-                eprintln!("{}", n.string().green().bold());
-            }
-        }
+        f::parse::node::dump_ast(&funcs);
     }
     funcs
 }
