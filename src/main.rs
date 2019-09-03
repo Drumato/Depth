@@ -47,7 +47,8 @@ fn compile(matches: &clap::ArgMatches) {
     genx64_phase(&matches, manager);
 }
 fn assemble(_matches: &clap::ArgMatches) {
-    let _tokens: Vec<a::parse::Token> = a::parse::lexing(read_file("c.s"));
+    let tokens: Vec<a::lex::Token> = a::lex::lexing(read_file("c.s"));
+    let (_instructions, _info_map) = a::parse::parsing(tokens);
 }
 
 fn lex_phase(matches: &clap::ArgMatches) -> Vec<f::token::token::Token> {
