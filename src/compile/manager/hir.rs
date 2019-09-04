@@ -149,10 +149,14 @@ impl Manager {
             }
             node::Node::INDEX(barray, bexpr) => {
                 let array: node::Node = unsafe { Box::into_raw(barray).read() };
-                let offset: usize = match array {
+                let offset: usize = match array.clone() {
                     node::Node::IDENT(name) => self.get_var(&name).unwrap().stack_offset,
+                    node::Node::ARRAYLIT(_, num) => {
+                        self.get_var(&format!("Array{}", num)).unwrap().stack_offset
+                    }
                     _ => 42,
                 };
+                self.gen_expr(array);
                 let address_reg: usize = self.regnum;
                 self.hirs.push(HIR::ADDRESS(address_reg, offset));
                 self.regnum += 1;
@@ -165,7 +169,7 @@ impl Manager {
                         int_type.type_size,
                     ));
                     self.regnum += 1;
-                    return self.regnum;
+                    return self.regnum - 1;
                 }
                 let expr_reg: usize = self.gen_expr(expr);
                 expr_reg
@@ -185,22 +189,21 @@ impl Manager {
                 self.regnum += 1;
                 return_reg
             }
-            node::Node::ARRAYLIT(elems) => {
+            node::Node::ARRAYLIT(elems, num) => {
                 let mut total_size: usize = 0;
                 let length: usize = elems.len();
                 for elem in elems {
-                    let elem_size: usize = match &elem.1 {
+                    let elem_size: usize = match &elem {
                         node::Node::BINOP(_, _, _, otype) => otype.clone().unwrap().size(),
                         node::Node::UNARY(_, _, otype) => otype.clone().unwrap().size(),
                         node::Node::NUMBER(ty) => ty.size(),
                         _ => 0,
                     };
-                    let expr_reg: usize = self.gen_expr(elem.1);
-                    if let Some(ident_name) = elem.0 {
-                        let offset: usize = self.get_var(&ident_name).unwrap().stack_offset;
-                        self.hirs
-                            .push(HIR::STORE(offset - total_size, expr_reg, elem_size));
-                    }
+                    let expr_reg: usize = self.gen_expr(elem);
+                    let offset: usize =
+                        self.get_var(&format!("Array{}", num)).unwrap().stack_offset;
+                    self.hirs
+                        .push(HIR::STORE(offset - total_size, expr_reg, elem_size));
                     total_size += elem_size;
                 }
                 self.regnum -= length - 1;

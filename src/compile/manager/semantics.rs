@@ -164,18 +164,26 @@ impl Manager {
                 }
             }
             Node::CHARLIT(char_val) => Type::CHAR(Some(char_val)),
-            Node::ARRAYLIT(ref mut elems) => {
+            Node::ARRAYLIT(ref mut elems, ref mut num) => {
                 let mut fin_type: Type = Type::UNKNOWN;
                 let mut total_size: usize = 0;
                 let length: usize = elems.len();
                 for elem in elems.iter() {
-                    let elem_type: Type = self.walk(elem.1.clone());
+                    let elem_type: Type = self.walk(elem.clone());
                     total_size += elem_type.size();
                     fin_type = elem_type;
                 }
+                if let Some(ref mut array) = self.cur_env.table.get_mut(&format!("Array{}", num)) {
+                    self.stack_offset += total_size;
+                    array.stack_offset = self.stack_offset;
+                }
                 Type::ARRAY(Box::new(fin_type), length, total_size)
             }
-            //Node::RETURN(bstmt),
+            Node::RETURN(bstmt) => {
+                let stmt: Node = unsafe { Box::into_raw(bstmt).read() };
+                self.walk(stmt);
+                Type::UNKNOWN
+            }
             //Node::IF(bcond,bstmt),
             Node::LET(ident_name, type_name, bexpr) => {
                 let expr: Node = unsafe { Box::into_raw(bexpr).read() };
@@ -198,7 +206,6 @@ impl Manager {
                     Type::ARRAY(belem, ary_size, size) => {
                         let expr_type: Type = self.walk(expr);
                         self.check_type(Type::ARRAY(belem, ary_size, size), expr_type);
-                        self.stack_offset += size;
                     }
                     _ => (),
                 }

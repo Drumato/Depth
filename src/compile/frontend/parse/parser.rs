@@ -10,6 +10,7 @@ struct Parser {
 }
 static mut CUR: usize = 0;
 static mut NEXT: usize = 1;
+static mut LIT: usize = 0;
 pub fn parsing(tokens: Vec<Token>) -> Vec<Func> {
     let mut parser: Parser = Parser::new(tokens);
     parser.toplevel();
@@ -126,12 +127,7 @@ impl Parser {
                 self.cur_token().string()
             ));
         }
-        let mut expr: Node = self.expr();
-        if let Node::ARRAYLIT(ref mut v) = expr {
-            for elem in v.iter_mut() {
-                *elem = (Some(ident_name.clone()), elem.1.clone());
-            }
-        }
+        let expr: Node = self.expr();
         self.cur_env
             .table
             .insert(ident_name.clone(), Symbol::new(0, typename.clone()));
@@ -288,18 +284,26 @@ impl Parser {
             }
             Token::LBRACKET => {
                 self.next_token();
-                let mut elems: Vec<(Option<String>, Node)> = Vec::new();
+                let mut elems: Vec<Node> = Vec::new();
                 loop {
                     if let &Token::RBRACKET = self.cur_token() {
                         break;
                     }
-                    elems.push((None, self.expr()));
+                    elems.push(self.expr());
                     if !self.consume(&Token::COMMA) {
                         self.consume(&Token::RBRACKET);
                         break;
                     }
                 }
-                Node::ARRAYLIT(elems)
+                self.cur_env.table.insert(
+                    format!("Array{}", unsafe { LIT }),
+                    Symbol::new(0, Token::EOF),
+                );
+                let num = unsafe { LIT };
+                unsafe {
+                    LIT += 1;
+                }
+                Node::ARRAYLIT(elems, num)
             }
             _ => {
                 Error::PARSE.found(&format!("unexpected {} while parsing term", t.string(),));

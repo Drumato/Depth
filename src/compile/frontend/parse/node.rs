@@ -11,7 +11,7 @@ pub enum Node {
     INDEX(Box<Node>, Box<Node>),
     CALL(String, Vec<Box<Node>>),
     CHARLIT(char),
-    ARRAYLIT(Vec<(Option<String>, Node)>), //(ident_name, expression)
+    ARRAYLIT(Vec<Node>, usize), // expression,number
     IDENT(String),
     RETURN(Box<Node>),
     IF(Box<Node>, Box<Node>, Option<Box<Node>>), // condition, block,else
@@ -64,10 +64,10 @@ impl Node {
                 expr.string()
             ),
             Node::CHARLIT(char_val) => format!("CHARLIT<{}>", char_val),
-            Node::ARRAYLIT(elems) => {
+            Node::ARRAYLIT(elems, _) => {
                 let elems_string: String = elems
                     .into_iter()
-                    .map(|b| b.1.string() + ",")
+                    .map(|b| b.string() + ",")
                     .collect::<String>();
                 format!("ARRAY({})", elems_string)
             }
