@@ -147,11 +147,20 @@ impl Manager {
                 }
             }
             Node::NUMBER(ty) => ty,
-            Node::INDEX(ident_name, _) => {
+            Node::INDEX(barray, _) => {
+                let array: Node = unsafe { Box::into_raw(barray).read() };
+                let elem_type: Type = match self.walk(array.clone()) {
+                    Type::ARRAY(elem, _, _) => unsafe { Box::into_raw(elem).read() },
+                    _ => Type::UNKNOWN,
+                };
+                let ident_name: String = match array {
+                    Node::IDENT(name) => name,
+                    _ => "".to_string(),
+                };
                 if let Some(var) = self.cur_env.table.get(&ident_name) {
                     var.ty.clone()
                 } else {
-                    Type::UNKNOWN
+                    elem_type
                 }
             }
             Node::CHARLIT(char_val) => Type::CHAR(Some(char_val)),

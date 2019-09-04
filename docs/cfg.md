@@ -3,7 +3,7 @@
 priority -> **`T1` > `T2`**
 
 ```
-T1 -> ident[E]
+T1 -> T[E] ( T <- {Arraylit | ident} )
 T1 -> ident( E*n ) (0 <= n)
 T1 -> -T
 T1 -> *T

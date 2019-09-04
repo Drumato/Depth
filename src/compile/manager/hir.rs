@@ -147,8 +147,12 @@ impl Manager {
                 self.regnum += 1;
                 expr_reg
             }
-            node::Node::INDEX(ident_name, bexpr) => {
-                let offset: usize = self.get_var(&ident_name).unwrap().stack_offset;
+            node::Node::INDEX(barray, bexpr) => {
+                let array: node::Node = unsafe { Box::into_raw(barray).read() };
+                let offset: usize = match array {
+                    node::Node::IDENT(name) => self.get_var(&name).unwrap().stack_offset,
+                    _ => 42,
+                };
                 let address_reg: usize = self.regnum;
                 self.hirs.push(HIR::ADDRESS(address_reg, offset));
                 self.regnum += 1;

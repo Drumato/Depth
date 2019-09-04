@@ -243,7 +243,17 @@ impl Parser {
                 self.next_token();
                 Node::UNARY(op, Box::new(self.term()), None)
             }
-            _ => self.term(),
+            _ => {
+                let mut n: Node = self.term();
+                let t: &Token = self.cur_token();
+                if let &Token::LBRACKET = t {
+                    self.next_token();
+                    let expr: Node = self.expr();
+                    self.consume(&Token::RBRACKET);
+                    n = Node::INDEX(Box::new(n), Box::new(expr));
+                }
+                n
+            }
         }
     }
     fn defarg(&mut self) -> Node {
@@ -301,12 +311,6 @@ impl Parser {
         let ident_name: String = self.consume_ident();
         let tok: &Token = self.cur_token();
         match tok {
-            &Token::LBRACKET => {
-                self.next_token();
-                let expr: Node = self.expr();
-                self.consume(&Token::RBRACKET);
-                Node::INDEX(ident_name.clone(), Box::new(expr))
-            }
             &Token::LPAREN => {
                 self.next_token();
                 let mut args: Vec<Box<Node>> = Vec::new();

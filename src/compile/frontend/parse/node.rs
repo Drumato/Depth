@@ -8,7 +8,7 @@ pub enum Node {
     BINOP(Token, Box<Node>, Box<Node>, Option<Type>),
     UNARY(Token, Box<Node>, Option<Type>),
     NUMBER(Type),
-    INDEX(String, Box<Node>),
+    INDEX(Box<Node>, Box<Node>),
     CALL(String, Vec<Box<Node>>),
     CHARLIT(char),
     ARRAYLIT(Vec<(Option<String>, Node)>), //(ident_name, expression)
@@ -26,7 +26,7 @@ impl Node {
             Node::BINOP(op, lhs, rhs, _) => {
                 format!("{}({}, {})", op.string(), lhs.string(), rhs.string())
             }
-            Node::INDEX(ident, expr) => format!("{}[{}]", ident, expr.string()),
+            Node::INDEX(array, expr) => format!("{}[{}]", array.string(), expr.string()),
             Node::UNARY(op, inner, _) => format!("{}({})", op.string(), inner.string()),
             Node::NUMBER(ty) => match ty {
                 Type::INTEGER(int_type) => format!("INT-Node<{}>", int_type.val.unwrap()),
