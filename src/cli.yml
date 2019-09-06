@@ -23,6 +23,9 @@ args:
     - dump-hir:
         long: dump-hir
         help: dump hir
+    - dump-inst:
+        long: dump-inst
+        help: dump inst
     - stop-s:
         short: S
         help: stop until compile

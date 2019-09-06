@@ -33,6 +33,9 @@ fn main() -> Result<(), Box<std::error::Error>> {
     Ok(())
 }
 fn compile(matches: &clap::ArgMatches) {
+    if !matches.value_of("source").unwrap().contains(".dep") {
+        return;
+    }
     let tokens: Vec<f::token::token::Token> = lex_phase(&matches);
     let funcs: Vec<f::parse::node::Func> = parse_phase(&matches, tokens);
     let mut manager: Manager = Manager::new(funcs);
@@ -46,9 +49,37 @@ fn compile(matches: &clap::ArgMatches) {
     }
     genx64_phase(&matches, manager);
 }
-fn assemble(_matches: &clap::ArgMatches) {
-    let tokens: Vec<a::lex::Token> = a::lex::lexing(read_file("c.s"));
-    let (_instructions, _info_map) = a::parse::parsing(tokens);
+fn assemble(matches: &clap::ArgMatches) {
+    if !matches.value_of("source").unwrap().contains(".s") {
+        return;
+    }
+    let tokens: Vec<a::lex::Token> = a::lex::lexing(read_file(matches.value_of("source").unwrap()));
+    let (instructions, info_map) = a::parse::parsing(tokens);
+    if matches.is_present("dump-inst") {
+        for (symbol, v) in instructions.iter() {
+            eprintln!("{}'s instructions", symbol.bold().green());
+            for inst in v.iter() {
+                let num: &usize = match inst {
+                    a::parse::Inst::BINARG(num) | a::parse::Inst::NOARG(num) => num,
+                };
+                let info: &a::parse::Info = info_map.get(num).unwrap();
+                let lop_string: String = match &info.lop {
+                    Some(l) => l.string(),
+                    None => "".to_string(),
+                };
+                let rop_string: String = match &info.rop {
+                    Some(r) => r.string(),
+                    None => "".to_string(),
+                };
+                eprintln!(
+                    "  {} {} {}",
+                    info.inst_name.bold().blue(),
+                    lop_string,
+                    rop_string
+                );
+            }
+        }
+    }
 }
 
 fn lex_phase(matches: &clap::ArgMatches) -> Vec<f::token::token::Token> {
