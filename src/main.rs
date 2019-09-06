@@ -80,6 +80,10 @@ fn assemble(matches: &clap::ArgMatches) {
             }
         }
     }
+    let codes: Vec<u8> = a::gen::generate(instructions, info_map);
+    for code in codes.iter() {
+        eprint!("{:x} ", code);
+    }
 }
 
 fn lex_phase(matches: &clap::ArgMatches) -> Vec<f::token::token::Token> {
