@@ -292,11 +292,20 @@ impl Manager {
         }
     }
     fn get_ident_name(&self, n: node::Node) -> String {
-        if let node::Node::IDENT(ident_name) = n {
-            return ident_name;
+        match n {
+            node::Node::IDENT(ident_name) => ident_name,
+            node::Node::UNARY(_, binner, _) => {
+                let mut inner: node::Node = unsafe { Box::into_raw(binner).read() };
+                while let node::Node::UNARY(_, binners, _) = inner {
+                    inner = unsafe { Box::into_raw(binners).read() };
+                }
+                self.get_ident_name(inner)
+            }
+            _ => {
+                Error::TYPE.found(&format!("unexpected '{}'", n.string()));
+                "".to_string()
+            }
         }
-        Error::TYPE.found(&format!("unexpected '{}'", n.string()));
-        "".to_string()
     }
     fn get_var(&self, ident_name: &String) -> Option<&Symbol> {
         if let Some(var) = self.cur_env.table.get(ident_name) {

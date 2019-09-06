@@ -186,11 +186,21 @@ impl Parser {
         self.check_invalid(&lhs);
         loop {
             match self.cur_token() {
-                Token::LSHIFT | Token::RSHIFT => {
+                Token::LSHIFT => {
                     let op: Token = self.get_token();
                     self.next_token();
+
                     lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.adsub()), None);
                 }
+                Token::GT => match unsafe { &self.tokens[NEXT] } {
+                    &Token::GT => {
+                        self.next_token();
+                        self.next_token();
+                        let op: Token = Token::RSHIFT;
+                        lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.adsub()), None);
+                    }
+                    _ => break,
+                },
                 _ => {
                     break;
                 }
@@ -237,7 +247,7 @@ impl Parser {
         match op {
             Token::STAR | Token::AMPERSAND | Token::MINUS => {
                 self.next_token();
-                Node::UNARY(op, Box::new(self.term()), None)
+                Node::UNARY(op, Box::new(self.unary()), None)
             }
             _ => {
                 let mut n: Node = self.term();

@@ -75,8 +75,7 @@ impl Manager {
                 HIR::ADDRESS(reg, offset) => {
                     println!("  lea {}, -{}[rbp]", gr(reg, 8), offset);
                 }
-                HIR::DEREFERENCE(reg, offset) => {
-                    println!("  mov {}, -{}[rbp]", gr(reg, 8), offset);
+                HIR::DEREFERENCE(reg, _) => {
                     println!("  mov {}, [{}]", gr(reg, 8), gr(reg, 8));
                 }
                 HIR::RETURN(reg) => {

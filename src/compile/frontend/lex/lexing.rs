@@ -112,7 +112,6 @@ fn count_len(input: &String, f: fn(ch: &char) -> bool) -> usize {
 fn tokenize_multisymbols(input: &String) -> Option<Token> {
     match input.as_str() {
         "<<" => Some(Token::LSHIFT),
-        ">>" => Some(Token::RSHIFT),
         "<=" => Some(Token::LTEQ),
         ">=" => Some(Token::GTEQ),
         "==" => Some(Token::EQ),
