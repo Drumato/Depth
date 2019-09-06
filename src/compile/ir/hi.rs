@@ -2,7 +2,6 @@ type Offset = usize;
 type Reg = usize;
 pub enum HIR {
     PROLOGUE(usize),
-    EPILOGUE,
     IMM(Reg, i128),
     IMMCHAR(Reg, char),
     ADD(Reg, Reg),
@@ -37,7 +36,6 @@ impl HIR {
     pub fn string(&self) -> String {
         match self {
             HIR::PROLOGUE(size) => format!("function prologue<allocate {}>", size),
-            HIR::EPILOGUE => format!("function epilogue"),
             HIR::IMM(reg, val) => format!("immediate {} to {}", val, reg),
             HIR::IMMCHAR(reg, char_val) => format!("immediate-char {} to {}", char_val, reg),
             HIR::ADD(lr, rr) => format!("{} plus {}", lr, rr),

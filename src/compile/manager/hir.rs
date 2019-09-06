@@ -29,9 +29,6 @@ impl Manager {
             for n in f.stmts {
                 self.gen_stmt(n);
             }
-            if f.name == "main" {
-                self.hirs.push(HIR::EPILOGUE);
-            }
             idx += 1;
         }
     }

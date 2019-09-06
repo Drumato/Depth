@@ -80,7 +80,13 @@ impl Manager {
                 }
                 HIR::RETURN(reg) => {
                     println!("  mov rax, {}", gr(reg, 8));
-                    println!("  call .Lend");
+                    println!("  mov rsp, rbp");
+                    println!("  pop r15");
+                    println!("  pop r14");
+                    println!("  pop r13");
+                    println!("  pop r12");
+                    println!("  pop rbp");
+                    println!("  ret");
                 }
                 HIR::PROLOGUE(size) => {
                     println!("  push rbp");
@@ -92,16 +98,6 @@ impl Manager {
                     if size != &0 {
                         println!("  sub rsp, {}", !7 & size + 7);
                     }
-                }
-                HIR::EPILOGUE => {
-                    println!(".Lend:");
-                    println!("  mov rsp, rbp");
-                    println!("  pop r15");
-                    println!("  pop r14");
-                    println!("  pop r13");
-                    println!("  pop r12");
-                    println!("  pop rbp");
-                    println!("  ret");
                 }
                 HIR::SYMBOL(name) => {
                     println!("{}:", name);
