@@ -1,6 +1,5 @@
 extern crate colored;
-use super::super::super::ce::types::Error;
-use colored::*;
+
 type Elf64Half = u16;
 type Elf64Word = u32;
 //type Elf64SWord = i32;
@@ -10,106 +9,162 @@ type Elf64Addr = u64;
 type Elf64Off = u64;
 //type Elf64Section = u16;
 type EIDENT = u128;
-struct ELF {
-    ehdr: Ehdr,
-    shdrs: Vec<Shdr>,
+pub struct ELF {
+    pub ehdr: Ehdr,
+    pub shdrs: Vec<Shdr>,
+    pub sections: Vec<Vec<u8>>,
+    pub phdrs: Option<Vec<Phdr>>,
 }
 
 impl ELF {
-    fn new(binary: Vec<u8>) -> ELF {
-        let ehdr: Ehdr = Ehdr::new_unsafe(binary[0..64].to_vec());
-        let shdrs: Vec<Shdr> = ELF::build_shdrs(&ehdr, binary[ehdr.e_shoff as usize..].to_vec());
-        ELF {
-            ehdr: ehdr,
-            shdrs: shdrs,
+    pub fn to_vec(&self) -> Vec<u8> {
+        let mut bb: Vec<u8> = Vec::new();
+        for b in self.ehdr.to_vec() {
+            bb.push(b);
         }
-    }
-    fn build_shdrs(ehdr: &Ehdr, binary: Vec<u8>) -> Vec<Shdr> {
-        let mut shdrs: Vec<Shdr> = Vec::new();
-        for i in 0..ehdr.e_shnum {
-            shdrs.push(Shdr::new_unsafe(
-                binary[(i * ehdr.e_shentsize) as usize..].to_vec(),
-            ));
+        for sec in self.sections.iter() {
+            for b in sec.to_vec() {
+                bb.push(b);
+            }
         }
-        shdrs
-    }
-    fn dump(&self) {
-        self.ehdr.dump();
         for shdr in self.shdrs.iter() {
-            shdr.dump();
+            for b in shdr.to_vec() {
+                bb.push(b);
+            }
         }
+        bb
     }
 }
 #[repr(C)]
-#[derive(Debug)]
-struct Ehdr {
-    e_ident: EIDENT,
-    e_type: Elf64Half,
-    e_machine: Elf64Half,
-    e_version: Elf64Word,
-    e_entry: Elf64Addr,
-    e_phoff: Elf64Off,
-    e_shoff: Elf64Off,
-    e_flags: Elf64Word,
-    e_ehsize: Elf64Half,
-    e_phentsize: Elf64Half,
-    e_phnum: Elf64Half,
-    e_shentsize: Elf64Half,
-    e_shnum: Elf64Half,
-    e_shstrndx: Elf64Half,
+pub struct Ehdr {
+    pub e_ident: EIDENT,
+    pub e_type: Elf64Half,
+    pub e_machine: Elf64Half,
+    pub e_version: Elf64Word,
+    pub e_entry: Elf64Addr,
+    pub e_phoff: Elf64Off,
+    pub e_shoff: Elf64Off,
+    pub e_flags: Elf64Word,
+    pub e_ehsize: Elf64Half,
+    pub e_phentsize: Elf64Half,
+    pub e_phnum: Elf64Half,
+    pub e_shentsize: Elf64Half,
+    pub e_shnum: Elf64Half,
+    pub e_shstrndx: Elf64Half,
 }
 impl Ehdr {
-    fn new_unsafe(binary: Vec<u8>) -> Ehdr {
-        if binary.len() < 0x40 {
-            Error::ELF.found(&format!("not enough bytes: got {:x}", binary.len()));
+    pub fn to_vec(&self) -> Vec<u8> {
+        let mut bb: Vec<u8> = Vec::new();
+        for b in self.e_ident.to_be_bytes().to_vec() {
+            bb.push(b);
         }
-        unsafe { std::ptr::read(binary.as_ptr() as *const Ehdr) }
-    }
-    fn dump(&self) {
-        eprintln!("{}", "--------dump EHDR--------".green().bold());
-        eprintln!("Magicnumber(Little Endian) -> {:x}", self.e_ident);
-        eprintln!("Type -> {}", self.e_type);
-        eprintln!("Machine -> 0x{:x}", self.e_machine);
-        eprintln!("Version -> {}", self.e_version);
-        eprintln!("Entrypoint -> 0x{:x}", self.e_entry);
-        eprintln!("Program Header Table Offset -> 0x{:x}", self.e_phoff);
-        eprintln!("Section Header Table Offset -> 0x{:x}", self.e_shoff);
-        eprintln!("Flags -> {:b}", self.e_flags);
-        eprintln!("ELF-Header Size -> {}(bytes)", self.e_ehsize);
-        eprintln!("Program-Header Size -> {}(bytes)", self.e_phentsize);
-        eprintln!("Program-Header Number -> {}", self.e_phnum);
-        eprintln!("Section-Header Size -> {}(bytes)", self.e_shentsize);
-        eprintln!("Section-Header Number -> {}", self.e_shnum);
-        eprintln!(".shstrtab Index -> {}", self.e_shstrndx);
+        for b in self.e_type.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_machine.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_version.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_entry.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_phoff.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_shoff.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_flags.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_ehsize.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_phentsize.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_phnum.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_shentsize.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_shnum.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.e_shstrndx.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        bb
     }
 }
 
 #[repr(C)]
-#[derive(Debug)]
-struct Shdr {
-    sh_name: Elf64Word,
-    sh_type: Elf64Word,
-    sh_flags: Elf64Xword,
-    sh_addr: Elf64Addr,
-    sh_offset: Elf64Off,
-    sh_size: Elf64Xword,
-    sh_link: Elf64Word,
-    sh_info: Elf64Word,
-    sh_addralign: Elf64Xword,
-    sh_entsize: Elf64Xword,
+pub struct Shdr {
+    pub sh_name: Elf64Word,
+    pub sh_type: Elf64Word,
+    pub sh_flags: Elf64Xword,
+    pub sh_addr: Elf64Addr,
+    pub sh_offset: Elf64Off,
+    pub sh_size: Elf64Xword,
+    pub sh_link: Elf64Word,
+    pub sh_info: Elf64Word,
+    pub sh_addralign: Elf64Xword,
+    pub sh_entsize: Elf64Xword,
 }
 
 impl Shdr {
-    fn new_unsafe(binary: Vec<u8>) -> Shdr {
-        if binary.len() < 0x40 {
-            Error::ELF.found(&format!("not enough bytes: got {:x}", binary.len()));
+    pub fn to_vec(&self) -> Vec<u8> {
+        let mut bb: Vec<u8> = Vec::new();
+        for b in self.sh_name.to_le_bytes().to_vec() {
+            bb.push(b);
         }
-        unsafe { std::ptr::read(binary.as_ptr() as *const Shdr) }
+        for b in self.sh_type.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.sh_flags.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.sh_addr.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.sh_offset.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.sh_size.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.sh_link.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.sh_info.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.sh_addralign.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.sh_entsize.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        bb
     }
-    fn dump(&self) {}
+}
+#[repr(C)]
+pub struct Phdr {
+    pub p_type: Elf64Word,
+    pub p_flags: Elf64Word,
+    pub p_offset: Elf64Off,
+    pub p_vaddr: Elf64Addr,
+    pub p_paddr: Elf64Addr,
+    pub p_filesz: Elf64Word,
+    pub p_memsz: Elf64Xword,
+    pub p_align: Elf64Xword,
 }
 
-pub fn dump_elf_in_detail(binary: Vec<u8>) {
-    let elf_file: ELF = ELF::new(binary);
-    elf_file.dump();
-}
+pub static ET_REL: Elf64Half = 1;
+
+pub static SHT_PROGBITS: Elf64Word = 1;
+pub static SHF_ALLOC: Elf64Xword = 1 << 1;
+pub static SHF_EXECINSTR: Elf64Xword = 1 << 2;

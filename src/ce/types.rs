@@ -4,7 +4,6 @@ pub enum Error {
     PARSE,
     TYPE,
     UNDEFINED,
-    ELF,
 }
 
 impl Error {
@@ -16,7 +15,6 @@ impl Error {
             Error::PARSE => "ParseError".to_string(),
             Error::TYPE => "TypeError".to_string(),
             Error::UNDEFINED => "UndefinedError".to_string(),
-            Error::ELF => "ELFError".to_string(),
         }
     }
 }

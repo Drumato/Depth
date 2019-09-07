@@ -14,17 +14,12 @@ use object::elf;
 mod assemble;
 use assemble as a;
 mod ce;
+use std::fs::File;
+use std::io::{BufWriter, Write};
 
 fn main() -> Result<(), Box<std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
-    if matches.is_present("elf") {
-        match parse_elf(matches.value_of("source").unwrap()) {
-            Ok(()) => (),
-            Err(e) => eprintln!("{}", e),
-        }
-        std::process::exit(0);
-    }
     compile(&matches);
     if matches.is_present("stop-s") {
         std::process::exit(0);
@@ -81,8 +76,48 @@ fn assemble(matches: &clap::ArgMatches) {
         }
     }
     let codes: Vec<u8> = a::gen::generate(instructions, info_map);
-    for code in codes.iter() {
-        eprint!("{:x} ", code);
+    let main_hdr = elf::elf64::Shdr {
+        sh_name: 0,
+        sh_type: elf::elf64::SHT_PROGBITS,
+        sh_flags: elf::elf64::SHF_ALLOC | elf::elf64::SHF_EXECINSTR,
+        sh_addr: 0,
+        sh_offset: 0,
+        sh_size: codes.len() as u64,
+        sh_link: 0,
+        sh_info: 0,
+        sh_addralign: 1,
+        sh_entsize: 0,
+    };
+    let ehdr: elf::elf64::Ehdr = elf::elf64::Ehdr {
+        e_ident: 0x7f454c46020101000000000000000000,
+        e_type: elf::elf64::ET_REL,
+        e_machine: 0x3e,
+        e_version: 1,
+        e_entry: 0,
+        e_phoff: 0,
+        e_shoff: 0x40 + codes.len() as u64,
+        e_flags: 0,
+        e_ehsize: 0x40,
+        e_phentsize: 0,
+        e_phnum: 0,
+        e_shentsize: 0x40,
+        e_shnum: 1,
+        e_shstrndx: 0,
+    };
+    let mut writer = BufWriter::new(File::create("c.o").unwrap());
+    let elf_file = elf::elf64::ELF {
+        ehdr: ehdr,
+        sections: vec![codes],
+        shdrs: vec![main_hdr],
+        phdrs: None,
+    };
+    match writer.write_all(&elf_file.to_vec()) {
+        Ok(_) => (),
+        Err(e) => eprintln!("{}", e),
+    }
+    match writer.flush() {
+        Ok(_) => (),
+        Err(e) => eprintln!("{}", e),
     }
 }
 
@@ -127,13 +162,4 @@ fn read_file(s: &str) -> String {
         eprintln!("{} is directory.", filepath.to_str().unwrap());
     }
     s.to_string()
-}
-fn parse_elf(s: &str) -> Result<(), Box<std::error::Error>> {
-    use std::fs::File;
-    use std::io::Read;
-    let mut file: File = File::open(s)?;
-    let mut content = Vec::new();
-    file.read_to_end(&mut content)?;
-    elf::elf64::dump_elf_in_detail(content);
-    Ok(())
 }
