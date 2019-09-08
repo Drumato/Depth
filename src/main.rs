@@ -81,7 +81,7 @@ fn assemble(matches: &clap::ArgMatches) {
         sh_type: elf::elf64::SHT_PROGBITS,
         sh_flags: elf::elf64::SHF_ALLOC | elf::elf64::SHF_EXECINSTR,
         sh_addr: 0,
-        sh_offset: 0,
+        sh_offset: 0x40,
         sh_size: codes.len() as u64,
         sh_link: 0,
         sh_info: 0,
