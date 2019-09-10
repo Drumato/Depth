@@ -48,6 +48,22 @@ impl ELF {
             .iter()
             .fold(0x40, |sum, sec| sum + sec.len() as u64);
         self.ehdr.e_shnum = 1 + self.sections.len() as u16; // 1 -> nullhdr
+        self.ehdr.e_shstrndx = self.ehdr.e_shnum - 1;
+        let name_count = self.sections[(self.ehdr.e_shstrndx - 1) as usize] // -1 means null-hdr
+            .iter()
+            .filter(|num| *num == &('.' as u8))
+            .collect::<Vec<&u8>>()
+            .len();
+        let mut sh_name = 1;
+        for (idx, bb) in self.sections[(self.ehdr.e_shstrndx - 1) as usize][1..]
+            .to_vec()
+            .splitn(name_count, |num| *num == 0x00)
+            .enumerate()
+        {
+            let b: Vec<&u8> = bb.iter().filter(|num| *num != &0x00).collect::<Vec<&u8>>();
+            self.shdrs[idx + 1].sh_name = sh_name as u32;
+            sh_name += (b.len() + 1) as u32;
+        }
     }
 }
 #[repr(C)]
@@ -201,12 +217,12 @@ pub fn init_ehdr() -> Ehdr {
         e_phnum: 0,
         e_shentsize: 0x40,
         e_shnum: 0,
-        e_shstrndx: 4,
+        e_shstrndx: 0,
     }
 }
 pub fn init_mainhdr(size: u64) -> Shdr {
     Shdr {
-        sh_name: 1,
+        sh_name: 0,
         sh_type: SHT_PROGBITS,
         sh_flags: SHF_ALLOC | SHF_EXECINSTR,
         sh_addr: 0,
@@ -220,7 +236,7 @@ pub fn init_mainhdr(size: u64) -> Shdr {
 }
 pub fn init_symtabhdr(size: u64) -> Shdr {
     Shdr {
-        sh_name: 7,
+        sh_name: 0,
         sh_type: SHT_SYMTAB,
         sh_flags: 0,
         sh_addr: 0,
@@ -234,7 +250,7 @@ pub fn init_symtabhdr(size: u64) -> Shdr {
 }
 pub fn init_strtabhdr(size: u64) -> Shdr {
     Shdr {
-        sh_name: 15,
+        sh_name: 0,
         sh_type: SHT_STRTAB,
         sh_flags: 0,
         sh_addr: 0,
@@ -248,7 +264,7 @@ pub fn init_strtabhdr(size: u64) -> Shdr {
 }
 pub fn init_shstrtabhdr(size: u64) -> Shdr {
     Shdr {
-        sh_name: 23,
+        sh_name: 0,
         sh_type: SHT_STRTAB,
         sh_flags: 0,
         sh_addr: 0,
