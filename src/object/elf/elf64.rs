@@ -37,6 +37,9 @@ impl ELF {
     pub fn condition(&mut self) {
         let mut offset = 0x40;
         for shdr in self.shdrs.iter_mut() {
+            if shdr.sh_type == 0 {
+                continue;
+            }
             shdr.sh_offset += offset;
             offset += shdr.sh_size;
         }
@@ -44,7 +47,7 @@ impl ELF {
             .sections
             .iter()
             .fold(0x40, |sum, sec| sum + sec.len() as u64);
-        self.ehdr.e_shnum = self.sections.len() as u16;
+        self.ehdr.e_shnum = 1 + self.sections.len() as u16; // 1 -> nullhdr
     }
 }
 #[repr(C)]
@@ -198,7 +201,7 @@ pub fn init_ehdr() -> Ehdr {
         e_phnum: 0,
         e_shentsize: 0x40,
         e_shnum: 0,
-        e_shstrndx: 3,
+        e_shstrndx: 4,
     }
 }
 pub fn init_mainhdr(size: u64) -> Shdr {
@@ -223,7 +226,7 @@ pub fn init_symtabhdr(size: u64) -> Shdr {
         sh_addr: 0,
         sh_offset: 0,
         sh_size: size,
-        sh_link: 2,
+        sh_link: 3,
         sh_info: 0,
         sh_addralign: 8,
         sh_entsize: 24,
@@ -257,6 +260,20 @@ pub fn init_shstrtabhdr(size: u64) -> Shdr {
         sh_entsize: 0,
     }
 }
+pub fn init_nullhdr() -> Shdr {
+    Shdr {
+        sh_name: 0,
+        sh_type: 0,
+        sh_flags: 0,
+        sh_addr: 0,
+        sh_offset: 0,
+        sh_size: 0,
+        sh_link: 0,
+        sh_info: 0,
+        sh_addralign: 0,
+        sh_entsize: 0,
+    }
+}
 
 pub fn strtab(names: Vec<&str>) -> Vec<u8> {
     let mut b: Vec<u8> = Vec::new();
@@ -274,6 +291,7 @@ pub fn strtab(names: Vec<&str>) -> Vec<u8> {
     b
 }
 pub static STB_GLOBAL: u8 = 1;
+pub static STT_FUNC: u8 = 2;
 #[repr(C)]
 pub struct Symbol {
     pub st_name: Elf64Word,
@@ -319,7 +337,7 @@ pub fn symbols_to_vec(symbols: Vec<Symbol>) -> Vec<u8> {
 pub fn init_mainsym(size: u64) -> Symbol {
     Symbol {
         st_name: 1,
-        st_info: STB_GLOBAL << 4,
+        st_info: (STB_GLOBAL << 4) + STT_FUNC,
         st_other: 0,
         st_shndx: 1,
         st_value: 0,

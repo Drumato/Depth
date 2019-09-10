@@ -28,7 +28,13 @@ impl Generator {
                 }
             }
             "ret" => {
-                self.codes.push(0xc3);
+                for b in vec![
+                    0x48, 0x89, 0xc7, 0x48, 0xc7, 0xc0, 0x3c, 0x00, 0x00, 0x00, 0x0f, 0x05,
+                ] {
+                    //mov rdi,rax; mov rax 0x3c; syscall
+                    self.codes.push(b);
+                }
+                //self.codes.push(0xc3); // the opcode of ret
             }
             _ => (),
         }
@@ -71,6 +77,10 @@ pub fn generate(inst_map: HashMap<String, Vec<Inst>>, info_map: HashMap<usize, I
     for (_symbol, insts) in inst_map.iter() {
         generator.insts = insts.to_vec();
         generator.gen();
+    }
+    let md = generator.codes.len() % 4;
+    for _ in 0..(4 - md) {
+        generator.codes.push(0x00);
     }
     generator.codes
 }

@@ -89,7 +89,13 @@ fn assemble(matches: &clap::ArgMatches) {
     let mut elf_file = elf::elf64::ELF {
         ehdr: ehdr,
         sections: vec![codes, symtab, strtab, shstrtab],
-        shdrs: vec![main_hdr, symtab_hdr, strtab_hdr, shstrtab_hdr],
+        shdrs: vec![
+            elf::elf64::init_nullhdr(),
+            main_hdr,
+            symtab_hdr,
+            strtab_hdr,
+            shstrtab_hdr,
+        ],
         phdrs: None,
     };
     elf_file.condition();
