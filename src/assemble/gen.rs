@@ -28,13 +28,7 @@ impl Generator {
                 }
             }
             "ret" => {
-                for b in vec![
-                    0x48, 0x89, 0xc7, 0x48, 0xc7, 0xc0, 0x3c, 0x00, 0x00, 0x00, 0x0f, 0x05,
-                ] {
-                    //mov rdi,rax; mov rax 0x3c; syscall
-                    self.codes.push(b);
-                }
-                //self.codes.push(0xc3); // the opcode of ret
+                self.codes.push(0xc3);
             }
             _ => (),
         }
