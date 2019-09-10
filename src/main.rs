@@ -76,39 +76,31 @@ fn assemble(matches: &clap::ArgMatches) {
         }
     }
     let codes: Vec<u8> = a::gen::generate(instructions, info_map);
-    let main_hdr = elf::elf64::Shdr {
-        sh_name: 0,
-        sh_type: elf::elf64::SHT_PROGBITS,
-        sh_flags: elf::elf64::SHF_ALLOC | elf::elf64::SHF_EXECINSTR,
-        sh_addr: 0,
-        sh_offset: 0x40,
-        sh_size: codes.len() as u64,
-        sh_link: 0,
-        sh_info: 0,
-        sh_addralign: 1,
-        sh_entsize: 0,
-    };
-    let ehdr: elf::elf64::Ehdr = elf::elf64::Ehdr {
-        e_ident: 0x7f454c46020101000000000000000000,
-        e_type: elf::elf64::ET_REL,
-        e_machine: 0x3e,
-        e_version: 1,
-        e_entry: 0,
-        e_phoff: 0,
-        e_shoff: 0x40 + codes.len() as u64,
-        e_flags: 0,
-        e_ehsize: 0x40,
-        e_phentsize: 0,
-        e_phnum: 0,
-        e_shentsize: 0x40,
-        e_shnum: 1,
-        e_shstrndx: 0,
-    };
+    let shstrtab: Vec<u8> = elf::elf64::strtab(vec![".text", ".symtab", ".strtab", ".shstrtab"]);
+    let strtab: Vec<u8> = elf::elf64::strtab(vec!["main"]);
+    let symtab: Vec<u8> =
+        elf::elf64::symbols_to_vec(vec![elf::elf64::init_mainsym(codes.len() as u64)]);
+    let main_hdr = elf::elf64::init_mainhdr(0x40, codes.len() as u64);
+    let symtab_hdr = elf::elf64::init_symtabhdr(0x40 + codes.len() as u64, symtab.len() as u64);
+    let strtab_hdr = elf::elf64::init_strtabhdr(
+        0x40 + codes.len() as u64 + symtab.len() as u64,
+        strtab.len() as u64,
+    );
+    let shstrtab_hdr = elf::elf64::init_shstrtabhdr(
+        0x40 + codes.len() as u64 + strtab.len() as u64 + symtab.len() as u64,
+        shstrtab.len() as u64,
+    );
+    let ehdr: elf::elf64::Ehdr = elf::elf64::init_ehdr(
+        0x40 + codes.len() as u64
+            + symtab.len() as u64
+            + strtab.len() as u64
+            + shstrtab.len() as u64,
+    );
     let mut writer = BufWriter::new(File::create("c.o").unwrap());
     let elf_file = elf::elf64::ELF {
         ehdr: ehdr,
-        sections: vec![codes],
-        shdrs: vec![main_hdr],
+        sections: vec![codes, symtab, strtab, shstrtab],
+        shdrs: vec![main_hdr, symtab_hdr, strtab_hdr, shstrtab_hdr],
         phdrs: None,
     };
     match writer.write_all(&elf_file.to_vec()) {

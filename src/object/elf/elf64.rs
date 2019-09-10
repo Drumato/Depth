@@ -7,7 +7,7 @@ type Elf64Xword = u64;
 //type Elf64Sxword = i64;
 type Elf64Addr = u64;
 type Elf64Off = u64;
-//type Elf64Section = u16;
+type Elf64Section = u16;
 type EIDENT = u128;
 pub struct ELF {
     pub ehdr: Ehdr,
@@ -166,5 +166,151 @@ pub struct Phdr {
 pub static ET_REL: Elf64Half = 1;
 
 pub static SHT_PROGBITS: Elf64Word = 1;
+pub static SHT_SYMTAB: Elf64Word = 2;
+pub static SHT_STRTAB: Elf64Word = 3;
+
 pub static SHF_ALLOC: Elf64Xword = 1 << 1;
 pub static SHF_EXECINSTR: Elf64Xword = 1 << 2;
+pub fn init_ehdr(shoff: u64) -> Ehdr {
+    Ehdr {
+        e_ident: 0x7f454c46020101000000000000000000,
+        e_type: ET_REL,
+        e_machine: 0x3e,
+        e_version: 1,
+        e_entry: 0,
+        e_phoff: 0,
+        e_shoff: shoff,
+        e_flags: 0,
+        e_ehsize: 0x40,
+        e_phentsize: 0,
+        e_phnum: 0,
+        e_shentsize: 0x40,
+        e_shnum: 4,
+        e_shstrndx: 3,
+    }
+}
+pub fn init_mainhdr(offset: u64, size: u64) -> Shdr {
+    Shdr {
+        sh_name: 1,
+        sh_type: SHT_PROGBITS,
+        sh_flags: SHF_ALLOC | SHF_EXECINSTR,
+        sh_addr: 0,
+        sh_offset: offset,
+        sh_size: size,
+        sh_link: 0,
+        sh_info: 0,
+        sh_addralign: 1,
+        sh_entsize: 0,
+    }
+}
+pub fn init_symtabhdr(offset: u64, size: u64) -> Shdr {
+    Shdr {
+        sh_name: 7,
+        sh_type: SHT_SYMTAB,
+        sh_flags: 0,
+        sh_addr: 0,
+        sh_offset: offset,
+        sh_size: size,
+        sh_link: 2,
+        sh_info: 0,
+        sh_addralign: 8,
+        sh_entsize: 1,
+    }
+}
+pub fn init_strtabhdr(offset: u64, size: u64) -> Shdr {
+    Shdr {
+        sh_name: 15,
+        sh_type: SHT_STRTAB,
+        sh_flags: 0,
+        sh_addr: 0,
+        sh_offset: offset,
+        sh_size: size,
+        sh_link: 0,
+        sh_info: 0,
+        sh_addralign: 1,
+        sh_entsize: 0,
+    }
+}
+pub fn init_shstrtabhdr(offset: u64, size: u64) -> Shdr {
+    Shdr {
+        sh_name: 23,
+        sh_type: SHT_STRTAB,
+        sh_flags: 0,
+        sh_addr: 0,
+        sh_offset: offset,
+        sh_size: size,
+        sh_link: 0,
+        sh_info: 0,
+        sh_addralign: 1,
+        sh_entsize: 0,
+    }
+}
+
+pub fn strtab(names: Vec<&str>) -> Vec<u8> {
+    let mut b: Vec<u8> = Vec::new();
+    b.push(0x00);
+    for name in names {
+        for byte in name.as_bytes() {
+            b.push(*byte);
+        }
+        b.push(0x00);
+    }
+    let md = b.len() % 4;
+    for i in 0..(4 - md) {
+        b.push(i as u8);
+    }
+    b
+}
+pub static STB_GLOBAL: u8 = 1;
+#[repr(C)]
+pub struct Symbol {
+    pub st_name: Elf64Word,
+    pub st_info: u8,
+    pub st_other: u8,
+    pub st_shndx: Elf64Section,
+    pub st_value: Elf64Addr,
+    pub st_size: Elf64Xword,
+}
+impl Symbol {
+    pub fn to_vec(&self) -> Vec<u8> {
+        let mut bb: Vec<u8> = Vec::new();
+        for b in self.st_name.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.st_info.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.st_other.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.st_shndx.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.st_value.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.st_size.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        bb
+    }
+}
+pub fn symbols_to_vec(symbols: Vec<Symbol>) -> Vec<u8> {
+    let mut bb: Vec<u8> = Vec::new();
+    for sym in symbols {
+        for b in sym.to_vec() {
+            bb.push(b);
+        }
+    }
+    bb
+}
+pub fn init_mainsym(size: u64) -> Symbol {
+    Symbol {
+        st_name: 1,
+        st_info: STB_GLOBAL << 4,
+        st_other: 0,
+        st_shndx: 1,
+        st_value: 0,
+        st_size: size,
+    }
+}

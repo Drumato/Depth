@@ -22,7 +22,7 @@ impl Generator {
             "mov" => {
                 self.codes.push(0x48);
                 self.codes.push(0xc7);
-                self.codes.push(0xc0);
+                self.codes.push(0xc0); // consider reg as rax
                 if let Some(Operand::IMM(value)) = info.rop {
                     self.gen_immediate(value);
                 }
