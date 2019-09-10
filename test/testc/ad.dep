@@ -1,0 +1,7 @@
+func main(){
+  return add()
+}
+
+func add(){
+  return 30
+}

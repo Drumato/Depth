@@ -1,0 +1,9 @@
+func main(){
+  return rec(3)
+}
+func rec(x:i64){
+  if x > 2{
+    return x + rec(x-1)
+  }
+  return x
+}

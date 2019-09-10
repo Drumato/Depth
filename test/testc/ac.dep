@@ -1,0 +1,4 @@
+func main(){
+  let xs : Array<i64,3> = [1,10,100]
+  return xs[1]
+}
