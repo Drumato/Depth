@@ -34,6 +34,18 @@ impl ELF {
         }
         bb
     }
+    pub fn condition(&mut self) {
+        let mut offset = 0x40;
+        for shdr in self.shdrs.iter_mut() {
+            shdr.sh_offset += offset;
+            offset += shdr.sh_size;
+        }
+        self.ehdr.e_shoff = self
+            .sections
+            .iter()
+            .fold(0x40, |sum, sec| sum + sec.len() as u64);
+        self.ehdr.e_shnum = self.sections.len() as u16;
+    }
 }
 #[repr(C)]
 pub struct Ehdr {
@@ -171,7 +183,7 @@ pub static SHT_STRTAB: Elf64Word = 3;
 
 pub static SHF_ALLOC: Elf64Xword = 1 << 1;
 pub static SHF_EXECINSTR: Elf64Xword = 1 << 2;
-pub fn init_ehdr(shoff: u64) -> Ehdr {
+pub fn init_ehdr() -> Ehdr {
     Ehdr {
         e_ident: 0x7f454c46020101000000000000000000,
         e_type: ET_REL,
@@ -179,23 +191,23 @@ pub fn init_ehdr(shoff: u64) -> Ehdr {
         e_version: 1,
         e_entry: 0,
         e_phoff: 0,
-        e_shoff: shoff,
+        e_shoff: 0,
         e_flags: 0,
         e_ehsize: 0x40,
         e_phentsize: 0,
         e_phnum: 0,
         e_shentsize: 0x40,
-        e_shnum: 4,
+        e_shnum: 0,
         e_shstrndx: 3,
     }
 }
-pub fn init_mainhdr(offset: u64, size: u64) -> Shdr {
+pub fn init_mainhdr(size: u64) -> Shdr {
     Shdr {
         sh_name: 1,
         sh_type: SHT_PROGBITS,
         sh_flags: SHF_ALLOC | SHF_EXECINSTR,
         sh_addr: 0,
-        sh_offset: offset,
+        sh_offset: 0,
         sh_size: size,
         sh_link: 0,
         sh_info: 0,
@@ -203,27 +215,27 @@ pub fn init_mainhdr(offset: u64, size: u64) -> Shdr {
         sh_entsize: 0,
     }
 }
-pub fn init_symtabhdr(offset: u64, size: u64) -> Shdr {
+pub fn init_symtabhdr(size: u64) -> Shdr {
     Shdr {
         sh_name: 7,
         sh_type: SHT_SYMTAB,
         sh_flags: 0,
         sh_addr: 0,
-        sh_offset: offset,
+        sh_offset: 0,
         sh_size: size,
         sh_link: 2,
         sh_info: 0,
         sh_addralign: 8,
-        sh_entsize: 1,
+        sh_entsize: 24,
     }
 }
-pub fn init_strtabhdr(offset: u64, size: u64) -> Shdr {
+pub fn init_strtabhdr(size: u64) -> Shdr {
     Shdr {
         sh_name: 15,
         sh_type: SHT_STRTAB,
         sh_flags: 0,
         sh_addr: 0,
-        sh_offset: offset,
+        sh_offset: 0,
         sh_size: size,
         sh_link: 0,
         sh_info: 0,
@@ -231,13 +243,13 @@ pub fn init_strtabhdr(offset: u64, size: u64) -> Shdr {
         sh_entsize: 0,
     }
 }
-pub fn init_shstrtabhdr(offset: u64, size: u64) -> Shdr {
+pub fn init_shstrtabhdr(size: u64) -> Shdr {
     Shdr {
         sh_name: 23,
         sh_type: SHT_STRTAB,
         sh_flags: 0,
         sh_addr: 0,
-        sh_offset: offset,
+        sh_offset: 0,
         sh_size: size,
         sh_link: 0,
         sh_info: 0,
@@ -256,8 +268,8 @@ pub fn strtab(names: Vec<&str>) -> Vec<u8> {
         b.push(0x00);
     }
     let md = b.len() % 4;
-    for i in 0..(4 - md) {
-        b.push(i as u8);
+    for _ in 0..(4 - md) {
+        b.push(0x00);
     }
     b
 }

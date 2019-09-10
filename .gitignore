@@ -214,3 +214,4 @@ test/*.dep
 *.txt
 *.s
 a.out
+core
