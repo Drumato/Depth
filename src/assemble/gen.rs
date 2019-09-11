@@ -10,7 +10,7 @@ impl Generator {
         let insts: Vec<Inst> = self.insts.to_vec();
         for inst in insts.iter() {
             match inst {
-                &Inst::BINARG(num) | &Inst::NOARG(num) => {
+                &Inst::BINARG(num) | &Inst::UNARG(num) | &Inst::NOARG(num) => {
                     self.gen_inst(&num);
                 }
             }
@@ -28,6 +28,7 @@ impl Generator {
         let info: &Info = self.info_map.get(num).unwrap();
         match info.inst_name.as_str() {
             "push" => {}
+            "pop" => {}
             "mov" => {
                 self.codes.push(0x48);
                 let modrm: u8 = self.set_modrm(&info.lop, &info.rop); // mod field of ModR/M

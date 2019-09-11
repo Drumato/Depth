@@ -6,6 +6,7 @@ static mut NEXT: usize = 1;
 #[derive(Debug, Clone)]
 pub enum Inst {
     BINARG(usize),
+    UNARG(usize),
     NOARG(usize),
 }
 pub enum Operand {
@@ -85,22 +86,34 @@ impl Parser {
         }
     }
     fn parse_inst(&mut self) -> Option<()> {
-        let inst: &Token = self.cur_token();
+        let inst: Token = self.get_token();
         match inst {
-            &Token::RET => {
+            Token::RET => {
                 let entry: usize = self.entry;
                 self.entry += 1;
                 self.insts.push(Inst::NOARG(entry));
-                self.info_map.insert(entry, Info::new("ret".to_string()));
+                self.info_map.insert(entry, Info::new(inst.string()));
                 self.next_token();
                 Some(())
             }
-            &Token::MOV => {
+            Token::PUSH | Token::POP => {
+                eprintln!("{}", self.cur_token().string());
+                self.next_token();
+                eprintln!("{}", self.cur_token().string());
+                let entry: usize = self.entry;
+                self.entry += 1;
+                self.insts.push(Inst::UNARG(entry));
+                let mut info: Info = Info::new(inst.string());
+                info.lop = self.get_operand();
+                self.info_map.insert(entry, info);
+                Some(())
+            }
+            Token::MOV => {
                 self.next_token();
                 let entry: usize = self.entry;
                 self.entry += 1;
                 self.insts.push(Inst::BINARG(entry));
-                let mut info: Info = Info::new("mov".to_string());
+                let mut info: Info = Info::new(inst.string());
                 info.lop = self.get_operand();
                 self.next_token();
                 info.rop = self.get_operand();

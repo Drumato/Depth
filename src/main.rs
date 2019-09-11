@@ -55,7 +55,9 @@ fn assemble(matches: &clap::ArgMatches) {
             eprintln!("{}'s instructions", symbol.bold().green());
             for inst in v.iter() {
                 let num: &usize = match inst {
-                    a::parse::Inst::BINARG(num) | a::parse::Inst::NOARG(num) => num,
+                    a::parse::Inst::BINARG(num)
+                    | a::parse::Inst::UNARG(num)
+                    | a::parse::Inst::NOARG(num) => num,
                 };
                 let info: &a::parse::Info = info_map.get(num).unwrap();
                 let lop_string: String = match &info.lop {
