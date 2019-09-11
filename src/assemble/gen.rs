@@ -17,7 +17,7 @@ impl Generator {
         }
     }
     fn gen_inst(&mut self, num: &usize) {
-        let info: &Info = self.info_map.get(num).unwrap();
+        let info: &Info = self.info_map.get(&num).unwrap();
         match info.inst_name.as_str() {
             "add" => {
                 self.codes.push(self.set_rexprefix(&info.lop, &info.rop));
@@ -27,6 +27,17 @@ impl Generator {
                     self.codes.push(0x01);
                 }
                 self.codes.push(modrm);
+            }
+            "cmp" => {
+                self.codes.push(0x49);
+                if let Some(Operand::IMM(value)) = info.rop {
+                    self.codes.push(0x81);
+                    self.codes.push(self.set_modrm(&info.lop, &info.rop));
+                    self.gen_immediate(value);
+                } else {
+                    self.codes.push(0x3b);
+                    self.codes.push(self.set_modrm(&info.lop, &info.rop));
+                }
             }
             "cqo" => {
                 self.codes.push(0x48);

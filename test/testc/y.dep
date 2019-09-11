@@ -1,0 +1,4 @@
+func main(){
+  let x : i64 = 2
+  return x
+}
