@@ -27,8 +27,20 @@ impl Generator {
     fn gen_inst(&mut self, num: &usize) {
         let info: &Info = self.info_map.get(num).unwrap();
         match info.inst_name.as_str() {
-            "push" => {}
-            "pop" => {}
+            "push" => {
+                let mut opcode: u8 = 0x50;
+                if let Some(reg) = &info.lop {
+                    opcode |= reg.reg_number();
+                }
+                self.codes.push(opcode);
+            }
+            "pop" => {
+                let mut opcode: u8 = 0x58;
+                if let Some(reg) = &info.lop {
+                    opcode |= reg.reg_number();
+                }
+                self.codes.push(opcode);
+            }
             "mov" => {
                 self.codes.push(0x48);
                 let modrm: u8 = self.set_modrm(&info.lop, &info.rop); // mod field of ModR/M

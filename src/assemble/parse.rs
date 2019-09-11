@@ -97,9 +97,7 @@ impl Parser {
                 Some(())
             }
             Token::PUSH | Token::POP => {
-                eprintln!("{}", self.cur_token().string());
                 self.next_token();
-                eprintln!("{}", self.cur_token().string());
                 let entry: usize = self.entry;
                 self.entry += 1;
                 self.insts.push(Inst::UNARG(entry));
