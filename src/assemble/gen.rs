@@ -27,6 +27,25 @@ impl Generator {
     fn gen_inst(&mut self, num: &usize) {
         let info: &Info = self.info_map.get(num).unwrap();
         match info.inst_name.as_str() {
+            "add" => {
+                self.codes.push(0x48);
+                let modrm: u8 = self.set_modrm(&info.lop, &info.rop); // mod field of ModR/M
+                if let Some(Operand::IMM(_value)) = info.rop {
+                } else {
+                    self.codes.push(0x01);
+                }
+                self.codes.push(modrm);
+                //e:	48 01 f8             	add    rax,rdi
+            }
+            "sub" => {
+                self.codes.push(0x48);
+                let modrm: u8 = self.set_modrm(&info.lop, &info.rop); // mod field of ModR/M
+                if let Some(Operand::IMM(_value)) = info.rop {
+                } else {
+                    self.codes.push(0x29);
+                }
+                self.codes.push(modrm);
+            }
             "push" => {
                 let mut opcode: u8 = 0x50;
                 if let Some(reg) = &info.lop {
@@ -44,14 +63,13 @@ impl Generator {
             "mov" => {
                 self.codes.push(0x48);
                 let modrm: u8 = self.set_modrm(&info.lop, &info.rop); // mod field of ModR/M
-                if let Some(Operand::IMM(_)) = info.rop {
+                if let Some(Operand::IMM(value)) = info.rop {
                     self.codes.push(0xc7); // mov reg, immediate
+                    self.codes.push(modrm);
+                    self.gen_immediate(value);
                 } else {
                     self.codes.push(0x89); // mov reg, reg
-                }
-                self.codes.push(modrm);
-                if let Some(Operand::IMM(value)) = info.rop {
-                    self.gen_immediate(value);
+                    self.codes.push(modrm);
                 }
             }
             "ret" => {

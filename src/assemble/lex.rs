@@ -5,6 +5,8 @@ pub enum Token {
     COLON,
     COMMA,
     MOV,
+    ADD,
+    SUB,
     PUSH,
     POP,
     RET,
@@ -24,6 +26,8 @@ impl Token {
         match self {
             Token::MOV => "mov".to_string(),
             Token::RET => "ret".to_string(),
+            Token::ADD => "add".to_string(),
+            Token::SUB => "sub".to_string(),
             Token::PUSH => "push".to_string(),
             Token::POP => "pop".to_string(),
             Token::SYMBOL(name) => name.to_string(),
@@ -85,8 +89,15 @@ fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
 }
 fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
     let length: usize = count_len(input, |c| c.is_digit(10) || c == &'_' || c.is_alphabetic());
-    let keywords: Vec<&str> = vec!["mov", "ret", "push", "pop"];
-    let types: Vec<Token> = vec![Token::MOV, Token::RET, Token::PUSH, Token::POP];
+    let keywords: Vec<&str> = vec!["mov", "ret", "push", "pop", "add", "sub"];
+    let types: Vec<Token> = vec![
+        Token::MOV,
+        Token::RET,
+        Token::PUSH,
+        Token::POP,
+        Token::ADD,
+        Token::SUB,
+    ];
     for (idx, k) in keywords.iter().enumerate() {
         if input.starts_with(k) {
             return Some((types[idx].clone(), length));
