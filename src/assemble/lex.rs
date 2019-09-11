@@ -13,6 +13,7 @@ pub enum Token {
     PUSH,
     POP,
     RET,
+    SETL,
     SUB,
     BLANK,
     LF,
@@ -37,6 +38,7 @@ impl Token {
             Token::PUSH => "push".to_string(),
             Token::POP => "pop".to_string(),
             Token::RET => "ret".to_string(),
+            Token::SETL => "setl".to_string(),
             Token::SUB => "sub".to_string(),
             Token::SYMBOL(name) => name.to_string(),
             Token::INTEGER(num) => format!("INTEGER<{}>", num),
@@ -98,7 +100,7 @@ fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
 fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
     let length: usize = count_len(input, |c| c.is_digit(10) || c == &'_' || c.is_alphabetic());
     let keywords: Vec<&str> = vec![
-        "mov", "ret", "push", "pop", "cqo", "add", "sub", "idiv", "imul", "cmp",
+        "mov", "ret", "push", "pop", "cqo", "add", "sub", "idiv", "imul", "cmp", "setl",
     ];
     let types: Vec<Token> = vec![
         Token::MOV,
@@ -111,6 +113,7 @@ fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
         Token::IDIV,
         Token::IMUL,
         Token::CMP,
+        Token::SETL,
     ];
     for (idx, k) in keywords.iter().enumerate() {
         if input.starts_with(k) {

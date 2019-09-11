@@ -29,14 +29,14 @@ impl Generator {
                 self.codes.push(modrm);
             }
             "cmp" => {
-                self.codes.push(0x49);
+                self.codes.push(self.set_rexprefix(&info.lop, &info.rop));
                 if let Some(Operand::IMM(value)) = info.rop {
                     self.codes.push(0x81);
-                    self.codes.push(self.set_modrm(&info.lop, &info.rop));
+                    self.codes.push(self.set_modrm(&info.rop, &info.lop));
                     self.gen_immediate(value);
                 } else {
                     self.codes.push(0x3b);
-                    self.codes.push(self.set_modrm(&info.lop, &info.rop));
+                    self.codes.push(self.set_modrm(&info.rop, &info.lop));
                 }
             }
             "cqo" => {
@@ -105,6 +105,11 @@ impl Generator {
             }
             "ret" => {
                 self.codes.push(0xc3);
+            }
+            "setl" => {
+                self.codes.push(0x0f);
+                self.codes.push(0x9c);
+                self.codes.push(self.set_modrm(&info.lop, &info.rop));
             }
             "sub" => {
                 self.codes.push(self.set_rexprefix(&info.lop, &info.rop));

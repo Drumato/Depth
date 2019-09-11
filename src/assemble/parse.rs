@@ -23,7 +23,7 @@ impl Operand {
     pub fn reg_number(&self) -> u8 {
         match self {
             Operand::REG(name) => match name.as_str() {
-                "rax" | "r8" => 0b000,
+                "al" | "ax" | "eax" | "rax" | "r8" => 0b000,
                 "rcx" | "r9" => 0b001,
                 "rdx" | "r10" => 0b010,
                 "rbx" | "r11" => 0b011,
@@ -96,7 +96,7 @@ impl Parser {
                 self.next_token();
                 Some(())
             }
-            Token::PUSH | Token::POP | Token::IDIV | Token::IMUL => {
+            Token::PUSH | Token::POP | Token::IDIV | Token::IMUL | Token::SETL => {
                 self.next_token();
                 let entry: usize = self.entry;
                 self.entry += 1;
