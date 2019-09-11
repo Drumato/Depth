@@ -22,7 +22,8 @@ impl Generator {
             "mov" => {
                 self.codes.push(0x48);
                 self.codes.push(0xc7);
-                self.codes.push(0xc0); // consider reg as rax
+                let modrm: u8 = self.set_modrm(&info.lop, &info.rop); // mod field of ModR/M
+                self.codes.push(modrm);
                 if let Some(Operand::IMM(value)) = info.rop {
                     self.gen_immediate(value);
                 }
@@ -60,6 +61,18 @@ impl Generator {
                 self.codes.push(value as u8);
             }
         }
+    }
+    fn set_modrm(&self, lop: &Option<Operand>, rop: &Option<Operand>) -> u8 {
+        let mut modrm: u8 = 0xc0; // the mod filed of modr/m
+        if let Some(reg) = lop {
+            modrm |= reg.reg_number();
+        }
+        match rop {
+            Some(Operand::IMM(_)) => (),
+            Some(reg) => modrm |= reg.reg_number(),
+            None => (),
+        }
+        modrm
     }
 }
 pub fn generate(inst_map: HashMap<String, Vec<Inst>>, info_map: HashMap<usize, Info>) -> Vec<u8> {

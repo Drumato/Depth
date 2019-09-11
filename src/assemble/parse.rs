@@ -19,6 +19,29 @@ impl Operand {
             Operand::IMM(value) => format!("imm<{}>", value),
         }
     }
+    pub fn reg_number(&self) -> u8 {
+        match self {
+            Operand::REG(name) => match name.as_str() {
+                "rax" | "r8" => 0b000,
+                "rcx" | "r9" => 0b001,
+                "rdx" | "r10" => 0b010,
+                "rbx" | "r11" => 0b011,
+                "rsp" | "r12" => 0b100,
+                "rbp" | "r13" => 0b101,
+                "rsi" | "r14" => 0b110,
+                "rdi" | "r15" => 0b111,
+                c => {
+                    eprintln!("invalid Register<{}>", c);
+
+                    0
+                }
+            },
+            _ => {
+                eprintln!("reg_number() must called with register");
+                0
+            }
+        }
+    }
 }
 pub struct Info {
     pub inst_name: String,
