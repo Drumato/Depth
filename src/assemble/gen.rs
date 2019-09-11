@@ -15,30 +15,21 @@ impl Generator {
                 }
             }
         }
-        /*
-        0000000000000000 <main>:
-          0:   55                      push   rbp
-          1:   48 89 e5                mov    rbp,rsp
-          4:   b8 00 00 00 00          mov    eax,0x0
-          9:   5d                      pop    rbp
-          a:   c3                      ret
-               */
     }
     fn gen_inst(&mut self, num: &usize) {
         let info: &Info = self.info_map.get(num).unwrap();
         match info.inst_name.as_str() {
             "add" => {
-                self.codes.push(0x48);
+                self.codes.push(self.set_rexprefix(&info.lop, &info.rop));
                 let modrm: u8 = self.set_modrm(&info.lop, &info.rop); // mod field of ModR/M
                 if let Some(Operand::IMM(_value)) = info.rop {
                 } else {
                     self.codes.push(0x01);
                 }
                 self.codes.push(modrm);
-                //e:	48 01 f8             	add    rax,rdi
             }
             "sub" => {
-                self.codes.push(0x48);
+                self.codes.push(self.set_rexprefix(&info.lop, &info.rop));
                 let modrm: u8 = self.set_modrm(&info.lop, &info.rop); // mod field of ModR/M
                 if let Some(Operand::IMM(_value)) = info.rop {
                 } else {
@@ -49,6 +40,14 @@ impl Generator {
             "push" => {
                 let mut opcode: u8 = 0x50;
                 if let Some(reg) = &info.lop {
+                    if let Operand::REG(name) = reg {
+                        match name.as_str() {
+                            "r8" | "r9" | "r10" | "r11" | "r12" | "r13" | "r14" | "r15" => {
+                                self.codes.push(0x41);
+                            }
+                            _ => (),
+                        }
+                    }
                     opcode |= reg.reg_number();
                 }
                 self.codes.push(opcode);
@@ -56,12 +55,20 @@ impl Generator {
             "pop" => {
                 let mut opcode: u8 = 0x58;
                 if let Some(reg) = &info.lop {
+                    if let Operand::REG(name) = reg {
+                        match name.as_str() {
+                            "r8" | "r9" | "r10" | "r11" | "r12" | "r13" | "r14" | "r15" => {
+                                self.codes.push(0x41);
+                            }
+                            _ => (),
+                        }
+                    }
                     opcode |= reg.reg_number();
                 }
                 self.codes.push(opcode);
             }
             "mov" => {
-                self.codes.push(0x48);
+                self.codes.push(self.set_rexprefix(&info.lop, &info.rop));
                 let modrm: u8 = self.set_modrm(&info.lop, &info.rop); // mod field of ModR/M
                 if let Some(Operand::IMM(value)) = info.rop {
                     self.codes.push(0xc7); // mov reg, immediate
@@ -105,6 +112,32 @@ impl Generator {
                 self.codes.push(value as u8);
             }
         }
+    }
+    fn set_rexprefix(&self, lop: &Option<Operand>, rop: &Option<Operand>) -> u8 {
+        let mut rexprefix: u8 = 0x40;
+        if let Some(Operand::REG(name)) = lop {
+            if name.starts_with("r") {
+                rexprefix |= 0x08;
+            }
+            match name.as_str() {
+                "r8" | "r9" | "r10" | "r11" | "r12" | "r13" | "r14" | "r15" => {
+                    rexprefix |= 0x01;
+                }
+                _ => (),
+            }
+        }
+        if let Some(Operand::REG(name)) = rop {
+            if name.starts_with("r") {
+                rexprefix |= 0x08;
+            }
+            match name.as_str() {
+                "r8" | "r9" | "r10" | "r11" | "r12" | "r13" | "r14" | "r15" => {
+                    rexprefix |= 0x04;
+                }
+                _ => (),
+            }
+        }
+        rexprefix
     }
     fn set_modrm(&self, lop: &Option<Operand>, rop: &Option<Operand>) -> u8 {
         let mut modrm: u8 = 0xc0; // the mod filed of modr/m
