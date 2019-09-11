@@ -15,14 +15,27 @@ impl Generator {
                 }
             }
         }
+        /*
+        0000000000000000 <main>:
+          0:   55                      push   rbp
+          1:   48 89 e5                mov    rbp,rsp
+          4:   b8 00 00 00 00          mov    eax,0x0
+          9:   5d                      pop    rbp
+          a:   c3                      ret
+               */
     }
     fn gen_inst(&mut self, num: &usize) {
         let info: &Info = self.info_map.get(num).unwrap();
         match info.inst_name.as_str() {
+            "push" => {}
             "mov" => {
                 self.codes.push(0x48);
-                self.codes.push(0xc7);
                 let modrm: u8 = self.set_modrm(&info.lop, &info.rop); // mod field of ModR/M
+                if let Some(Operand::IMM(_)) = info.rop {
+                    self.codes.push(0xc7); // mov reg, immediate
+                } else {
+                    self.codes.push(0x89); // mov reg, reg
+                }
                 self.codes.push(modrm);
                 if let Some(Operand::IMM(value)) = info.rop {
                     self.gen_immediate(value);
@@ -69,7 +82,9 @@ impl Generator {
         }
         match rop {
             Some(Operand::IMM(_)) => (),
-            Some(reg) => modrm |= reg.reg_number(),
+            Some(reg) => {
+                modrm |= reg.reg_number() << 3;
+            }
             None => (),
         }
         modrm

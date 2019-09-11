@@ -5,6 +5,7 @@ pub enum Token {
     COLON,
     COMMA,
     MOV,
+    PUSH,
     RET,
     BLANK,
     LF,
@@ -68,8 +69,8 @@ fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
 }
 fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
     let length: usize = count_len(input, |c| c.is_digit(10) || c == &'_' || c.is_alphabetic());
-    let keywords: Vec<&str> = vec!["mov", "ret"];
-    let types: Vec<Token> = vec![Token::MOV, Token::RET];
+    let keywords: Vec<&str> = vec!["mov", "ret", "push"];
+    let types: Vec<Token> = vec![Token::MOV, Token::RET, Token::PUSH];
     for (idx, k) in keywords.iter().enumerate() {
         if input.starts_with(k) {
             return Some((types[idx].clone(), length));
