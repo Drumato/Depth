@@ -88,7 +88,7 @@ impl Parser {
     fn parse_inst(&mut self) -> Option<()> {
         let inst: Token = self.get_token();
         match inst {
-            Token::RET | Token::CQO => {
+            Token::RET | Token::CQO | Token::SYSCALL => {
                 let entry: usize = self.entry;
                 self.entry += 1;
                 self.insts.push(Inst::NOARG(entry));

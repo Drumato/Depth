@@ -120,6 +120,10 @@ impl Generator {
                 }
                 self.codes.push(modrm);
             }
+            "syscall" => {
+                self.codes.push(0x0f);
+                self.codes.push(0x05);
+            }
             _ => (),
         }
     }
