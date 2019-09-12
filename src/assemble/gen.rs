@@ -198,19 +198,25 @@ impl Generator {
         modrm
     }
 }
-pub fn generate(inst_map: HashMap<String, Vec<Inst>>, info_map: HashMap<usize, Info>) -> Vec<u8> {
+pub fn generate(
+    inst_map: HashMap<String, Vec<Inst>>,
+    info_map: HashMap<usize, Info>,
+) -> HashMap<String, Vec<u8>> {
     let mut generator: Generator = Generator {
         insts: Vec::new(),
         info_map: info_map,
         codes: Vec::new(),
     };
-    for (_symbol, insts) in inst_map.iter() {
+    let mut symbol_map: HashMap<String, Vec<u8>> = HashMap::new();
+    for (symbol, insts) in inst_map.iter() {
         generator.insts = insts.to_vec();
         generator.gen();
+        let md = generator.codes.len() % 4;
+        for _ in 0..(4 - md) {
+            generator.codes.push(0x00);
+        }
+        symbol_map.insert(symbol.to_string(), generator.codes.to_vec());
+        generator.codes = Vec::new();
     }
-    let md = generator.codes.len() % 4;
-    for _ in 0..(4 - md) {
-        generator.codes.push(0x00);
-    }
-    generator.codes
+    symbol_map
 }

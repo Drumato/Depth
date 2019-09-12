@@ -14,6 +14,7 @@ use object::elf;
 mod assemble;
 use assemble as a;
 mod ce;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 
@@ -77,11 +78,12 @@ fn assemble(matches: &clap::ArgMatches) {
             }
         }
     }
-    let codes: Vec<u8> = a::gen::generate(instructions, info_map);
+    let code_map: HashMap<String, Vec<u8>> = a::gen::generate(instructions, info_map);
     let shstrtab: Vec<u8> = elf::elf64::strtab(vec![".text", ".symtab", ".strtab", ".shstrtab"]);
     let strtab: Vec<u8> = elf::elf64::strtab(vec!["main"]);
-    let symtab: Vec<u8> =
-        elf::elf64::symbols_to_vec(vec![elf::elf64::init_mainsym(codes.len() as u64)]);
+    let codes = code_map.get(&"main".to_string()).unwrap();
+    let main_sym = elf::elf64::init_mainsym(codes.len() as u64);
+    let symtab: Vec<u8> = elf::elf64::symbols_to_vec(vec![main_sym]);
     let main_hdr = elf::elf64::init_mainhdr(codes.len() as u64);
     let symtab_hdr = elf::elf64::init_symtabhdr(symtab.len() as u64);
     let strtab_hdr = elf::elf64::init_strtabhdr(strtab.len() as u64);
@@ -90,7 +92,7 @@ fn assemble(matches: &clap::ArgMatches) {
     let mut writer = BufWriter::new(File::create("c.o").unwrap());
     let mut elf_file = elf::elf64::ELF {
         ehdr: ehdr,
-        sections: vec![codes, symtab, strtab, shstrtab],
+        sections: vec![codes.to_owned(), symtab, strtab, shstrtab],
         shdrs: vec![
             elf::elf64::init_nullhdr(),
             main_hdr,

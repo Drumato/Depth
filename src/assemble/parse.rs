@@ -83,6 +83,7 @@ impl Parser {
             self.next_token();
             while let Some(()) = self.parse_inst() {}
             self.inst_map.insert(n, self.insts.clone());
+            self.insts = Vec::new();
         }
     }
     fn parse_inst(&mut self) -> Option<()> {
