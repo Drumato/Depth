@@ -50,6 +50,7 @@ pub struct Info {
     pub inst_name: String,
     pub lop: Option<Operand>,
     pub rop: Option<Operand>,
+    pub rels: Option<(usize, String)>,
 }
 
 impl Info {
@@ -58,6 +59,7 @@ impl Info {
             inst_name: name,
             lop: None,
             rop: None,
+            rels: None,
         }
     }
 }
@@ -68,6 +70,7 @@ struct Parser {
     insts: Vec<Inst>,
     inst_map: HashMap<String, Vec<Inst>>,
     entry: usize,
+    symnum: usize,
 }
 impl Parser {
     fn parse(&mut self) {
@@ -106,6 +109,9 @@ impl Parser {
                 self.insts.push(Inst::UNARG(entry));
                 let mut info: Info = Info::new(inst.string());
                 info.lop = self.get_operand();
+                if let Some(Operand::SYMBOL(name)) = &info.lop {
+                    info.rels = Some((self.symnum, name.to_string()));
+                }
                 self.info_map.insert(entry, info);
                 Some(())
             }
@@ -175,6 +181,7 @@ pub fn parsing(tokens: Vec<Token>) -> (HashMap<String, Vec<Inst>>, HashMap<usize
         inst_map: HashMap::new(),
         insts: Vec::new(),
         entry: 0,
+        symnum: 0,
     };
     parser.parse();
     (parser.inst_map, parser.info_map)

@@ -52,31 +52,7 @@ fn assemble(matches: &clap::ArgMatches) {
     let tokens: Vec<a::lex::Token> = a::lex::lexing(read_file(matches.value_of("source").unwrap()));
     let (instructions, info_map) = a::parse::parsing(tokens);
     if matches.is_present("dump-inst") {
-        for (symbol, v) in instructions.iter() {
-            eprintln!("{}'s instructions", symbol.bold().green());
-            for inst in v.iter() {
-                let num: &usize = match inst {
-                    a::parse::Inst::BINARG(num)
-                    | a::parse::Inst::UNARG(num)
-                    | a::parse::Inst::NOARG(num) => num,
-                };
-                let info: &a::parse::Info = info_map.get(num).unwrap();
-                let lop_string: String = match &info.lop {
-                    Some(l) => l.string(),
-                    None => "".to_string(),
-                };
-                let rop_string: String = match &info.rop {
-                    Some(r) => r.string(),
-                    None => "".to_string(),
-                };
-                eprintln!(
-                    "  {} {} {}",
-                    info.inst_name.bold().blue(),
-                    lop_string,
-                    rop_string
-                );
-            }
-        }
+        dump_inst(&instructions, &info_map);
     }
     let code_map: HashMap<String, Vec<u8>> = a::gen::generate(instructions, info_map);
     let shstrtab: Vec<u8> = elf::elf64::strtab(vec![".text", ".symtab", ".strtab", ".shstrtab"]);
@@ -171,4 +147,42 @@ fn read_file(s: &str) -> String {
         eprintln!("{} is directory.", filepath.to_str().unwrap());
     }
     s.to_string()
+}
+fn dump_inst(
+    instructions: &std::collections::HashMap<
+        std::string::String,
+        std::vec::Vec<assemble::parse::Inst>,
+    >,
+    info_map: &std::collections::HashMap<usize, assemble::parse::Info>,
+) {
+    for (symbol, v) in instructions.iter() {
+        eprintln!("{}'s instructions", symbol.bold().green());
+        for inst in v.iter() {
+            let num: &usize = match inst {
+                a::parse::Inst::BINARG(num)
+                | a::parse::Inst::UNARG(num)
+                | a::parse::Inst::NOARG(num) => num,
+            };
+            let info: &a::parse::Info = info_map.get(num).unwrap();
+            let lop_string: String = match &info.lop {
+                Some(l) => l.string(),
+                None => "".to_string(),
+            };
+            let rop_string: String = match &info.rop {
+                Some(r) => r.string(),
+                None => "".to_string(),
+            };
+            let rel_string: String = match &info.rels {
+                Some(r) => format!("{}<{}>", r.1, r.0),
+                None => "".to_string(),
+            };
+            eprintln!(
+                "  instname->'{}' lop->'{}' rop->'{}' rel->'{}'",
+                info.inst_name.bold().blue(),
+                lop_string.green(),
+                rop_string.green(),
+                rel_string.green(),
+            );
+        }
+    }
 }
