@@ -4,7 +4,7 @@ type Elf64Half = u16;
 type Elf64Word = u32;
 //type Elf64SWord = i32;
 type Elf64Xword = u64;
-//type Elf64Sxword = i64;
+type Elf64Sxword = i64;
 type Elf64Addr = u64;
 type Elf64Off = u64;
 type Elf64Section = u16;
@@ -346,5 +346,33 @@ pub fn init_sym(name: Elf64Word, bind: u8, size: u64, value: u64) -> Symbol {
         st_shndx: 1,
         st_value: value,
         st_size: size,
+    }
+}
+
+pub struct Rela {
+    pub r_offset: Elf64Addr,
+    pub r_info: Elf64Xword,
+    pub r_addend: Elf64Sxword,
+}
+impl Rela {
+    pub fn to_vec(&self) -> Vec<u8> {
+        let mut bb: Vec<u8> = Vec::new();
+        for b in self.r_offset.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.r_info.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.r_addend.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        bb
+    }
+    pub fn new() -> Rela {
+        Rela {
+            r_offset: 0,
+            r_info: 0,
+            r_addend: 4,
+        }
     }
 }

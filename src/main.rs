@@ -54,15 +54,24 @@ fn assemble(matches: &clap::ArgMatches) {
     if matches.is_present("dump-inst") {
         dump_inst(&instructions, &info_map);
     }
+    let relas = info_map
+        .iter()
+        .map(|(_, info)| *info.to_owned())
+        .map(|info| info.rels)
+        .filter(Option::is_some)
+        .map(|op| op.unwrap())
+        .collect::<Vec<elf::elf64::Rela>>();
     let code_map: HashMap<String, Vec<u8>> = a::gen::generate(instructions, info_map);
     let shstrtab: Vec<u8> = elf::elf64::strtab(vec![".text", ".symtab", ".strtab", ".shstrtab"]);
-    let mut strs: Vec<&str> = Vec::new();
+    let strs: Vec<&str> = code_map
+        .iter()
+        .map(|(name, _)| name.as_str())
+        .collect::<Vec<&str>>();
     let mut symbols: Vec<elf::elf64::Symbol> = Vec::new();
     let mut total_len: u64 = 0;
     let mut total_code: Vec<u8> = Vec::new();
     let mut name: u32 = 1;
-    for (symbol_name, codes) in code_map.iter() {
-        strs.push(symbol_name.as_str());
+    for (idx, (symbol_name, codes)) in code_map.iter().enumerate() {
         symbols.push(elf::elf64::init_sym(
             name,
             elf::elf64::STB_GLOBAL,
@@ -172,16 +181,11 @@ fn dump_inst(
                 Some(r) => r.string(),
                 None => "".to_string(),
             };
-            let rel_string: String = match &info.rels {
-                Some(r) => format!("{}<{}>", r.1, r.0),
-                None => "".to_string(),
-            };
             eprintln!(
-                "  instname->'{}' lop->'{}' rop->'{}' rel->'{}'",
+                "  instname->'{}' lop->'{}' rop->'{}' ",
                 info.inst_name.bold().blue(),
                 lop_string.green(),
                 rop_string.green(),
-                rel_string.green(),
             );
         }
     }

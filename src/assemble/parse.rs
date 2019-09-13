@@ -1,4 +1,5 @@
 //use super::super::ce::types::Error;
+use super::super::object::elf::elf64::Rela;
 use super::lex::Token;
 use std::collections::HashMap;
 static mut CUR: usize = 0;
@@ -50,7 +51,7 @@ pub struct Info {
     pub inst_name: String,
     pub lop: Option<Operand>,
     pub rop: Option<Operand>,
-    pub rels: Option<(usize, String)>,
+    pub rels: Option<Rela>,
 }
 
 impl Info {
@@ -70,7 +71,6 @@ struct Parser {
     insts: Vec<Inst>,
     inst_map: HashMap<String, Vec<Inst>>,
     entry: usize,
-    symnum: usize,
 }
 impl Parser {
     fn parse(&mut self) {
@@ -110,7 +110,7 @@ impl Parser {
                 let mut info: Info = Info::new(inst.string());
                 info.lop = self.get_operand();
                 if let Some(Operand::SYMBOL(name)) = &info.lop {
-                    info.rels = Some((self.symnum, name.to_string()));
+                    info.rels = Some(Rela::new());
                 }
                 self.info_map.insert(entry, info);
                 Some(())
@@ -181,7 +181,6 @@ pub fn parsing(tokens: Vec<Token>) -> (HashMap<String, Vec<Inst>>, HashMap<usize
         inst_map: HashMap::new(),
         insts: Vec::new(),
         entry: 0,
-        symnum: 0,
     };
     parser.parse();
     (parser.inst_map, parser.info_map)
