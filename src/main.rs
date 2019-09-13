@@ -54,7 +54,7 @@ fn assemble(matches: &clap::ArgMatches) {
     if matches.is_present("dump-inst") {
         dump_inst(&instructions, &info_map);
     }
-    let code_map: HashMap<String, Vec<u8>> = a::gen::generate(instructions, info_map);
+    let (code_map, mut relas) = a::gen::generate(instructions, info_map, relas);
     let shstrtab: Vec<u8> = elf::elf64::strtab(vec![
         ".text",
         ".symtab",

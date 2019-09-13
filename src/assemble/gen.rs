@@ -1,3 +1,4 @@
+use super::super::object::elf::elf64::Rela;
 use super::parse::{Info, Inst, Operand};
 use std::collections::HashMap;
 struct Generator {
@@ -205,7 +206,8 @@ impl Generator {
 pub fn generate(
     inst_map: HashMap<String, Vec<Inst>>,
     info_map: HashMap<usize, Info>,
-) -> HashMap<String, Vec<u8>> {
+    rels_map: HashMap<String, Rela>,
+) -> (HashMap<String, Vec<u8>>, HashMap<String, Rela>) {
     let mut generator: Generator = Generator {
         insts: Vec::new(),
         info_map: info_map,
@@ -222,5 +224,5 @@ pub fn generate(
         symbol_map.insert(symbol.to_string(), generator.codes.to_vec());
         generator.codes = Vec::new();
     }
-    symbol_map
+    (symbol_map, rels_map)
 }
