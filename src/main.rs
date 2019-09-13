@@ -105,7 +105,7 @@ fn assemble(matches: &clap::ArgMatches) {
     let main_hdr = elf::elf64::init_mainhdr(total_len);
     let symtab_hdr = elf::elf64::init_symtabhdr(24 * symbol_number as u64);
     let strtab_hdr = elf::elf64::init_strtabhdr(strtab.len() as u64);
-    let shstrtab_hdr = elf::elf64::init_shstrtabhdr(shstrtab.len() as u64);
+    let shstrtab_hdr = elf::elf64::init_strtabhdr(shstrtab.len() as u64);
     let ehdr: elf::elf64::Ehdr = elf::elf64::init_ehdr();
     let mut writer = BufWriter::new(File::create("c.o").unwrap());
     let mut elf_file = elf::elf64::ELF {

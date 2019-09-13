@@ -262,20 +262,6 @@ pub fn init_strtabhdr(size: u64) -> Shdr {
         sh_entsize: 0,
     }
 }
-pub fn init_shstrtabhdr(size: u64) -> Shdr {
-    Shdr {
-        sh_name: 0,
-        sh_type: SHT_STRTAB,
-        sh_flags: 0,
-        sh_addr: 0,
-        sh_offset: 0,
-        sh_size: size,
-        sh_link: 0,
-        sh_info: 0,
-        sh_addralign: 1,
-        sh_entsize: 0,
-    }
-}
 pub fn init_nullhdr() -> Shdr {
     Shdr {
         sh_name: 0,
@@ -307,7 +293,7 @@ pub fn strtab(names: Vec<&str>) -> Vec<u8> {
     b
 }
 pub static STB_GLOBAL: u8 = 1;
-pub static STB_LOCAL: u8 = 0;
+//pub static STB_LOCAL: u8 = 0;
 pub static STT_FUNC: u8 = 2;
 #[repr(C)]
 pub struct Symbol {
