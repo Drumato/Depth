@@ -307,6 +307,7 @@ pub fn strtab(names: Vec<&str>) -> Vec<u8> {
     b
 }
 pub static STB_GLOBAL: u8 = 1;
+pub static STB_LOCAL: u8 = 0;
 pub static STT_FUNC: u8 = 2;
 #[repr(C)]
 pub struct Symbol {
@@ -350,13 +351,13 @@ pub fn symbols_to_vec(symbols: Vec<Symbol>) -> Vec<u8> {
     }
     bb
 }
-pub fn init_mainsym(size: u64) -> Symbol {
+pub fn init_sym(name: Elf64Word, bind: u8, size: u64, value: u64) -> Symbol {
     Symbol {
-        st_name: 1,
-        st_info: (STB_GLOBAL << 4) + STT_FUNC,
+        st_name: name,
+        st_info: (bind << 4) + STT_FUNC,
         st_other: 0,
         st_shndx: 1,
-        st_value: 0,
+        st_value: value,
         st_size: size,
     }
 }

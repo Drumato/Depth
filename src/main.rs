@@ -80,19 +80,37 @@ fn assemble(matches: &clap::ArgMatches) {
     }
     let code_map: HashMap<String, Vec<u8>> = a::gen::generate(instructions, info_map);
     let shstrtab: Vec<u8> = elf::elf64::strtab(vec![".text", ".symtab", ".strtab", ".shstrtab"]);
-    let strtab: Vec<u8> = elf::elf64::strtab(vec!["main"]);
-    let codes = code_map.get(&"main".to_string()).unwrap();
-    let main_sym = elf::elf64::init_mainsym(codes.len() as u64);
-    let symtab: Vec<u8> = elf::elf64::symbols_to_vec(vec![main_sym]);
-    let main_hdr = elf::elf64::init_mainhdr(codes.len() as u64);
-    let symtab_hdr = elf::elf64::init_symtabhdr(symtab.len() as u64);
+    let mut strs: Vec<&str> = Vec::new();
+    let mut symbols: Vec<elf::elf64::Symbol> = Vec::new();
+    let mut total_len: u64 = 0;
+    let mut total_code: Vec<u8> = Vec::new();
+    let mut name: u32 = 1;
+    for (symbol_name, codes) in code_map.iter() {
+        strs.push(symbol_name.as_str());
+        symbols.push(elf::elf64::init_sym(
+            name,
+            elf::elf64::STB_GLOBAL,
+            codes.len() as u64,
+            total_len,
+        ));
+        name += symbol_name.len() as u32 + 1;
+        total_len += codes.len() as u64;
+        for b in codes.iter() {
+            total_code.push(*b);
+        }
+    }
+    let strtab: Vec<u8> = elf::elf64::strtab(strs);
+    let symbol_number = symbols.len();
+    let symtab: Vec<u8> = elf::elf64::symbols_to_vec(symbols);
+    let main_hdr = elf::elf64::init_mainhdr(total_len);
+    let symtab_hdr = elf::elf64::init_symtabhdr(24 * symbol_number as u64);
     let strtab_hdr = elf::elf64::init_strtabhdr(strtab.len() as u64);
     let shstrtab_hdr = elf::elf64::init_shstrtabhdr(shstrtab.len() as u64);
     let ehdr: elf::elf64::Ehdr = elf::elf64::init_ehdr();
     let mut writer = BufWriter::new(File::create("c.o").unwrap());
     let mut elf_file = elf::elf64::ELF {
         ehdr: ehdr,
-        sections: vec![codes.to_owned(), symtab, strtab, shstrtab],
+        sections: vec![total_code, symtab, strtab, shstrtab],
         shdrs: vec![
             elf::elf64::init_nullhdr(),
             main_hdr,
