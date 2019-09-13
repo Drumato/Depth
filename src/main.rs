@@ -50,12 +50,18 @@ fn assemble(matches: &clap::ArgMatches) {
         return;
     }
     let tokens: Vec<a::lex::Token> = a::lex::lexing(read_file(matches.value_of("source").unwrap()));
-    let (instructions, info_map, _relas) = a::parse::parsing(tokens);
+    let (instructions, info_map, mut relas) = a::parse::parsing(tokens);
     if matches.is_present("dump-inst") {
         dump_inst(&instructions, &info_map);
     }
     let code_map: HashMap<String, Vec<u8>> = a::gen::generate(instructions, info_map);
-    let shstrtab: Vec<u8> = elf::elf64::strtab(vec![".text", ".symtab", ".strtab", ".shstrtab"]);
+    let shstrtab: Vec<u8> = elf::elf64::strtab(vec![
+        ".text",
+        ".symtab",
+        ".strtab",
+        ".relatext",
+        ".shstrtab",
+    ]);
     let strs: Vec<&str> = code_map
         .iter()
         .map(|(name, _)| name.as_str())
@@ -76,6 +82,9 @@ fn assemble(matches: &clap::ArgMatches) {
         for b in codes.iter() {
             total_code.push(*b);
         }
+        if let Some(rela) = relas.get_mut(symbol_name) {
+            rela.r_info = ((idx << 32) + 4) as u64;
+        }
     }
     let mut elf_file = elf::elf64::ELF {
         ehdr: elf::elf64::init_ehdr(),
@@ -94,8 +103,14 @@ fn assemble(matches: &clap::ArgMatches) {
     );
     let strtab_length = strtab.len() as u64;
     elf_file.add_section(strtab, elf::elf64::init_strtabhdr(strtab_length));
+    let relas_length = relas.len() as u64;
+    elf_file.add_section(
+        elf::elf64::relas_to_vec(relas.values().collect::<Vec<&elf::elf64::Rela>>()),
+        elf::elf64::init_relahdr(24 * relas_length),
+    );
     let shstrtab_length = shstrtab.len() as u64;
     elf_file.add_section(shstrtab, elf::elf64::init_strtabhdr(shstrtab_length));
+
     elf_file.condition();
     let mut writer = BufWriter::new(File::create("c.o").unwrap());
     match writer.write_all(&elf_file.to_vec()) {

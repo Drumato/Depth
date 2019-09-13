@@ -200,9 +200,11 @@ pub static ET_REL: Elf64Half = 1;
 pub static SHT_PROGBITS: Elf64Word = 1;
 pub static SHT_SYMTAB: Elf64Word = 2;
 pub static SHT_STRTAB: Elf64Word = 3;
+pub static SHT_RELA: Elf64Word = 4;
 
 pub static SHF_ALLOC: Elf64Xword = 1 << 1;
 pub static SHF_EXECINSTR: Elf64Xword = 1 << 2;
+pub static SHF_INFO_LINK: Elf64Xword = 1 << 6;
 pub fn init_ehdr() -> Ehdr {
     Ehdr {
         e_ident: 0x7f454c46020101000000000000000000,
@@ -261,6 +263,21 @@ pub fn init_strtabhdr(size: u64) -> Shdr {
         sh_info: 0,
         sh_addralign: 1,
         sh_entsize: 0,
+    }
+}
+
+pub fn init_relahdr(size: u64) -> Shdr {
+    Shdr {
+        sh_name: 0,
+        sh_type: SHT_RELA,
+        sh_flags: SHF_INFO_LINK,
+        sh_addr: 0,
+        sh_offset: 0,
+        sh_size: size,
+        sh_link: 2,
+        sh_info: 1,
+        sh_addralign: 8,
+        sh_entsize: 24,
     }
 }
 pub fn init_nullhdr() -> Shdr {
@@ -349,6 +366,7 @@ pub fn init_sym(name: Elf64Word, bind: u8, size: u64, value: u64) -> Symbol {
     }
 }
 
+#[derive(Debug)]
 pub struct Rela {
     pub r_offset: Elf64Addr,
     pub r_info: Elf64Xword,
@@ -372,7 +390,16 @@ impl Rela {
         Rela {
             r_offset: 0,
             r_info: 0,
-            r_addend: 4,
+            r_addend: -4,
         }
     }
+}
+pub fn relas_to_vec(relas: Vec<&Rela>) -> Vec<u8> {
+    let mut bb: Vec<u8> = Vec::new();
+    for rela in relas {
+        for b in rela.to_vec() {
+            bb.push(b);
+        }
+    }
+    bb
 }
