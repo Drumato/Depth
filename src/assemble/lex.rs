@@ -6,6 +6,7 @@ pub enum Token {
     COMMA,
     MOV,
     ADD,
+    CALL,
     CMP,
     CQO,
     IDIV,
@@ -31,6 +32,7 @@ impl Token {
     pub fn string(&self) -> String {
         match self {
             Token::ADD => "add".to_string(),
+            Token::CALL => "call".to_string(),
             Token::CMP => "cmp".to_string(),
             Token::CQO => "cqo".to_string(),
             Token::IDIV => "idiv".to_string(),
@@ -103,6 +105,7 @@ fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
     let length: usize = count_len(input, |c| c.is_digit(10) || c == &'_' || c.is_alphabetic());
     let keywords: Vec<&str> = vec![
         "mov", "ret", "push", "pop", "cqo", "add", "sub", "idiv", "imul", "cmp", "setl", "syscall",
+        "call",
     ];
     let types: Vec<Token> = vec![
         Token::MOV,
@@ -117,6 +120,7 @@ fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
         Token::CMP,
         Token::SETL,
         Token::SYSCALL,
+        Token::CALL,
     ];
     for (idx, k) in keywords.iter().enumerate() {
         if input.starts_with(k) {

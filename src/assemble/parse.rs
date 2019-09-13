@@ -11,12 +11,14 @@ pub enum Inst {
 }
 pub enum Operand {
     REG(String),
+    SYMBOL(String),
     IMM(i128),
 }
 impl Operand {
     pub fn string(&self) -> String {
         match self {
             Operand::REG(name) => format!("reg<{}>", name),
+            Operand::SYMBOL(name) => format!("symbol<{}>", name),
             Operand::IMM(value) => format!("imm<{}>", value),
         }
     }
@@ -97,7 +99,7 @@ impl Parser {
                 self.next_token();
                 Some(())
             }
-            Token::PUSH | Token::POP | Token::IDIV | Token::IMUL | Token::SETL => {
+            Token::PUSH | Token::POP | Token::IDIV | Token::IMUL | Token::SETL | Token::CALL => {
                 self.next_token();
                 let entry: usize = self.entry;
                 self.entry += 1;
@@ -125,10 +127,17 @@ impl Parser {
     fn get_operand(&self) -> Option<Operand> {
         let t: &Token = self.cur_token();
         match t {
-            Token::SYMBOL(name) => {
-                self.next_token();
-                Some(Operand::REG(name.to_string()))
-            }
+            Token::SYMBOL(name) => match name.as_str() {
+                "rax" | "rbx" | "rcx" | "rdx" | "rsi" | "rdi" | "rsp" | "rbp" | "r8" | "r9"
+                | "r10" | "r11" | "r12" | "r13" | "r14" | "r15" | "al" => {
+                    self.next_token();
+                    Some(Operand::REG(name.to_string()))
+                }
+                _ => {
+                    self.next_token();
+                    Some(Operand::SYMBOL(name.to_string()))
+                }
+            },
             Token::INTEGER(value) => {
                 self.next_token();
                 Some(Operand::IMM(*value))

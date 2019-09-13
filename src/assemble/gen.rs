@@ -28,6 +28,10 @@ impl Generator {
                 }
                 self.codes.push(modrm);
             }
+            "call" => {
+                self.codes.push(0xe8);
+                self.gen_immediate(0x00);
+            }
             "cmp" => {
                 self.codes.push(self.set_rexprefix(&info.lop, &info.rop));
                 if let Some(Operand::IMM(value)) = info.rop {
