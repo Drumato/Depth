@@ -51,7 +51,6 @@ pub struct Info {
     pub inst_name: String,
     pub lop: Option<Operand>,
     pub rop: Option<Operand>,
-    pub rels: Option<Rela>,
 }
 
 impl Info {
@@ -60,7 +59,6 @@ impl Info {
             inst_name: name,
             lop: None,
             rop: None,
-            rels: None,
         }
     }
 }
@@ -71,6 +69,7 @@ struct Parser {
     insts: Vec<Inst>,
     inst_map: HashMap<String, Vec<Inst>>,
     entry: usize,
+    rels: HashMap<String, Rela>,
 }
 impl Parser {
     fn parse(&mut self) {
@@ -110,7 +109,7 @@ impl Parser {
                 let mut info: Info = Info::new(inst.string());
                 info.lop = self.get_operand();
                 if let Some(Operand::SYMBOL(name)) = &info.lop {
-                    info.rels = Some(Rela::new());
+                    self.rels.insert(name.to_string(), Rela::new());
                 }
                 self.info_map.insert(entry, info);
                 Some(())
@@ -174,14 +173,21 @@ impl Parser {
         }
     }
 }
-pub fn parsing(tokens: Vec<Token>) -> (HashMap<String, Vec<Inst>>, HashMap<usize, Info>) {
+pub fn parsing(
+    tokens: Vec<Token>,
+) -> (
+    HashMap<String, Vec<Inst>>,
+    HashMap<usize, Info>,
+    HashMap<String, Rela>,
+) {
     let mut parser: Parser = Parser {
         tokens: tokens,
         info_map: HashMap::new(),
         inst_map: HashMap::new(),
         insts: Vec::new(),
         entry: 0,
+        rels: HashMap::new(),
     };
     parser.parse();
-    (parser.inst_map, parser.info_map)
+    (parser.inst_map, parser.info_map, parser.rels)
 }

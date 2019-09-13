@@ -50,17 +50,10 @@ fn assemble(matches: &clap::ArgMatches) {
         return;
     }
     let tokens: Vec<a::lex::Token> = a::lex::lexing(read_file(matches.value_of("source").unwrap()));
-    let (instructions, info_map) = a::parse::parsing(tokens);
+    let (instructions, info_map, _relas) = a::parse::parsing(tokens);
     if matches.is_present("dump-inst") {
         dump_inst(&instructions, &info_map);
     }
-    let relas = info_map
-        .iter()
-        .map(|(_, info)| *info.to_owned())
-        .map(|info| info.rels)
-        .filter(Option::is_some)
-        .map(|op| op.unwrap())
-        .collect::<Vec<elf::elf64::Rela>>();
     let code_map: HashMap<String, Vec<u8>> = a::gen::generate(instructions, info_map);
     let shstrtab: Vec<u8> = elf::elf64::strtab(vec![".text", ".symtab", ".strtab", ".shstrtab"]);
     let strs: Vec<&str> = code_map
