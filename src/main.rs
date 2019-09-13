@@ -99,28 +99,27 @@ fn assemble(matches: &clap::ArgMatches) {
             total_code.push(*b);
         }
     }
-    let strtab: Vec<u8> = elf::elf64::strtab(strs);
-    let symbol_number = symbols.len();
-    let symtab: Vec<u8> = elf::elf64::symbols_to_vec(symbols);
-    let main_hdr = elf::elf64::init_mainhdr(total_len);
-    let symtab_hdr = elf::elf64::init_symtabhdr(24 * symbol_number as u64);
-    let strtab_hdr = elf::elf64::init_strtabhdr(strtab.len() as u64);
-    let shstrtab_hdr = elf::elf64::init_strtabhdr(shstrtab.len() as u64);
-    let ehdr: elf::elf64::Ehdr = elf::elf64::init_ehdr();
-    let mut writer = BufWriter::new(File::create("c.o").unwrap());
     let mut elf_file = elf::elf64::ELF {
-        ehdr: ehdr,
-        sections: vec![total_code, symtab, strtab, shstrtab],
-        shdrs: vec![
-            elf::elf64::init_nullhdr(),
-            main_hdr,
-            symtab_hdr,
-            strtab_hdr,
-            shstrtab_hdr,
-        ],
+        ehdr: elf::elf64::init_ehdr(),
+        sections: vec![],
+        shdrs: vec![],
         phdrs: None,
     };
+    let strtab: Vec<u8> = elf::elf64::strtab(strs);
+    elf_file.add_section(vec![], elf::elf64::init_nullhdr());
+    elf_file.add_section(total_code, elf::elf64::init_texthdr(total_len));
+    let symbol_length = symbols.len();
+    let symtab: Vec<u8> = elf::elf64::symbols_to_vec(symbols);
+    elf_file.add_section(
+        symtab,
+        elf::elf64::init_symtabhdr(24 * symbol_length as u64),
+    );
+    let strtab_length = strtab.len() as u64;
+    elf_file.add_section(strtab, elf::elf64::init_strtabhdr(strtab_length));
+    let shstrtab_length = shstrtab.len() as u64;
+    elf_file.add_section(shstrtab, elf::elf64::init_strtabhdr(shstrtab_length));
     elf_file.condition();
+    let mut writer = BufWriter::new(File::create("c.o").unwrap());
     match writer.write_all(&elf_file.to_vec()) {
         Ok(_) => (),
         Err(e) => eprintln!("{}", e),

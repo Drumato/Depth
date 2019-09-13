@@ -34,12 +34,13 @@ impl ELF {
         }
         bb
     }
+    pub fn add_section(&mut self, section: Vec<u8>, shdr: Shdr) {
+        self.sections.push(section);
+        self.shdrs.push(shdr);
+    }
     pub fn condition(&mut self) {
         let mut offset = 0x40;
         for shdr in self.shdrs.iter_mut() {
-            if shdr.sh_type == 0 {
-                continue;
-            }
             shdr.sh_offset += offset;
             offset += shdr.sh_size;
         }
@@ -47,15 +48,15 @@ impl ELF {
             .sections
             .iter()
             .fold(0x40, |sum, sec| sum + sec.len() as u64);
-        self.ehdr.e_shnum = 1 + self.sections.len() as u16; // 1 -> nullhdr
+        self.ehdr.e_shnum = self.sections.len() as u16; // 1 -> nullhdr
         self.ehdr.e_shstrndx = self.ehdr.e_shnum - 1;
-        let name_count = self.sections[(self.ehdr.e_shstrndx - 1) as usize] // -1 means null-hdr
+        let name_count = self.sections[self.ehdr.e_shstrndx as usize]
             .iter()
             .filter(|num| *num == &('.' as u8))
             .collect::<Vec<&u8>>()
             .len();
         let mut sh_name = 1;
-        for (idx, bb) in self.sections[(self.ehdr.e_shstrndx - 1) as usize][1..]
+        for (idx, bb) in self.sections[self.ehdr.e_shstrndx as usize][1..]
             .to_vec()
             .splitn(name_count, |num| *num == 0x00)
             .enumerate()
@@ -220,7 +221,7 @@ pub fn init_ehdr() -> Ehdr {
         e_shstrndx: 0,
     }
 }
-pub fn init_mainhdr(size: u64) -> Shdr {
+pub fn init_texthdr(size: u64) -> Shdr {
     Shdr {
         sh_name: 0,
         sh_type: SHT_PROGBITS,
