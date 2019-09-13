@@ -246,7 +246,7 @@ pub fn init_symtabhdr(size: u64) -> Shdr {
         sh_offset: 0,
         sh_size: size,
         sh_link: 3,
-        sh_info: 0,
+        sh_info: 1,
         sh_addralign: 8,
         sh_entsize: 24,
     }
@@ -363,6 +363,16 @@ pub fn init_sym(name: Elf64Word, bind: u8, size: u64, value: u64) -> Symbol {
         st_shndx: 1,
         st_value: value,
         st_size: size,
+    }
+}
+pub fn init_nullsym() -> Symbol {
+    Symbol {
+        st_name: 0,
+        st_info: 0,
+        st_other: 0,
+        st_shndx: 0,
+        st_value: 0,
+        st_size: 0,
     }
 }
 

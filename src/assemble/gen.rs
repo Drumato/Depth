@@ -5,6 +5,7 @@ struct Generator {
     insts: Vec<Inst>,
     info_map: HashMap<usize, Info>,
     codes: Vec<u8>,
+    rels_map: HashMap<String, Rela>,
 }
 impl Generator {
     fn gen(&mut self) {
@@ -31,6 +32,11 @@ impl Generator {
             }
             "call" => {
                 self.codes.push(0xe8);
+                if let Some(Operand::SYMBOL(name)) = &info.lop {
+                    if let Some(rela) = self.rels_map.get_mut(name) {
+                        rela.r_offset = self.codes.len() as u64;
+                    }
+                }
                 self.gen_immediate(0x00);
             }
             "cmp" => {
@@ -212,6 +218,7 @@ pub fn generate(
         insts: Vec::new(),
         info_map: info_map,
         codes: Vec::new(),
+        rels_map: rels_map,
     };
     let mut symbol_map: HashMap<String, Vec<u8>> = HashMap::new();
     for (symbol, insts) in inst_map.iter() {
@@ -224,5 +231,5 @@ pub fn generate(
         symbol_map.insert(symbol.to_string(), generator.codes.to_vec());
         generator.codes = Vec::new();
     }
-    (symbol_map, rels_map)
+    (symbol_map, generator.rels_map)
 }

@@ -50,7 +50,7 @@ fn assemble(matches: &clap::ArgMatches) {
         return;
     }
     let tokens: Vec<a::lex::Token> = a::lex::lexing(read_file(matches.value_of("source").unwrap()));
-    let (instructions, info_map, mut relas) = a::parse::parsing(tokens);
+    let (instructions, info_map, relas) = a::parse::parsing(tokens);
     if matches.is_present("dump-inst") {
         dump_inst(&instructions, &info_map);
     }
@@ -67,6 +67,7 @@ fn assemble(matches: &clap::ArgMatches) {
         .map(|(name, _)| name.as_str())
         .collect::<Vec<&str>>();
     let mut symbols: Vec<elf::elf64::Symbol> = Vec::new();
+    symbols.push(elf::elf64::init_nullsym());
     let mut total_len: u64 = 0;
     let mut total_code: Vec<u8> = Vec::new();
     let mut name: u32 = 1;
@@ -83,7 +84,7 @@ fn assemble(matches: &clap::ArgMatches) {
             total_code.push(*b);
         }
         if let Some(rela) = relas.get_mut(symbol_name) {
-            rela.r_info = ((idx << 32) + 4) as u64;
+            rela.r_info = (((idx + 1) << 32) + 4) as u64;
         }
     }
     let mut elf_file = elf::elf64::ELF {
