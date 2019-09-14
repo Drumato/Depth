@@ -15,6 +15,11 @@ pub enum Token {
     POP,
     RET,
     SETL,
+    SETLE,
+    SETG,
+    SETGE,
+    SETE,
+    SETNE,
     SUB,
     SYSCALL,
     BLANK,
@@ -42,6 +47,11 @@ impl Token {
             Token::POP => "pop".to_string(),
             Token::RET => "ret".to_string(),
             Token::SETL => "setl".to_string(),
+            Token::SETLE => "setle".to_string(),
+            Token::SETG => "setg".to_string(),
+            Token::SETGE => "setge".to_string(),
+            Token::SETE => "sete".to_string(),
+            Token::SETNE => "setne".to_string(),
             Token::SUB => "sub".to_string(),
             Token::SYSCALL => "syscall".to_string(),
             Token::SYMBOL(name) => name.to_string(),
@@ -105,7 +115,7 @@ fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
     let length: usize = count_len(input, |c| c.is_digit(10) || c == &'_' || c.is_alphabetic());
     let keywords: Vec<&str> = vec![
         "mov", "ret", "push", "pop", "cqo", "add", "sub", "idiv", "imul", "cmp", "setl", "syscall",
-        "call",
+        "call", "setle", "setg", "setge", "sete", "setne",
     ];
     let types: Vec<Token> = vec![
         Token::MOV,
@@ -121,6 +131,11 @@ fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
         Token::SETL,
         Token::SYSCALL,
         Token::CALL,
+        Token::SETLE,
+        Token::SETG,
+        Token::SETGE,
+        Token::SETE,
+        Token::SETNE,
     ];
     for (idx, k) in keywords.iter().enumerate() {
         if input.starts_with(k) {

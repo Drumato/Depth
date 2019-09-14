@@ -101,7 +101,17 @@ impl Parser {
                 self.next_token();
                 Some(())
             }
-            Token::PUSH | Token::POP | Token::IDIV | Token::IMUL | Token::SETL | Token::CALL => {
+            Token::PUSH
+            | Token::POP
+            | Token::IDIV
+            | Token::IMUL
+            | Token::SETL
+            | Token::SETLE
+            | Token::SETG
+            | Token::SETGE
+            | Token::SETE
+            | Token::SETNE
+            | Token::CALL => {
                 self.next_token();
                 let entry: usize = self.entry;
                 self.entry += 1;

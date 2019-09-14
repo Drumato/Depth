@@ -122,6 +122,31 @@ impl Generator {
                 self.codes.push(0x9c);
                 self.codes.push(self.set_modrm(&info.lop, &info.rop));
             }
+            "setle" => {
+                self.codes.push(0x0f);
+                self.codes.push(0x9e);
+                self.codes.push(self.set_modrm(&info.lop, &info.rop));
+            }
+            "setg" => {
+                self.codes.push(0x0f);
+                self.codes.push(0x9f);
+                self.codes.push(self.set_modrm(&info.lop, &info.rop));
+            }
+            "setge" => {
+                self.codes.push(0x0f);
+                self.codes.push(0x9d);
+                self.codes.push(self.set_modrm(&info.lop, &info.rop));
+            }
+            "sete" => {
+                self.codes.push(0x0f);
+                self.codes.push(0x94);
+                self.codes.push(self.set_modrm(&info.lop, &info.rop));
+            }
+            "setne" => {
+                self.codes.push(0x0f);
+                self.codes.push(0x95);
+                self.codes.push(self.set_modrm(&info.lop, &info.rop));
+            }
             "sub" => {
                 self.codes.push(self.set_rexprefix(&info.lop, &info.rop));
                 let modrm: u8 = self.set_modrm(&info.lop, &info.rop); // mod field of ModR/M
