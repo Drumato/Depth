@@ -22,10 +22,26 @@ fn main() -> Result<(), Box<std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
     compile(&matches);
-    if matches.is_present("stop-s") {
+    if matches.is_present("stop-c") {
         std::process::exit(0);
     }
-    assemble(&matches);
+    let mut elf_file: elf::elf64::ELF = assemble(&matches);
+    let file_name;
+    if matches.is_present("stop-a") {
+        file_name = "c.o";
+    } else {
+        file_name = "a.out";
+        elf_file.linking();
+    }
+    let mut writer = BufWriter::new(File::create(file_name).unwrap());
+    match writer.write_all(&elf_file.to_vec()) {
+        Ok(_) => (),
+        Err(e) => eprintln!("{}", e),
+    }
+    match writer.flush() {
+        Ok(_) => (),
+        Err(e) => eprintln!("{}", e),
+    }
     Ok(())
 }
 fn compile(matches: &clap::ArgMatches) {
@@ -45,9 +61,9 @@ fn compile(matches: &clap::ArgMatches) {
     }
     genx64_phase(&matches, manager);
 }
-fn assemble(matches: &clap::ArgMatches) {
+fn assemble(matches: &clap::ArgMatches) -> elf::elf64::ELF {
     if !matches.value_of("source").unwrap().contains(".s") {
-        return;
+        std::process::exit(1);
     }
     let tokens: Vec<a::lex::Token> = a::lex::lexing(read_file(matches.value_of("source").unwrap()));
     let (instructions, info_map, relas) = a::parse::parsing(tokens);
@@ -111,17 +127,8 @@ fn assemble(matches: &clap::ArgMatches) {
     );
     let shstrtab_length = shstrtab.len() as u64;
     elf_file.add_section(shstrtab, elf::elf64::init_strtabhdr(shstrtab_length));
-
     elf_file.condition();
-    let mut writer = BufWriter::new(File::create("c.o").unwrap());
-    match writer.write_all(&elf_file.to_vec()) {
-        Ok(_) => (),
-        Err(e) => eprintln!("{}", e),
-    }
-    match writer.flush() {
-        Ok(_) => (),
-        Err(e) => eprintln!("{}", e),
-    }
+    elf_file
 }
 
 fn lex_phase(matches: &clap::ArgMatches) -> Vec<f::token::token::Token> {

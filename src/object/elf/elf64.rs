@@ -17,6 +17,7 @@ pub struct ELF {
 }
 
 impl ELF {
+    pub fn linking(&mut self) {}
     pub fn to_vec(&self) -> Vec<u8> {
         let mut bb: Vec<u8> = Vec::new();
         for b in self.ehdr.to_vec() {
