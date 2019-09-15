@@ -34,7 +34,7 @@ def test_compile():
         fn = f"test/testc/{filename}"
         f = open(fn)
         p = subprocess.Popen(
-            f"./target/debug/depth {fn} --intel -C > c.s; gcc c.s ; ./a.out", shell=True
+            f"./target/debug/depth {fn} --intel -C;  gcc c.s ; ./a.out", shell=True
         )
         exit_status = p.wait()
         if exit_status != expect:

@@ -21,132 +21,146 @@ fn gr(num: &usize, size: usize) -> String {
     }
 }
 impl Manager {
-    pub fn genx64(&self) {
+    pub fn genx64(&mut self) -> String {
+        let mut out: String = String::with_capacity(4096);
         for ir in self.hirs.iter() {
             match ir {
-                HIR::ADD(lr, rr) => println!("  add {}, {}", gr(lr, 64), gr(rr, 64)),
-                HIR::SUB(lr, rr) => println!("  sub {}, {}", gr(lr, 64), gr(rr, 64)),
+                HIR::ADD(lr, rr) => {
+                    out += format!("  add {}, {}\n", gr(lr, 64), gr(rr, 64)).as_str();
+                }
+                HIR::SUB(lr, rr) => {
+                    out += format!("  sub {}, {}\n", gr(lr, 64), gr(rr, 64)).as_str();
+                }
                 HIR::MUL(lr, rr) => {
-                    println!("  mov rax, {}", gr(lr, 8));
-                    println!("  imul {}", gr(rr, 8));
-                    println!("  mov {}, rax", gr(lr, 8));
+                    out += format!(
+                        "  mov rax, {}\n  imul {}\n  mov {}, rax\n",
+                        gr(lr, 64),
+                        gr(rr, 64),
+                        gr(lr, 8)
+                    )
+                    .as_str();
                 }
                 HIR::DIV(lr, rr) => {
-                    self.division(lr, rr);
-                    println!("  mov {}, rax", gr(lr, 8));
+                    out += self.division(lr, rr).as_str();
                 }
                 HIR::MOD(lr, rr) => {
-                    self.division(lr, rr);
-                    println!("  mov {}, rdx", gr(lr, 8));
+                    out += self.division(lr, rr).as_str();
+                    out += format!("  mov {}, rdx\n", gr(lr, 8)).as_str();
                 }
                 HIR::LSHIFT(lr, rr) => {
-                    println!("  mov rcx, {}", gr(rr, 8));
-                    println!("  sal {}, cl", gr(lr, 8))
+                    out += format!("  mov rcx, {}\n  sal {}, cl\n", gr(rr, 8), gr(lr, 8)).as_str();
                 }
                 HIR::RSHIFT(lr, rr) => {
-                    println!("  mov rcx, {}", gr(rr, 8));
-                    println!("  sar {}, cl", gr(lr, 8));
+                    out += format!("  mov rcx, {}\n  sar {}, cl\n", gr(rr, 8), gr(lr, 8)).as_str();
                 }
                 HIR::LT(lr, rr) => {
-                    self.compare(lr, rr, "setl");
+                    out += self.compare(lr, rr, "setl").as_str();
                 }
                 HIR::LTEQ(lr, rr) => {
-                    self.compare(lr, rr, "setle");
+                    out += self.compare(lr, rr, "setle").as_str();
                 }
                 HIR::GT(lr, rr) => {
-                    self.compare(lr, rr, "setg");
+                    out += self.compare(lr, rr, "setg").as_str();
                 }
                 HIR::GTEQ(lr, rr) => {
-                    self.compare(lr, rr, "setge");
+                    out += self.compare(lr, rr, "setge").as_str();
                 }
                 HIR::EQ(lr, rr) => {
-                    self.compare(lr, rr, "sete");
+                    out += self.compare(lr, rr, "sete").as_str();
                 }
                 HIR::NTEQ(lr, rr) => {
-                    self.compare(lr, rr, "setne");
+                    out += self.compare(lr, rr, "setne").as_str();
                 }
-                HIR::IMM(reg, val) => println!("  mov {}, {}", gr(reg, 8), val),
+                HIR::IMM(reg, val) => {
+                    out += format!("  mov {}, {}\n", gr(reg, 8), val).as_str();
+                }
                 HIR::IMMCHAR(reg, char_val) => {
-                    println!("  mov {}, {}", gr(reg, 4), *char_val as u32)
+                    out += format!("  mov {}, {}\n", gr(reg, 4), *char_val as u32).as_str();
                 }
                 HIR::NEGATIVE(reg) => {
-                    println!("  neg {}", gr(reg, 8));
+                    out += format!("  neg {}\n", gr(reg, 8)).as_str();
                 }
                 HIR::ADDRESS(reg, offset) => {
-                    println!("  lea {}, -{}[rbp]", gr(reg, 8), offset);
+                    out += format!("  lea {}, -{}[rbp]\n", gr(reg, 8), offset).as_str();
                 }
                 HIR::DEREFERENCE(reg, _) => {
-                    println!("  mov {}, [{}]", gr(reg, 8), gr(reg, 8));
+                    out += format!("  mov {}, [{}]\n", gr(reg, 8), gr(reg, 8)).as_str();
                 }
                 HIR::RETURN(reg) => {
-                    println!("  mov rax, {}", gr(reg, 8));
-                    println!("  mov rsp, rbp");
-                    println!("  pop r15");
-                    println!("  pop r14");
-                    println!("  pop r13");
-                    println!("  pop r12");
-                    println!("  pop rbp");
-                    println!("  ret");
+                    out += format!("  mov rax, {}\n", gr(reg, 8)).as_str();
+                    out += "  mov rsp, rbp\n";
+                    out += "  pop r15\n";
+                    out += "  pop r14\n";
+                    out += "  pop r13\n";
+                    out += "  pop r12\n";
+                    out += "  pop rbp\n";
+                    out += "  ret\n";
                 }
                 HIR::PROLOGUE(size) => {
-                    println!("  push rbp");
-                    println!("  push r12");
-                    println!("  push r13");
-                    println!("  push r14");
-                    println!("  push r15");
-                    println!("  mov rbp, rsp");
+                    out += "  push rbp\n";
+                    out += "  push r12\n";
+                    out += "  push r13\n";
+                    out += "  push r14\n";
+                    out += "  push r15\n";
+                    out += "  mov rbp, rsp\n";
                     if size != &0 {
-                        println!("  sub rsp, {}", !7 & size + 7);
+                        out += format!("  sub rsp, {}\n", !7 & size + 7).as_str();
                     }
                 }
                 HIR::SYMBOL(name) => {
-                    println!("{}:", name);
+                    out += format!("{}:\n", name).as_str();
                 }
                 HIR::JUMP(label) => {
-                    println!("  jmp .L{}", label);
+                    out += format!("  jmp .L{}\n", label).as_str();
                 }
                 HIR::LABEL(label) => {
-                    println!(".L{}:", label);
+                    out += format!(".L{}:\n", label).as_str();
                 }
                 HIR::CMP(reg, label) => {
-                    println!("  cmp {}, 0", gr(reg, 8));
-                    println!("  je .L{}", label);
+                    out += format!("  cmp {}, 0\n", gr(reg, 8)).as_str();
+                    out += format!("  je .L{}\n", label).as_str();
                 }
                 HIR::STORE(offset, reg, size) => {
-                    println!("  mov -{}[rbp], {}", offset, gr(reg, *size));
+                    out += format!("  mov -{}[rbp], {}\n", offset, gr(reg, *size)).as_str();
                 }
                 HIR::LOAD(reg, offset, size) => {
-                    println!("  mov {}, -{}[rbp]", gr(reg, *size), offset);
+                    out += format!("  mov {}, -{}[rbp]\n", gr(reg, *size), offset).as_str();
                 }
                 HIR::CALL(func_name, regs, retreg) => {
                     for (idx, reg) in regs.iter().enumerate() {
-                        println!("  mov {}, {}", argr(idx, 8), gr(reg, 8))
+                        out += format!("  mov {}, {}\n", argr(idx, 8), gr(reg, 8)).as_str();
                     }
-                    println!("  call {}", func_name);
+                    out += format!("  call {}\n", func_name).as_str();
                     if let Some(reg) = retreg {
-                        println!("  mov {}, rax", gr(reg, 8));
+                        out += format!("  mov {}, rax\n", gr(reg, 8)).as_str();
                     }
                 }
-                HIR::PUSHARG(reg) => println!("  push {}", argr(*reg, 8)),
+                HIR::PUSHARG(reg) => {
+                    out += format!("  push {}\n", argr(*reg, 8)).as_str();
+                }
                 HIR::INDEXLOAD(reg1, reg2, index, size) => {
-                    println!(
-                        "  mov {}, [{} + {}]",
+                    out += format!(
+                        "  mov {}, [{} + {}]\n",
                         gr(reg1, *size),
                         gr(reg2, *size),
                         index * (*size as i128)
-                    );
+                    )
+                    .as_str();
                 }
             }
         }
+        out
     }
-    fn division(&self, lr: &usize, rr: &usize) {
-        println!("  mov rax, {}", gr(lr, 8));
-        println!("  cqo");
-        println!("  idiv {}", gr(rr, 8));
+    fn division(&self, lr: &usize, rr: &usize) -> String {
+        format!("  mov rax, {}\n  cqo\n  idiv {}\n", gr(lr, 8), gr(rr, 8))
     }
-    fn compare(&self, lr: &usize, rr: &usize, inst: &str) {
-        println!("  cmp {}, {}", gr(lr, 8), gr(rr, 8));
-        println!("  {} al", inst);
-        println!("  movzx {}, al", gr(lr, 8));
+    fn compare(&self, lr: &usize, rr: &usize, inst: &str) -> String {
+        format!(
+            "  cmp {}, {}\n  {} al\n  movzx {}, al\n",
+            gr(lr, 8),
+            gr(rr, 8),
+            inst,
+            gr(lr, 8)
+        )
     }
 }

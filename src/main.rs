@@ -14,18 +14,20 @@ use object::elf;
 mod assemble;
 use assemble as a;
 mod ce;
-use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 
 fn main() -> Result<(), Box<std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
-    compile(&matches);
+    let assembler_code: String = compile(&matches);
     if matches.is_present("stop-c") {
+        //matches.value_of("source").unwrap()
+        let mut file = File::create("c.s")?;
+        file.write_all(assembler_code.as_bytes())?;
         std::process::exit(0);
     }
-    let mut elf_file: elf::elf64::ELF = assemble(&matches);
+    let mut elf_file: elf::elf64::ELF = assemble(&matches, assembler_code);
     let file_name;
     if matches.is_present("stop-a") {
         file_name = "c.o";
@@ -44,9 +46,9 @@ fn main() -> Result<(), Box<std::error::Error>> {
     }
     Ok(())
 }
-fn compile(matches: &clap::ArgMatches) {
+fn compile(matches: &clap::ArgMatches) -> String {
     if !matches.value_of("source").unwrap().contains(".dep") {
-        return;
+        return read_file(matches.value_of("source").unwrap());
     }
     let tokens: Vec<f::token::token::Token> = lex_phase(&matches);
     let funcs: Vec<f::parse::node::Func> = parse_phase(&matches, tokens);
@@ -59,13 +61,10 @@ fn compile(matches: &clap::ArgMatches) {
     if matches.is_present("dump-hir") {
         manager.dump_hir();
     }
-    genx64_phase(&matches, manager);
+    genx64_phase(&matches, manager)
 }
-fn assemble(matches: &clap::ArgMatches) -> elf::elf64::ELF {
-    if !matches.value_of("source").unwrap().contains(".s") {
-        std::process::exit(1);
-    }
-    let tokens: Vec<a::lex::Token> = a::lex::lexing(read_file(matches.value_of("source").unwrap()));
+fn assemble(matches: &clap::ArgMatches, assembler_code: String) -> elf::elf64::ELF {
+    let tokens: Vec<a::lex::Token> = a::lex::lexing(assembler_code);
     let (instructions, info_map, relas) = a::parse::parsing(tokens);
     if matches.is_present("dump-inst") {
         dump_inst(&instructions, &info_map);
@@ -153,12 +152,13 @@ fn parse_phase(
     }
     funcs
 }
-fn genx64_phase(matches: &clap::ArgMatches, manager: Manager) {
+fn genx64_phase(matches: &clap::ArgMatches, mut manager: Manager) -> String {
+    let mut assembler_code: String = manager.genx64();
     if matches.is_present("intel") {
-        println!(".intel_syntax noprefix");
-        println!(".global main");
+        assembler_code = ".global main\n".to_string() + assembler_code.as_str();
+        assembler_code = ".intel_syntax noprefix\n".to_string() + assembler_code.as_str();
     }
-    manager.genx64();
+    assembler_code
 }
 
 fn read_file(s: &str) -> String {
