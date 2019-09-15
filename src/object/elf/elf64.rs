@@ -366,6 +366,16 @@ pub fn init_sym(name: Elf64Word, bind: u8, size: u64, value: u64) -> Symbol {
         st_size: size,
     }
 }
+pub fn init_refsym(name: Elf64Word, bind: u8) -> Symbol {
+    Symbol {
+        st_name: name,
+        st_info: (bind << 4) + STT_FUNC,
+        st_other: 0,
+        st_shndx: 0,
+        st_value: 0,
+        st_size: 0,
+    }
+}
 pub fn init_nullsym() -> Symbol {
     Symbol {
         st_name: 0,

@@ -22,17 +22,30 @@ fn main() -> Result<(), Box<std::error::Error>> {
     let matches = App::from_yaml(yaml).get_matches();
     let assembler_code: String = compile(&matches);
     if matches.is_present("stop-c") {
-        //matches.value_of("source").unwrap()
-        let mut file = File::create("c.s")?;
+        let mut file = File::create(
+            matches
+                .value_of("source")
+                .unwrap()
+                .split(".")
+                .collect::<Vec<&str>>()[0]
+                .to_string()
+                + ".s",
+        )?;
         file.write_all(assembler_code.as_bytes())?;
         std::process::exit(0);
     }
     let mut elf_file: elf::elf64::ELF = assemble(&matches, assembler_code);
     let file_name;
     if matches.is_present("stop-a") {
-        file_name = "c.o";
+        file_name = matches
+            .value_of("source")
+            .unwrap()
+            .split(".")
+            .collect::<Vec<&str>>()[0]
+            .to_string()
+            + ".o";
     } else {
-        file_name = "a.out";
+        file_name = "a.out".to_string();
         elf_file.linking();
     }
     let mut writer = BufWriter::new(File::create(file_name).unwrap());
@@ -87,12 +100,16 @@ fn assemble(matches: &clap::ArgMatches, assembler_code: String) -> elf::elf64::E
     let mut total_code: Vec<u8> = Vec::new();
     let mut name: u32 = 1;
     for (idx, (symbol_name, codes)) in code_map.iter().enumerate() {
-        symbols.push(elf::elf64::init_sym(
-            name,
-            elf::elf64::STB_GLOBAL,
-            codes.len() as u64,
-            total_len,
-        ));
+        if codes.len() != 0 {
+            symbols.push(elf::elf64::init_sym(
+                name,
+                elf::elf64::STB_GLOBAL,
+                codes.len() as u64,
+                total_len,
+            ));
+        } else {
+            symbols.push(elf::elf64::init_refsym(name, elf::elf64::STB_GLOBAL));
+        }
         name += symbol_name.len() as u32 + 1;
         total_len += codes.len() as u64;
         for b in codes.iter() {
