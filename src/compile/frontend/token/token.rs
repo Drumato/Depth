@@ -98,6 +98,7 @@ impl Token {
             | Token::LBRACE
             | Token::RETURN
             | Token::IF
+            | Token::IDENT(_)
             | Token::LPAREN
             | Token::INTEGER(_) => Some(()),
             t => {

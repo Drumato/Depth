@@ -78,6 +78,9 @@ impl Parser {
         if let Token::LET = self.cur_token() {
             return self.parse_let();
         }
+        if let Token::IDENT(_) = self.cur_token() {
+            return self.parse_assign();
+        }
         self.expr()
     }
     fn expr(&mut self) -> Node {
@@ -92,6 +95,12 @@ impl Parser {
             self.cur_token().string()
         ));
         Node::INVALID
+    }
+    fn parse_assign(&mut self) -> Node {
+        let ident_name: String = self.consume_ident();
+        self.consume(&Token::ASSIGN);
+        let e: Node = self.expr();
+        Node::ASSIGN(ident_name, Box::new(e))
     }
     fn parse_if(&mut self) -> Node {
         if self.consume(&Token::IF) {
@@ -132,6 +141,10 @@ impl Parser {
             ));
         }
         let expr: Node = self.expr();
+
+        if let Some(_symbol) = self.cur_env.table.get(&ident_name) {
+            Error::TYPE.found(&format!("already defined identifier '{}'", &ident_name));
+        }
         self.cur_env.table.insert(
             ident_name.clone(),
             Symbol::new(0, typename.clone(), mutable_flg),

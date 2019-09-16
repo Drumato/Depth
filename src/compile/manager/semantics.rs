@@ -184,6 +184,17 @@ impl Manager {
                 self.walk(stmt);
                 Type::UNKNOWN
             }
+            Node::ASSIGN(ident_name, _bexpr) => {
+                if let Some(ref mut symbol) = self.cur_env.table.get_mut(&ident_name) {
+                    if !symbol.is_mutable {
+                        Error::TYPE.found(&format!("'{}' is defined as immutable", &ident_name));
+                    }
+                    symbol.ty.clone()
+                } else {
+                    Error::TYPE.found(&format!("'{}' is not defined yet", &ident_name));
+                    return Type::UNKNOWN;
+                }
+            }
             //Node::IF(bcond,bstmt),
             Node::LET(ident_name, type_name, bexpr) => {
                 let expr: Node = unsafe { Box::into_raw(bexpr).read() };

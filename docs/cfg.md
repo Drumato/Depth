@@ -50,6 +50,7 @@ S -> return E
 S -> if E S (else S)
 S -> let T : P = E
 S -> { S*n }
+S -> T = E
 ```
 
 # func

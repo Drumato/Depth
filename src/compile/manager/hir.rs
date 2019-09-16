@@ -90,6 +90,28 @@ impl Manager {
                     _ => Error::TYPE.found(&"type unknown".to_string()),
                 }
             }
+            node::Node::ASSIGN(ident_name, bexpr) => {
+                let expr: node::Node = unsafe { Box::into_raw(bexpr).read() };
+                let expr_reg: usize = self.gen_expr(expr);
+                self.regnum -= 1;
+                let var_type: &Type = &self.get_var(&ident_name).unwrap().ty;
+                let offset: usize = self.get_var(&ident_name).unwrap().stack_offset;
+                match var_type {
+                    Type::INTEGER(int_type) => {
+                        let size: usize = int_type.type_size;
+                        self.hirs.push(HIR::STORE(offset, expr_reg, size))
+                    }
+                    Type::CHAR(_) => {
+                        self.hirs.push(HIR::STORE(offset, expr_reg, 4));
+                    }
+                    Type::POINTER(_, size) => {
+                        let size: usize = *size;
+                        self.hirs.push(HIR::STORE(offset, expr_reg, size));
+                    }
+                    Type::ARRAY(_, _, _) => {}
+                    _ => Error::TYPE.found(&"type unknown".to_string()),
+                }
+            }
             _ => (),
         }
     }

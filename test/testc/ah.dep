@@ -1,0 +1,5 @@
+func main(){
+  let mut x : i64 = 30
+  x = 40
+  return x
+}

@@ -17,6 +17,7 @@ pub enum Node {
     IF(Box<Node>, Box<Node>, Option<Box<Node>>), // condition, block,else
     BLOCK(Vec<Box<Node>>),
     LET(String, Token, Box<Node>), // ident_name,type,expression
+    ASSIGN(String, Box<Node>),
     DEFARG(String, Token),
     INVALID,
 }
@@ -57,6 +58,9 @@ impl Node {
                 format!("CALL {}({})", ident, args)
             }
             Node::INVALID => "INVALID".to_string(),
+            Node::ASSIGN(ident_name, expr) => {
+                format!("ASSIGN {} \n\t({})", ident_name, expr.string())
+            }
             Node::LET(ident_name, ty, expr) => format!(
                 "LET {} <- {} \n\t({})",
                 ident_name,
