@@ -31,10 +31,11 @@ impl Manager {
             eprintln!("{}'s symbols:", f.name);
             for (name, symbol) in f.env.table.iter() {
                 eprintln!(
-                    "{}:offset->{} type->{}",
+                    "{}:offset->{} type->{} mutable->{:?}",
                     name.bold().green(),
                     symbol.stack_offset,
-                    symbol.ty.string().bold().blue()
+                    symbol.ty.string().bold().blue(),
+                    symbol.is_mutable
                 );
             }
         }
@@ -65,13 +66,15 @@ impl Env {
 pub struct Symbol {
     pub stack_offset: usize,
     pub ty: Type,
+    pub is_mutable: bool,
 }
 
 impl Symbol {
-    pub fn new(offset: usize, ty: Token) -> Symbol {
+    pub fn new(offset: usize, ty: Token, mutable: bool) -> Symbol {
         Symbol {
             stack_offset: offset,
             ty: Type::from_type(ty),
+            is_mutable: mutable,
         }
     }
 }

@@ -113,6 +113,10 @@ impl Parser {
     }
     fn parse_let(&mut self) -> Node {
         self.next_token();
+        let mut mutable_flg: bool = false;
+        if self.consume(&Token::MUT) {
+            mutable_flg = true;
+        }
         let ident_name: String = self.consume_ident();
         if !self.consume(&Token::COLON) {
             Error::PARSE.found(&format!(
@@ -128,9 +132,10 @@ impl Parser {
             ));
         }
         let expr: Node = self.expr();
-        self.cur_env
-            .table
-            .insert(ident_name.clone(), Symbol::new(0, typename.clone()));
+        self.cur_env.table.insert(
+            ident_name.clone(),
+            Symbol::new(0, typename.clone(), mutable_flg),
+        );
         Node::LET(ident_name, typename, Box::new(expr))
     }
     fn compound_stmt(&mut self) -> Node {
@@ -263,12 +268,16 @@ impl Parser {
         }
     }
     fn defarg(&mut self) -> Node {
+        let mut mutable: bool = false;
+        if self.consume(&Token::MUT) {
+            mutable = true;
+        }
         let arg_name: String = self.consume_ident();
         self.consume(&Token::COLON);
         let ty: Token = self.consume_typename();
         self.cur_env
             .table
-            .insert(arg_name.clone(), Symbol::new(0, ty.clone()));
+            .insert(arg_name.clone(), Symbol::new(0, ty.clone(), mutable));
         Node::DEFARG(arg_name, ty)
     }
     fn term(&mut self) -> Node {
@@ -307,7 +316,7 @@ impl Parser {
                 }
                 self.cur_env.table.insert(
                     format!("Array{}", unsafe { LIT }),
-                    Symbol::new(0, Token::EOF),
+                    Symbol::new(0, Token::EOF, false),
                 );
                 let num = unsafe { LIT };
                 unsafe {

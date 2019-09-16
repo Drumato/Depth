@@ -78,6 +78,7 @@ fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
     let length: usize = count_len(input, |c| c.is_digit(10) || c == &'_' || c.is_alphabetic());
     let keywords: Vec<&str> = vec![
         "return", "if", "else", "func", "let", "i8", "i16", "i32", "i64", "Pointer", "Array", "ch",
+        "mut",
     ];
     let types: Vec<Token> = vec![
         Token::RETURN,
@@ -92,6 +93,7 @@ fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
         Token::POINTER(Box::new(Token::EOF)),
         Token::ARRAY(Box::new(Token::EOF), Box::new(Token::EOF)),
         Token::CHAR,
+        Token::MUT,
     ];
     for (idx, k) in keywords.iter().enumerate() {
         if input.starts_with(k) {
