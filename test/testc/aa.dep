@@ -1,5 +1,5 @@
 func main(){
-  let a : i8 = 10
-  let x : Pointer<i8> = &a
+  let a : i64 = 10
+  let x : Pointer<i64> = &a
   return *x
 }

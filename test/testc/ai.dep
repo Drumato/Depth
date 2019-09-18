@@ -1,0 +1,5 @@
+const x : i64 = 30
+func main(){
+  return 0
+}
+const y : i64 = 30

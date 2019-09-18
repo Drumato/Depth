@@ -36,9 +36,8 @@ impl Manager {
         match n {
             node::Node::RETURN(bexpr) => {
                 let expr: node::Node = unsafe { Box::into_raw(bexpr).read() };
-                let _expr_reg: usize = self.gen_expr(expr);
-                self.regnum -= 1;
-                self.hirs.push(HIR::RETURN(self.regnum));
+                let expr_reg: usize = self.gen_expr(expr);
+                self.hirs.push(HIR::RETURN(expr_reg));
             }
             node::Node::IF(bcond, bstmt, oalter) => {
                 let cond: node::Node = unsafe { Box::into_raw(bcond).read() };
@@ -161,10 +160,9 @@ impl Manager {
                 if regs.len() > 0 {
                     self.regnum -= regs.len() - 1;
                 }
-                let expr_reg: usize = self.regnum;
-                self.hirs.push(HIR::CALL(func_name, regs, Some(expr_reg)));
-                self.regnum += 1;
-                expr_reg
+                self.hirs
+                    .push(HIR::CALL(func_name, regs, Some(self.regnum)));
+                self.regnum
             }
             node::Node::INDEX(barray, bexpr) => {
                 let array: node::Node = unsafe { Box::into_raw(barray).read() };
