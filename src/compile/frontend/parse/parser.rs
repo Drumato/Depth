@@ -169,15 +169,12 @@ impl Parser {
         let mut lhs: Node = self.unary();
         self.check_invalid(&lhs);
         loop {
-            match self.cur_token() {
-                Token::STAR | Token::SLASH | Token::PERCENT => {
-                    let op: Token = self.get_token();
-                    self.next_token();
-                    lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.unary()), None);
-                }
-                _ => {
-                    break;
-                }
+            if self.check_vec(vec![Token::STAR, Token::SLASH, Token::PERCENT]) {
+                let op: Token = self.get_token();
+                self.next_token();
+                lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.unary()), None);
+            } else {
+                break;
             }
         }
         lhs
@@ -186,15 +183,12 @@ impl Parser {
         let mut lhs: Node = self.muldiv();
         self.check_invalid(&lhs);
         loop {
-            match self.cur_token() {
-                Token::PLUS | Token::MINUS => {
-                    let op: Token = self.get_token();
-                    self.next_token();
-                    lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.muldiv()), None);
-                }
-                _ => {
-                    break;
-                }
+            if self.check_vec(vec![Token::PLUS, Token::MINUS]) {
+                let op: Token = self.get_token();
+                self.next_token();
+                lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.muldiv()), None);
+            } else {
+                break;
             }
         }
         lhs
@@ -203,25 +197,21 @@ impl Parser {
         let mut lhs: Node = self.adsub();
         self.check_invalid(&lhs);
         loop {
-            match self.cur_token() {
-                Token::LSHIFT => {
-                    let op: Token = self.get_token();
+            if self.check(&Token::LSHIFT) {
+                let op: Token = self.get_token();
+                self.next_token();
+                lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.adsub()), None);
+            } else if self.check(&Token::GT) {
+                if self.peek(&Token::GT) {
                     self.next_token();
-
+                    self.next_token();
+                    let op: Token = Token::RSHIFT;
                     lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.adsub()), None);
-                }
-                Token::GT => match unsafe { &self.tokens[NEXT] } {
-                    &Token::GT => {
-                        self.next_token();
-                        self.next_token();
-                        let op: Token = Token::RSHIFT;
-                        lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.adsub()), None);
-                    }
-                    _ => break,
-                },
-                _ => {
+                } else {
                     break;
                 }
+            } else {
+                break;
             }
         }
         lhs
@@ -230,15 +220,12 @@ impl Parser {
         let mut lhs: Node = self.shift();
         self.check_invalid(&lhs);
         loop {
-            match self.cur_token() {
-                Token::LT | Token::GT | Token::LTEQ | Token::GTEQ => {
-                    let op: Token = self.get_token();
-                    self.next_token();
-                    lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.shift()), None);
-                }
-                _ => {
-                    break;
-                }
+            if self.check_vec(vec![Token::LT, Token::GT, Token::LTEQ, Token::GTEQ]) {
+                let op: Token = self.get_token();
+                self.next_token();
+                lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.shift()), None);
+            } else {
+                break;
             }
         }
         lhs
@@ -247,15 +234,12 @@ impl Parser {
         let mut lhs: Node = self.relation();
         self.check_invalid(&lhs);
         loop {
-            match self.cur_token() {
-                Token::EQ | Token::NTEQ => {
-                    let op: Token = self.get_token();
-                    self.next_token();
-                    lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.relation()), None);
-                }
-                _ => {
-                    break;
-                }
+            if self.check_vec(vec![Token::EQ, Token::NTEQ]) {
+                let op: Token = self.get_token();
+                self.next_token();
+                lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.relation()), None);
+            } else {
+                break;
             }
         }
         lhs
@@ -371,6 +355,26 @@ impl Parser {
             std::process::exit(1);
         }
     }
+    fn check_vec(&self, tks: Vec<Token>) -> bool {
+        for t in tks.iter() {
+            if self.cur_token() == t {
+                return true;
+            }
+        }
+        false
+    }
+    fn check(&self, t: &Token) -> bool {
+        if self.cur_token() == t {
+            return true;
+        }
+        false
+    }
+    fn peek(&self, t: &Token) -> bool {
+        if self.peek_token() == t {
+            return true;
+        }
+        false
+    }
     fn consume(&self, t: &Token) -> bool {
         if self.cur_token() == t {
             self.next_token();
@@ -421,10 +425,18 @@ impl Parser {
     }
     fn cur_token(&self) -> &Token {
         unsafe {
-            if CUR == self.tokens.len() {
+            if CUR >= self.tokens.len() {
                 return &Token::EOF;
             }
             &self.tokens[CUR]
+        }
+    }
+    fn peek_token(&self) -> &Token {
+        unsafe {
+            if NEXT >= self.tokens.len() {
+                return &Token::EOF;
+            }
+            &self.tokens[NEXT]
         }
     }
     fn get_token(&mut self) -> Token {
