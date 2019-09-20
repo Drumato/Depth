@@ -103,19 +103,13 @@ impl Parser {
         Node::ASSIGN(ident_name, Box::new(e))
     }
     fn parse_if(&mut self) -> Node {
-        if self.consume(&Token::IF) {
-            let cond: Node = self.expr();
-            let stmt: Node = self.stmt();
-            if !self.consume(&Token::ELSE) {
-                return Node::IF(Box::new(cond), Box::new(stmt), None);
-            }
-            return Node::IF(Box::new(cond), Box::new(stmt), Some(Box::new(self.stmt())));
+        self.next_token();
+        let cond: Node = self.expr();
+        let stmt: Node = self.stmt();
+        if !self.consume(&Token::ELSE) {
+            return Node::IF(Box::new(cond), Box::new(stmt), None);
         }
-        Error::PARSE.found(&format!(
-            "unexpected {} while parsing if-stmt",
-            self.cur_token().string()
-        ));
-        Node::INVALID
+        Node::IF(Box::new(cond), Box::new(stmt), Some(Box::new(self.stmt())))
     }
     fn parse_block(&mut self) -> Node {
         self.compound_stmt()
@@ -169,13 +163,12 @@ impl Parser {
         let mut lhs: Node = self.unary();
         self.check_invalid(&lhs);
         loop {
-            if self.check_vec(vec![Token::STAR, Token::SLASH, Token::PERCENT]) {
-                let op: Token = self.get_token();
-                self.next_token();
-                lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.unary()), None);
-            } else {
+            if !self.check_vec(vec![Token::STAR, Token::SLASH, Token::PERCENT]) {
                 break;
             }
+            let op: Token = self.get_token();
+            self.next_token();
+            lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.unary()), None);
         }
         lhs
     }
@@ -183,13 +176,12 @@ impl Parser {
         let mut lhs: Node = self.muldiv();
         self.check_invalid(&lhs);
         loop {
-            if self.check_vec(vec![Token::PLUS, Token::MINUS]) {
-                let op: Token = self.get_token();
-                self.next_token();
-                lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.muldiv()), None);
-            } else {
+            if !self.check_vec(vec![Token::PLUS, Token::MINUS]) {
                 break;
             }
+            let op: Token = self.get_token();
+            self.next_token();
+            lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.muldiv()), None);
         }
         lhs
     }
@@ -220,13 +212,12 @@ impl Parser {
         let mut lhs: Node = self.shift();
         self.check_invalid(&lhs);
         loop {
-            if self.check_vec(vec![Token::LT, Token::GT, Token::LTEQ, Token::GTEQ]) {
-                let op: Token = self.get_token();
-                self.next_token();
-                lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.shift()), None);
-            } else {
+            if !self.check_vec(vec![Token::LT, Token::GT, Token::LTEQ, Token::GTEQ]) {
                 break;
             }
+            let op: Token = self.get_token();
+            self.next_token();
+            lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.shift()), None);
         }
         lhs
     }
@@ -234,35 +225,29 @@ impl Parser {
         let mut lhs: Node = self.relation();
         self.check_invalid(&lhs);
         loop {
-            if self.check_vec(vec![Token::EQ, Token::NTEQ]) {
-                let op: Token = self.get_token();
-                self.next_token();
-                lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.relation()), None);
-            } else {
+            if !self.check_vec(vec![Token::EQ, Token::NTEQ]) {
                 break;
             }
+            let op: Token = self.get_token();
+            self.next_token();
+            lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.relation()), None);
         }
         lhs
     }
     fn unary(&mut self) -> Node {
-        let op: Token = self.get_token();
-        match op {
-            Token::STAR | Token::AMPERSAND | Token::MINUS => {
-                self.next_token();
-                Node::UNARY(op, Box::new(self.unary()), None)
-            }
-            _ => {
-                let mut n: Node = self.term();
-                let t: &Token = self.cur_token();
-                if let &Token::LBRACKET = t {
-                    self.next_token();
-                    let expr: Node = self.expr();
-                    self.consume(&Token::RBRACKET);
-                    n = Node::INDEX(Box::new(n), Box::new(expr));
-                }
-                n
-            }
+        if self.check_vec(vec![Token::STAR, Token::AMPERSAND, Token::MINUS]) {
+            let op: Token = self.get_token();
+            self.next_token();
+            return Node::UNARY(op, Box::new(self.unary()), None);
         }
+        let n: Node = self.term();
+        if !self.consume(&Token::LBRACKET) {
+            return n;
+        }
+        self.next_token();
+        let expr: Node = self.expr();
+        self.consume(&Token::RBRACKET);
+        Node::INDEX(Box::new(n), Box::new(expr))
     }
     fn defarg(&mut self) -> Node {
         let mut mutable: bool = false;
