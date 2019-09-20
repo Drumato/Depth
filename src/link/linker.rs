@@ -32,11 +32,30 @@ impl ELF {
         for i in 0..symbol_number - 1 {
             let mut symbol: e::Symbol = e::Symbol::new_unsafe(bin[(i + 1) * 24..].to_vec());
             if strtab[symbol.st_name as usize] as char == '_' {
-                self.ehdr.e_entry = 0x400000 + symbol.st_value;
+                self.ehdr.e_entry = 0x400040 + symbol.st_value;
             }
-            symbol.st_value += 0x400000;
+            symbol.st_value += 0x400040;
             symbols.push(symbol);
         }
         self.sections[2] = e::symbols_to_vec(symbols);
     }
+    pub fn resolve_symbols(&mut self) {
+        let symbols: Vec<e::Symbol> = build_symbols(self.sections[2].clone());
+        let relbin: Vec<u8> = self.sections[4].clone();
+        let rel_number = relbin.len() / 24;
+        for i in 0..rel_number {
+            let rel: e::Rela = e::Rela::new_unsafe(relbin[i * 24..].to_vec());
+            rel.r_info & 0xffff0000;
+        }
+    }
+}
+
+fn build_symbols(bin: Vec<u8>) -> Vec<e::Symbol> {
+    let mut symbols: Vec<e::Symbol> = vec![e::init_nullsym()];
+    let symbol_number = bin.len() / 24;
+    for i in 0..symbol_number - 1 {
+        let mut symbol: e::Symbol = e::Symbol::new_unsafe(bin[(i + 1) * 24..].to_vec());
+        symbols.push(symbol);
+    }
+    symbols
 }
