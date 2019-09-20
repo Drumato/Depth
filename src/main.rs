@@ -16,6 +16,7 @@ use assemble as a;
 mod ce;
 use std::fs::File;
 use std::io::{BufWriter, Write};
+mod link;
 
 fn main() -> Result<(), Box<std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
@@ -76,7 +77,11 @@ fn compile(matches: &clap::ArgMatches) -> String {
     }
     genx64_phase(&matches, manager)
 }
-fn assemble(matches: &clap::ArgMatches, assembler_code: String) -> elf::elf64::ELF {
+fn assemble(matches: &clap::ArgMatches, mut assembler_code: String) -> elf::elf64::ELF {
+    assembler_code += "_start:\n  call main\n  mov rdi, rax\n  mov rax, 60\n  syscall\n";
+    if matches.value_of("source").unwrap().contains(".o") {
+        //return read_file(matches.value_of("source").unwrap());
+    }
     let tokens: Vec<a::lex::Token> = a::lex::lexing(assembler_code);
     let (instructions, info_map, relas) = a::parse::parsing(tokens);
     if matches.is_present("dump-inst") {

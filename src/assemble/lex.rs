@@ -85,7 +85,7 @@ fn tokenize(input: &String) -> Option<(Token, usize)> {
         return None;
     }
     match input.as_bytes()[0] as char {
-        c if c.is_alphabetic() => tokenize_keywords(input),
+        c if c.is_alphabetic() || c == '_' => tokenize_keywords(input),
         c if c == '0' => Some((Token::INTEGER(0), 1)),
         c if is_decimal(c) => {
             let length: usize = count_len(input, |c| c.is_ascii_digit());

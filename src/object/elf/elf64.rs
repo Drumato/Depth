@@ -17,11 +17,17 @@ pub struct ELF {
 }
 
 impl ELF {
-    pub fn linking(&mut self) {}
     pub fn to_vec(&self) -> Vec<u8> {
         let mut bb: Vec<u8> = Vec::new();
         for b in self.ehdr.to_vec() {
             bb.push(b);
+        }
+        if let Some(phdrs) = &self.phdrs {
+            for shdr in phdrs.iter() {
+                for b in shdr.to_vec() {
+                    bb.push(b);
+                }
+            }
         }
         for sec in self.sections.iter() {
             for b in sec.to_vec() {
@@ -68,6 +74,8 @@ impl ELF {
         }
     }
 }
+pub static ET_REL: Elf64Half = 1;
+pub static ET_EXEC: Elf64Half = 2;
 #[repr(C)]
 pub struct Ehdr {
     pub e_ident: EIDENT,
@@ -134,6 +142,33 @@ impl Ehdr {
     }
 }
 
+pub fn init_ehdr() -> Ehdr {
+    Ehdr {
+        e_ident: 0x7f454c46020101000000000000000000,
+        e_type: ET_REL,
+        e_machine: 0x3e,
+        e_version: 1,
+        e_entry: 0,
+        e_phoff: 0,
+        e_shoff: 0,
+        e_flags: 0,
+        e_ehsize: 0x40,
+        e_phentsize: 0,
+        e_phnum: 0,
+        e_shentsize: 0x40,
+        e_shnum: 0,
+        e_shstrndx: 0,
+    }
+}
+pub static SHT_PROGBITS: Elf64Word = 1;
+pub static SHT_SYMTAB: Elf64Word = 2;
+pub static SHT_STRTAB: Elf64Word = 3;
+pub static SHT_RELA: Elf64Word = 4;
+
+pub static SHF_ALLOC: Elf64Xword = 1 << 1;
+pub static SHF_EXECINSTR: Elf64Xword = 1 << 2;
+pub static SHF_INFO_LINK: Elf64Xword = 1 << 6;
+
 #[repr(C)]
 pub struct Shdr {
     pub sh_name: Elf64Word,
@@ -182,46 +217,6 @@ impl Shdr {
             bb.push(b);
         }
         bb
-    }
-}
-#[repr(C)]
-pub struct Phdr {
-    pub p_type: Elf64Word,
-    pub p_flags: Elf64Word,
-    pub p_offset: Elf64Off,
-    pub p_vaddr: Elf64Addr,
-    pub p_paddr: Elf64Addr,
-    pub p_filesz: Elf64Word,
-    pub p_memsz: Elf64Xword,
-    pub p_align: Elf64Xword,
-}
-
-pub static ET_REL: Elf64Half = 1;
-
-pub static SHT_PROGBITS: Elf64Word = 1;
-pub static SHT_SYMTAB: Elf64Word = 2;
-pub static SHT_STRTAB: Elf64Word = 3;
-pub static SHT_RELA: Elf64Word = 4;
-
-pub static SHF_ALLOC: Elf64Xword = 1 << 1;
-pub static SHF_EXECINSTR: Elf64Xword = 1 << 2;
-pub static SHF_INFO_LINK: Elf64Xword = 1 << 6;
-pub fn init_ehdr() -> Ehdr {
-    Ehdr {
-        e_ident: 0x7f454c46020101000000000000000000,
-        e_type: ET_REL,
-        e_machine: 0x3e,
-        e_version: 1,
-        e_entry: 0,
-        e_phoff: 0,
-        e_shoff: 0,
-        e_flags: 0,
-        e_ehsize: 0x40,
-        e_phentsize: 0,
-        e_phnum: 0,
-        e_shentsize: 0x40,
-        e_shnum: 0,
-        e_shstrndx: 0,
     }
 }
 pub fn init_texthdr(size: u64) -> Shdr {
@@ -295,6 +290,65 @@ pub fn init_nullhdr() -> Shdr {
         sh_entsize: 0,
     }
 }
+pub static PT_LOAD: Elf64Word = 1;
+pub static PF_X: Elf64Word = 1 << 0;
+pub static PF_W: Elf64Word = 1 << 1;
+pub static PF_R: Elf64Word = 1 << 2;
+#[repr(C)]
+pub struct Phdr {
+    pub p_type: Elf64Word,
+    pub p_flags: Elf64Word,
+    pub p_offset: Elf64Off,
+    pub p_vaddr: Elf64Addr,
+    pub p_paddr: Elf64Addr,
+    pub p_filesz: Elf64Xword,
+    pub p_memsz: Elf64Xword,
+    pub p_align: Elf64Xword,
+}
+
+impl Phdr {
+    pub fn to_vec(&self) -> Vec<u8> {
+        let mut bb: Vec<u8> = Vec::new();
+        for b in self.p_type.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.p_flags.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.p_offset.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.p_vaddr.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.p_paddr.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.p_filesz.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.p_memsz.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        for b in self.p_align.to_le_bytes().to_vec() {
+            bb.push(b);
+        }
+        bb
+    }
+}
+
+pub fn init_phdr() -> Phdr {
+    Phdr {
+        p_type: 0,
+        p_flags: 0,
+        p_offset: 0,
+        p_vaddr: 0,
+        p_paddr: 0,
+        p_filesz: 0,
+        p_memsz: 0,
+        p_align: 0,
+    }
+}
 
 pub fn strtab(names: Vec<&str>) -> Vec<u8> {
     let mut b: Vec<u8> = Vec::new();
@@ -324,6 +378,9 @@ pub struct Symbol {
     pub st_size: Elf64Xword,
 }
 impl Symbol {
+    pub fn new_unsafe(binary: Vec<u8>) -> Symbol {
+        unsafe { std::ptr::read(binary.as_ptr() as *const Symbol) }
+    }
     pub fn to_vec(&self) -> Vec<u8> {
         let mut bb: Vec<u8> = Vec::new();
         for b in self.st_name.to_le_bytes().to_vec() {
@@ -394,6 +451,9 @@ pub struct Rela {
     pub r_addend: Elf64Sxword,
 }
 impl Rela {
+    pub fn new_unsafe(binary: Vec<u8>) -> Rela {
+        unsafe { std::ptr::read(binary.as_ptr() as *const Rela) }
+    }
     pub fn to_vec(&self) -> Vec<u8> {
         let mut bb: Vec<u8> = Vec::new();
         for b in self.r_offset.to_le_bytes().to_vec() {
