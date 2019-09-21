@@ -2,7 +2,7 @@ use super::super::frontend::parse::node::Func;
 use super::super::frontend::token::token::Token;
 use super::super::ir::hi::HIR;
 use super::semantics::Type;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 extern crate colored;
 use colored::*;
 pub struct Manager {
@@ -50,13 +50,13 @@ impl Manager {
 
 #[derive(Clone)]
 pub struct Env {
-    pub table: HashMap<String, Symbol>,
+    pub table: BTreeMap<String, Symbol>,
     pub prev: Option<Box<Env>>,
 }
 impl Env {
     pub fn new() -> Env {
         Env {
-            table: HashMap::new(),
+            table: BTreeMap::new(),
             prev: None,
         }
     }

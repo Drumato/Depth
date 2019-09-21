@@ -1,12 +1,13 @@
 use super::super::object::elf::elf64::Rela;
 use super::parse::{Info, Inst, Operand};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 struct Generator {
     insts: Vec<Inst>,
-    info_map: HashMap<usize, Info>,
+    info_map: BTreeMap<usize, Info>,
     codes: Vec<u8>,
-    rels_map: HashMap<String, Rela>,
-    symbol_map: HashMap<String, Vec<u8>>,
+    rels_map: BTreeMap<String, Rela>,
+    symbol_map: BTreeMap<String, Vec<u8>>,
+    offset: u64,
 }
 impl Generator {
     fn gen(&mut self) {
@@ -32,16 +33,20 @@ impl Generator {
                 self.codes.push(modrm);
             }
             "call" => {
-                self.codes.push(0xe8);
+                self.codes.push(0x48);
+                self.codes.push(0xc7);
+                self.codes.push(0xc0);
                 if let Some(Operand::SYMBOL(name)) = &info.lop {
                     if let Some(rela) = self.rels_map.get_mut(name) {
-                        rela.r_offset = self.codes.len() as u64;
+                        rela.r_offset = self.offset + self.codes.len() as u64;
                     }
                     if let None = self.symbol_map.get(name) {
                         self.symbol_map.insert(name.to_string(), Vec::new());
                     }
                 }
                 self.gen_immediate(0x00);
+                self.codes.push(0xff);
+                self.codes.push(0xd0);
             }
             "cmp" => {
                 self.codes.push(self.set_rexprefix(&info.lop, &info.rop));
@@ -239,16 +244,17 @@ impl Generator {
     }
 }
 pub fn generate(
-    inst_map: HashMap<String, Vec<Inst>>,
-    info_map: HashMap<usize, Info>,
-    rels_map: HashMap<String, Rela>,
-) -> (HashMap<String, Vec<u8>>, HashMap<String, Rela>) {
+    inst_map: BTreeMap<String, Vec<Inst>>,
+    info_map: BTreeMap<usize, Info>,
+    rels_map: BTreeMap<String, Rela>,
+) -> (BTreeMap<String, Vec<u8>>, BTreeMap<String, Rela>) {
     let mut generator: Generator = Generator {
         insts: Vec::new(),
         info_map: info_map,
         codes: Vec::new(),
         rels_map: rels_map,
-        symbol_map: HashMap::new(),
+        symbol_map: BTreeMap::new(),
+        offset: 0,
     };
     for (symbol, insts) in inst_map.iter() {
         generator.insts = insts.to_vec();
@@ -257,6 +263,7 @@ pub fn generate(
         for _ in 0..(4 - md) {
             generator.codes.push(0x00);
         }
+        generator.offset += generator.codes.len() as u64;
         generator
             .symbol_map
             .insert(symbol.to_string(), generator.codes.to_vec());

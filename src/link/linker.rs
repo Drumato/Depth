@@ -57,8 +57,7 @@ impl ELF {
         for i in 0..rel_number {
             let rel: e::Rela = e::Rela::new_unsafe(relbin[i * 24..].to_vec());
             let address = symbols[rel.r_info as usize >> 32].st_value as u32;
-            eprintln!("{:x}", address);
-            for (idx, b) in address.to_be_bytes().to_vec().iter().enumerate() {
+            for (idx, b) in address.to_le_bytes().to_vec().iter().enumerate() {
                 self.sections[1][rel.r_offset as usize + idx] = *b;
             }
         }

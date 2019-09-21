@@ -1,7 +1,7 @@
 //use super::super::ce::types::Error;
 use super::super::object::elf::elf64::Rela;
 use super::lex::Token;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 static mut CUR: usize = 0;
 static mut NEXT: usize = 1;
 #[derive(Debug, Clone)]
@@ -65,11 +65,11 @@ impl Info {
 
 struct Parser {
     tokens: Vec<Token>,
-    info_map: HashMap<usize, Info>,
+    info_map: BTreeMap<usize, Info>,
     insts: Vec<Inst>,
-    inst_map: HashMap<String, Vec<Inst>>,
+    inst_map: BTreeMap<String, Vec<Inst>>,
     entry: usize,
-    rels: HashMap<String, Rela>,
+    rels: BTreeMap<String, Rela>,
 }
 impl Parser {
     fn parse(&mut self) {
@@ -186,17 +186,17 @@ impl Parser {
 pub fn parsing(
     tokens: Vec<Token>,
 ) -> (
-    HashMap<String, Vec<Inst>>,
-    HashMap<usize, Info>,
-    HashMap<String, Rela>,
+    BTreeMap<String, Vec<Inst>>,
+    BTreeMap<usize, Info>,
+    BTreeMap<String, Rela>,
 ) {
     let mut parser: Parser = Parser {
         tokens: tokens,
-        info_map: HashMap::new(),
-        inst_map: HashMap::new(),
+        info_map: BTreeMap::new(),
+        inst_map: BTreeMap::new(),
         insts: Vec::new(),
         entry: 0,
-        rels: HashMap::new(),
+        rels: BTreeMap::new(),
     };
     parser.parse();
     (parser.inst_map, parser.info_map, parser.rels)

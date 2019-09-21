@@ -198,11 +198,11 @@ fn read_file(s: &str) -> String {
     s.to_string()
 }
 fn dump_inst(
-    instructions: &std::collections::HashMap<
+    instructions: &std::collections::BTreeMap<
         std::string::String,
         std::vec::Vec<assemble::parse::Inst>,
     >,
-    info_map: &std::collections::HashMap<usize, assemble::parse::Info>,
+    info_map: &std::collections::BTreeMap<usize, assemble::parse::Info>,
 ) {
     for (symbol, v) in instructions.iter() {
         eprintln!("{}'s instructions", symbol.bold().green());
