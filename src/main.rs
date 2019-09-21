@@ -78,7 +78,9 @@ fn compile(matches: &clap::ArgMatches) -> String {
     genx64_phase(&matches, manager)
 }
 fn assemble(matches: &clap::ArgMatches, mut assembler_code: String) -> elf::elf64::ELF {
-    assembler_code += "_start:\n  call main\n  mov rdi, rax\n  mov rax, 60\n  syscall\n";
+    if !matches.is_present("stop-a") {
+        assembler_code += "_start:\n  call main\n  mov rdi, rax\n  mov rax, 60\n  syscall\n";
+    }
     if matches.value_of("source").unwrap().contains(".o") {
         //return read_file(matches.value_of("source").unwrap());
     }
@@ -121,7 +123,7 @@ fn assemble(matches: &clap::ArgMatches, mut assembler_code: String) -> elf::elf6
             total_code.push(*b);
         }
         if let Some(rela) = relas.get_mut(symbol_name) {
-            rela.r_info = (((idx + 1) << 32) + 4) as u64;
+            rela.r_info = (((idx + 1) << 32) + 1) as u64;
         }
     }
     let mut elf_file = elf::elf64::ELF {

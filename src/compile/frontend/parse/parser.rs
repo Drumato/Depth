@@ -241,7 +241,7 @@ impl Parser {
             return Node::UNARY(op, Box::new(self.unary()), None);
         }
         let n: Node = self.term();
-        if !self.consume(&Token::LBRACKET) {
+        if !self.check(&Token::LBRACKET) {
             return n;
         }
         self.next_token();
