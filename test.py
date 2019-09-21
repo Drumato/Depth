@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import time
 
 
 class Color:
@@ -48,8 +49,8 @@ def test_compile():
     print(f"{Color.GREEN}All Test Passed.{Color.CLEAR}")
 
 
-def test_assemble():
-    print(f"{Color.GREEN}++++++++++++++++test-assemble++++++++++++++++{Color.CLEAR}")
+def test_link():
+    print(f"{Color.GREEN}++++++++++++++++ test-linking ++++++++++++++++{Color.CLEAR}")
     f = open("test/testa/expect.txt", "r")
     content = f.read()
     cases = {}
@@ -61,10 +62,7 @@ def test_assemble():
     for filename, expect in cases.items():
         fn = f"test/testa/{filename}"
         f = open(fn)
-        p = subprocess.Popen(
-            f"./target/debug/depth {fn} -A ; gcc {fn.split('.')[0]}.o ; ./a.out",
-            shell=True,
-        )
+        p = subprocess.Popen(f"./target/debug/depth {fn} ; ./a.out", shell=True)
         exit_status = p.wait()
         if exit_status != expect:
             print(
@@ -77,6 +75,14 @@ def test_assemble():
 
 
 if __name__ == "__main__":
+    start = time.time()
     test_compile()
-    test_assemble()
+    compile_time = time.time() - start
+    start = time.time()
+    test_link()
+    link_time = time.time() - start
+    print(
+        f"test-only-compile time -> {Color.BLUE}{round(compile_time,2)}{Color.CLEAR}s"
+    )
+    print(f"test-link time -> {Color.BLUE}{round(link_time,2)}{Color.CLEAR}s")
     # make()
