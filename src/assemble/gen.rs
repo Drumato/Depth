@@ -1,6 +1,8 @@
+use super::super::ce::types::Error;
 use super::super::object::elf::elf64::Rela;
 use super::parse::{Info, Inst, Operand};
 use std::collections::BTreeMap;
+use std::ops::Deref;
 struct Generator {
     insts: Vec<Inst>,
     info_map: BTreeMap<usize, Info>,
@@ -52,11 +54,11 @@ impl Generator {
                 self.codes.push(self.set_rexprefix(&info.lop, &info.rop));
                 if let Some(Operand::IMM(value)) = info.rop {
                     self.codes.push(0x81);
-                    self.codes.push(self.set_modrm(&info.rop, &info.lop));
+                    self.codes.push(self.set_modrm(&info.rop, &info.lop)); // ModR/M with MR
                     self.gen_immediate(value);
                 } else {
                     self.codes.push(0x3b);
-                    self.codes.push(self.set_modrm(&info.rop, &info.lop));
+                    self.codes.push(self.set_modrm(&info.rop, &info.lop)); // ModR/M with MR
                 }
             }
             "cqo" => {
@@ -83,14 +85,30 @@ impl Generator {
             }
             "mov" => {
                 self.codes.push(self.set_rexprefix(&info.lop, &info.rop));
-                let modrm: u8 = self.set_modrm(&info.lop, &info.rop); // mod field of ModR/M
-                if let Some(Operand::IMM(value)) = info.rop {
-                    self.codes.push(0xc7); // mov reg, immediate
-                    self.codes.push(modrm);
-                    self.gen_immediate(value);
-                } else {
-                    self.codes.push(0x89); // mov reg, reg
-                    self.codes.push(modrm);
+                match &info.lop {
+                    Some(Operand::REG(_reg)) => {
+                        if let Some(Operand::IMM(value)) = info.rop {
+                            let modrm: u8 = self.set_modrm(&info.lop, &info.rop); // with RM
+                            self.codes.push(0xc7); // mov reg, immediate
+                            self.codes.push(modrm);
+                            self.gen_immediate(value);
+                        } else if let Some(Operand::ADDRESS(_content, offset)) = &info.rop {
+                            let modrm: u8 = self.set_modrm(&info.lop, &info.rop); // with MR
+                            self.codes.push(0x8b); // mov r64, r/m64
+                            self.codes.push(modrm);
+                            self.codes.push(*offset as u8);
+                        } else {
+                            let modrm: u8 = self.set_modrm(&info.lop, &info.rop); // with RM
+                            self.codes.push(0x89); // mov reg, reg
+                            self.codes.push(modrm);
+                        }
+                    }
+                    Some(Operand::ADDRESS(_content, offset)) => {
+                        self.codes.push(0x89); // mov r/m64, r64
+                        self.codes.push(self.set_modrm(&info.lop, &info.rop)); // with RM
+                        self.codes.push(*offset as u8);
+                    }
+                    _ => (),
                 }
             }
             "push" => {
@@ -158,12 +176,17 @@ impl Generator {
             }
             "sub" => {
                 self.codes.push(self.set_rexprefix(&info.lop, &info.rop));
-                let modrm: u8 = self.set_modrm(&info.lop, &info.rop); // mod field of ModR/M
-                if let Some(Operand::IMM(_value)) = info.rop {
+                if let Some(Operand::IMM(value)) = info.rop {
+                    let mut modrm: u8 = self.set_modrm(&info.lop, &info.rop); // with RM
+                    modrm |= 0b00101000;
+                    self.codes.push(0x83);
+                    self.codes.push(modrm);
+                    self.codes.push(value as u8);
                 } else {
+                    let modrm: u8 = self.set_modrm(&info.lop, &info.rop); // with RM
                     self.codes.push(0x29);
+                    self.codes.push(modrm);
                 }
-                self.codes.push(modrm);
             }
             "syscall" => {
                 self.codes.push(0x0f);
@@ -225,20 +248,58 @@ impl Generator {
                 _ => (),
             }
         }
+        if let Some(Operand::ADDRESS(content, _)) = lop {
+            if let Operand::REG(name) = content.deref() {
+                if name.starts_with("r") {
+                    rexprefix |= 0x08;
+                }
+                match name.as_str() {
+                    "r8" | "r9" | "r10" | "r11" | "r12" | "r13" | "r14" | "r15" => {
+                        rexprefix |= 0x04;
+                    }
+                    _ => (),
+                }
+            }
+        }
         rexprefix
     }
     fn set_modrm(&self, lop: &Option<Operand>, rop: &Option<Operand>) -> u8 {
         // mod(2 bits) | reg(3 bits) | r/m(3 bits)
         let mut modrm: u8 = 0xc0; // the mod filed of modr/m
-        if let Some(reg) = lop {
-            modrm |= reg.reg_number();
+        if let Some(Operand::ADDRESS(_content, _offset)) = lop {
+            modrm = 0x40;
         }
-        match rop {
-            Some(Operand::IMM(_)) => (),
-            Some(reg) => {
-                modrm |= reg.reg_number() << 3;
+        match lop {
+            Some(Operand::ADDRESS(content, _offset)) => {
+                modrm = 0x40;
+                if let Operand::REG(name) = content.deref() {
+                    modrm |= Operand::number(name);
+                }
+                if let Some(Operand::REG(name)) = rop {
+                    modrm |= Operand::number(name) << 3;
+                }
             }
-            None => (),
+            Some(Operand::REG(name)) => {
+                modrm |= Operand::number(name);
+                match rop {
+                    Some(Operand::IMM(_)) => (),
+                    Some(Operand::REG(name)) => {
+                        modrm |= Operand::number(name) << 3;
+                    }
+                    Some(Operand::ADDRESS(content, _offset)) => {
+                        modrm = 0x40;
+                        modrm |= Operand::number(name) << 3;
+                        if let Operand::REG(name) = content.deref() {
+                            modrm |= Operand::number(name);
+                        }
+                    }
+                    _ => (),
+                }
+            }
+            Some(Operand::IMM(_)) => {
+                Error::ASSEMBLE.found(&"cannot assign to immediate".to_string());
+            }
+            _ => (),
         }
         modrm
     }

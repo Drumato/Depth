@@ -19,7 +19,7 @@ use std::fs::File;
 use std::io::{BufWriter, Write};
 mod link;
 
-fn main() -> Result<(), Box<std::error::Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
     let assembler_code: String = compile(&matches);

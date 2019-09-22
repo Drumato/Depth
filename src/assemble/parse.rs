@@ -1,4 +1,4 @@
-//use super::super::ce::types::Error;
+use super::super::ce::types::Error;
 use super::super::object::elf::elf64::Rela;
 use super::lex::Token;
 use std::collections::BTreeMap;
@@ -14,6 +14,7 @@ pub enum Operand {
     REG(String),
     SYMBOL(String),
     IMM(i128),
+    ADDRESS(Box<Operand>, i128),
 }
 impl Operand {
     pub fn string(&self) -> String {
@@ -21,29 +22,29 @@ impl Operand {
             Operand::REG(name) => format!("reg<{}>", name),
             Operand::SYMBOL(name) => format!("symbol<{}>", name),
             Operand::IMM(value) => format!("imm<{}>", value),
+            Operand::ADDRESS(content, flag) => format!("address[{},{}]", content.string(), flag),
+        }
+    }
+    pub fn number(name: &str) -> u8 {
+        match name {
+            "al" | "ax" | "eax" | "rax" | "r8" => 0b000,
+            "rcx" | "r9" => 0b001,
+            "rdx" | "r10" => 0b010,
+            "rbx" | "r11" => 0b011,
+            "rsp" | "r12" => 0b100,
+            "rbp" | "r13" => 0b101,
+            "rsi" | "r14" => 0b110,
+            "rdi" | "r15" => 0b111,
+            c => {
+                Error::ASSEMBLE.found(&format!("invalid Register<{}>", c));
+                0
+            }
         }
     }
     pub fn reg_number(&self) -> u8 {
         match self {
-            Operand::REG(name) => match name.as_str() {
-                "al" | "ax" | "eax" | "rax" | "r8" => 0b000,
-                "rcx" | "r9" => 0b001,
-                "rdx" | "r10" => 0b010,
-                "rbx" | "r11" => 0b011,
-                "rsp" | "r12" => 0b100,
-                "rbp" | "r13" => 0b101,
-                "rsi" | "r14" => 0b110,
-                "rdi" | "r15" => 0b111,
-                c => {
-                    eprintln!("invalid Register<{}>", c);
-
-                    0
-                }
-            },
-            _ => {
-                eprintln!("reg_number() must called with register");
-                0
-            }
+            Operand::REG(name) => Operand::number(name.as_str()),
+            _ => 100,
         }
     }
 }
@@ -156,6 +157,23 @@ impl Parser {
             Token::INTEGER(value) => {
                 self.next_token();
                 Some(Operand::IMM(*value))
+            }
+            Token::MINUS => {
+                self.next_token();
+                let integer: Option<Operand> = self.get_operand();
+                let mut address: Option<Operand> = self.get_operand();
+                if let Some(Operand::ADDRESS(ref mut _content, ref mut offset)) = address {
+                    if let Some(Operand::IMM(value)) = integer {
+                        *offset = -value;
+                    }
+                }
+                address
+            }
+            Token::LBRACKET => {
+                self.next_token();
+                let content: Option<Operand> = self.get_operand();
+                self.next_token();
+                Some(Operand::ADDRESS(Box::new(content.unwrap()), 0))
             }
             _ => None,
         }
