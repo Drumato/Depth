@@ -8,16 +8,11 @@ impl ELF {
     pub fn linking(&mut self) {
         self.init_phdr();
         self.prepare_ehdr_for_staticlink();
-        for _ in 0..PAGE_SIZE - e::Ehdr::size() as u64 - e::Phdr::size() as u64 {
-            self.sections[0].push(0x00);
-        }
-        let _ = self
-            .shdrs
-            .iter_mut()
-            .map(|shdr| shdr.sh_offset = PAGE_SIZE - e::Ehdr::size() as u64 + shdr.sh_offset)
-            .collect::<()>();
+        self.padding();
+        self.conditioning_section_offset();
         self.link_symbols();
-        self.shdrs[1].sh_addr = BASE_ADDRESS;
+        let text_number: usize = self.get_section_number(".text");
+        self.shdrs[text_number].sh_addr = BASE_ADDRESS;
     }
     pub fn link_symbols(&mut self) {
         let strtab: Vec<u8> = self.get_section(".strtab");
@@ -91,5 +86,17 @@ impl ELF {
         phdr.p_memsz = text.len() as u64; // remove the hardcode
         phdr.p_flags = e::PF_R | e::PF_X | e::PF_W;
         self.phdrs = Some(vec![phdr]);
+    }
+    fn padding(&mut self) {
+        for _ in 0..PAGE_SIZE - e::Ehdr::size() as u64 - e::Phdr::size() as u64 {
+            self.sections[0].push(0x00);
+        }
+    }
+    fn conditioning_section_offset(&mut self) {
+        let _ = self
+            .shdrs
+            .iter_mut()
+            .map(|shdr| shdr.sh_offset = PAGE_SIZE - e::Ehdr::size() as u64 + shdr.sh_offset)
+            .collect::<()>();
     }
 }
