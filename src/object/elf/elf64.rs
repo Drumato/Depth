@@ -478,6 +478,9 @@ impl Rela {
     pub fn size() -> usize {
         24
     }
+    pub fn bind(info: u64) -> usize {
+        info as usize >> 32
+    }
     pub fn new_unsafe(binary: Vec<u8>) -> Rela {
         unsafe { std::ptr::read(binary.as_ptr() as *const Rela) }
     }

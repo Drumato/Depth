@@ -33,12 +33,10 @@ impl ELF {
         self.resolve_symbols();
     }
     pub fn resolve_symbols(&mut self) {
-        let symbols: Vec<e::Symbol> = build_symbols(self.sections[2].clone());
-        let relbin: Vec<u8> = self.sections[4].clone();
-        let rel_number = relbin.len() / e::Rela::size();
-        for i in 0..rel_number {
-            let rel: e::Rela = e::Rela::new_unsafe(relbin[i * e::Rela::size()..].to_vec());
-            let address = symbols[rel.r_info as usize >> 32].st_value as u32;
+        let symbols: Vec<e::Symbol> = self.get_symbols();
+        let mut relas: Vec<e::Rela> = self.get_relas(".relatext");
+        for rel in relas.iter_mut() {
+            let address = symbols[e::Rela::bind(rel.r_info)].st_value as u32;
             for (idx, b) in address.to_le_bytes().to_vec().iter().enumerate() {
                 let text_number: usize = self.get_section_number(".text");
                 self.sections[text_number][rel.r_offset as usize + idx] = *b;
@@ -58,7 +56,8 @@ impl ELF {
                 .sum::<u64>();
     }
     fn get_section(&self, name: &str) -> Vec<u8> {
-        self.sections[*self.names.get(name).unwrap()].clone()
+        let sec_number: usize = self.get_section_number(name);
+        self.sections[sec_number].clone()
     }
     fn get_symbols(&self) -> Vec<e::Symbol> {
         let symbin: Vec<u8> = self.get_section(".symtab");
@@ -71,6 +70,15 @@ impl ELF {
         }
         symbols
     }
+    fn get_relas(&self, name: &str) -> Vec<e::Rela> {
+        let relbin: Vec<u8> = self.get_section(name);
+        let relas_number: usize = relbin.len() / e::Rela::size();
+        let mut relas: Vec<e::Rela> = Vec::new();
+        for i in 0..relas_number {
+            relas.push(e::Rela::new_unsafe(relbin[i * e::Rela::size()..].to_vec()));
+        }
+        relas
+    }
     fn init_phdr(&mut self) {
         let mut phdr: e::Phdr = e::init_phdr();
         phdr.p_type = e::PT_LOAD;
@@ -78,20 +86,10 @@ impl ELF {
         phdr.p_vaddr = BASE_ADDRESS;
         phdr.p_paddr = BASE_ADDRESS;
         phdr.p_align = PAGE_SIZE;
-        let text_number: usize = self.get_section_number(".text");
-        phdr.p_filesz = self.sections[text_number].len() as u64; // remove the hardcode
-        phdr.p_memsz = self.sections[text_number].len() as u64; // remove the hardcode
+        let text: Vec<u8> = self.get_section(".text");
+        phdr.p_filesz = text.len() as u64; // remove the hardcode
+        phdr.p_memsz = text.len() as u64; // remove the hardcode
         phdr.p_flags = e::PF_R | e::PF_X | e::PF_W;
         self.phdrs = Some(vec![phdr]);
     }
-}
-
-fn build_symbols(bin: Vec<u8>) -> Vec<e::Symbol> {
-    let mut symbols: Vec<e::Symbol> = vec![e::init_nullsym()];
-    let symbol_number = bin.len() / e::Symbol::size();
-    for i in 0..symbol_number - 1 {
-        let symbol: e::Symbol = e::Symbol::new_unsafe(bin[(i + 1) * e::Symbol::size()..].to_vec());
-        symbols.push(symbol);
-    }
-    symbols
 }
