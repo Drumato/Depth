@@ -243,7 +243,6 @@ impl Generator {
                     if name.starts_with("r") {
                         rexprefix |= 0x08;
                     }
-                    eprintln!("{}", name);
                     match name.as_str() {
                         "r8" | "r9" | "r10" | "r11" | "r12" | "r13" | "r14" | "r15" => {
                             rexprefix |= 0x04;
@@ -266,19 +265,8 @@ impl Generator {
                     _ => (),
                 }
             }
-            Some(Operand::ADDRESS(content, _)) => {
-                if let Operand::REG(name) = content.deref() {
-                    if name.starts_with("r") {
-                        rexprefix |= 0x08;
-                    }
-                    eprintln!("{}", name);
-                    match name.as_str() {
-                        "r8" | "r9" | "r10" | "r11" | "r12" | "r13" | "r14" | "r15" => {
-                            rexprefix |= 0x04;
-                        }
-                        _ => (),
-                    }
-                }
+            Some(Operand::ADDRESS(_content, _)) => {
+                rexprefix = 0x4c;
             }
             _ => (),
         }
