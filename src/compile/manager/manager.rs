@@ -18,7 +18,7 @@ impl Manager {
     pub fn new(funcs: Vec<Func>) -> Manager {
         Manager {
             functions: funcs,
-            hirs: Vec::new(),
+            hirs: Vec::with_capacity(2048),
             regnum: 0,
             labelnum: 0,
             stack_offset: 0,

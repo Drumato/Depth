@@ -20,7 +20,7 @@ impl Parser {
     fn new(tokens: Vec<Token>) -> Parser {
         Parser {
             tokens: tokens,
-            funcs: Vec::new(),
+            funcs: Vec::with_capacity(100),
             cur_env: Env::new(),
         }
     }
@@ -35,8 +35,8 @@ impl Parser {
     fn func(&mut self) -> Func {
         let mut f: Func = Func {
             name: String::new(),
-            stmts: Vec::new(),
-            args: Vec::new(),
+            stmts: Vec::with_capacity(100),
+            args: Vec::with_capacity(6),
             env: Env::new(),
         };
         self.cur_env = f.env.clone();

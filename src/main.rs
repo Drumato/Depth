@@ -101,10 +101,10 @@ fn assemble(matches: &clap::ArgMatches, mut assembler_code: String) -> elf::elf6
         .iter()
         .map(|(name, _)| name.as_str())
         .collect::<Vec<&str>>();
-    let mut symbols: Vec<elf::elf64::Symbol> = Vec::new();
+    let mut symbols: Vec<elf::elf64::Symbol> = Vec::with_capacity(100);
     symbols.push(elf::elf64::init_nullsym());
     let mut total_len: u64 = 0;
-    let mut total_code: Vec<u8> = Vec::new();
+    let mut total_code: Vec<u8> = Vec::with_capacity(2048);
     let mut name: u32 = 1;
     for (idx, (symbol_name, codes)) in code_map.iter().enumerate() {
         if codes.len() != 0 {

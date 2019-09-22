@@ -2,7 +2,7 @@ use super::super::super::super::ce::types::Error;
 use super::super::token::token::Token;
 
 pub fn lexing(mut input: String) -> Vec<Token> {
-    let mut tokens: Vec<Token> = Vec::new();
+    let mut tokens: Vec<Token> = Vec::with_capacity(2048);
     while let Some((t, idx)) = tokenize(&input) {
         input.drain(..idx);
         if t.should_ignore() {
