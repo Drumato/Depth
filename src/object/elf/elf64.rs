@@ -1,4 +1,6 @@
 extern crate colored;
+use super::super::super::ce::types::Error;
+use std::collections::HashMap;
 
 type Elf64Half = u16;
 type Elf64Word = u32;
@@ -14,6 +16,7 @@ pub struct ELF {
     pub shdrs: Vec<Shdr>,
     pub sections: Vec<Vec<u8>>,
     pub phdrs: Option<Vec<Phdr>>,
+    pub names: HashMap<String, usize>,
 }
 
 impl ELF {
@@ -41,7 +44,8 @@ impl ELF {
         }
         bb
     }
-    pub fn add_section(&mut self, section: Vec<u8>, shdr: Shdr) {
+    pub fn add_section(&mut self, section: Vec<u8>, shdr: Shdr, name: &str) {
+        self.names.insert(name.to_string(), self.sections.len());
         self.sections.push(section);
         self.shdrs.push(shdr);
     }
@@ -71,6 +75,14 @@ impl ELF {
             let b: Vec<&u8> = bb.iter().filter(|num| *num != &0x00).collect::<Vec<&u8>>();
             self.shdrs[idx + 1].sh_name = sh_name as u32;
             sh_name += (b.len() + 1) as u32;
+        }
+    }
+    pub fn get_section_number(&self, name: &str) -> usize {
+        if let Some(number) = self.names.get(name) {
+            return *number;
+        } else {
+            Error::ELF.found(&format!("not found such an section -> {}", name));
+            00
         }
     }
 }
@@ -244,7 +256,7 @@ pub fn init_symtabhdr(size: u64) -> Shdr {
         sh_link: 3,
         sh_info: 1,
         sh_addralign: 8,
-        sh_entsize: 24,
+        sh_entsize: Symbol::size() as u64,
     }
 }
 pub fn init_strtabhdr(size: u64) -> Shdr {
@@ -273,7 +285,7 @@ pub fn init_relahdr(size: u64) -> Shdr {
         sh_link: 2,
         sh_info: 1,
         sh_addralign: 8,
-        sh_entsize: 24,
+        sh_entsize: Rela::size() as u64,
     }
 }
 pub fn init_nullhdr() -> Shdr {
@@ -378,6 +390,9 @@ pub struct Symbol {
     pub st_size: Elf64Xword,
 }
 impl Symbol {
+    pub fn size() -> usize {
+        24
+    }
     pub fn new_unsafe(binary: Vec<u8>) -> Symbol {
         unsafe { std::ptr::read(binary.as_ptr() as *const Symbol) }
     }
@@ -451,6 +466,9 @@ pub struct Rela {
     pub r_addend: Elf64Sxword,
 }
 impl Rela {
+    pub fn size() -> usize {
+        24
+    }
     pub fn new_unsafe(binary: Vec<u8>) -> Rela {
         unsafe { std::ptr::read(binary.as_ptr() as *const Rela) }
     }

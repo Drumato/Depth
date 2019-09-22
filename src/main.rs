@@ -14,6 +14,7 @@ use object::elf;
 mod assemble;
 use assemble as a;
 mod ce;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 mod link;
@@ -131,25 +132,32 @@ fn assemble(matches: &clap::ArgMatches, mut assembler_code: String) -> elf::elf6
         sections: vec![],
         shdrs: vec![],
         phdrs: None,
+        names: HashMap::new(),
     };
     let strtab: Vec<u8> = elf::elf64::strtab(strs);
-    elf_file.add_section(vec![], elf::elf64::init_nullhdr());
-    elf_file.add_section(total_code, elf::elf64::init_texthdr(total_len));
+    elf_file.add_section(vec![], elf::elf64::init_nullhdr(), "null");
+    elf_file.add_section(total_code, elf::elf64::init_texthdr(total_len), ".text");
     let symbol_length = symbols.len();
     let symtab: Vec<u8> = elf::elf64::symbols_to_vec(symbols);
     elf_file.add_section(
         symtab,
         elf::elf64::init_symtabhdr(24 * symbol_length as u64),
+        ".symtab",
     );
     let strtab_length = strtab.len() as u64;
-    elf_file.add_section(strtab, elf::elf64::init_strtabhdr(strtab_length));
+    elf_file.add_section(strtab, elf::elf64::init_strtabhdr(strtab_length), ".strtab");
     let relas_length = relas.len() as u64;
     elf_file.add_section(
         elf::elf64::relas_to_vec(relas.values().collect::<Vec<&elf::elf64::Rela>>()),
         elf::elf64::init_relahdr(24 * relas_length),
+        ".relatext",
     );
     let shstrtab_length = shstrtab.len() as u64;
-    elf_file.add_section(shstrtab, elf::elf64::init_strtabhdr(shstrtab_length));
+    elf_file.add_section(
+        shstrtab,
+        elf::elf64::init_strtabhdr(shstrtab_length),
+        ".shstrtab",
+    );
     elf_file.condition();
     elf_file
 }

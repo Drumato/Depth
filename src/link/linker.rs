@@ -1,28 +1,11 @@
 use super::super::object::elf::elf64 as e;
+
 use e::ELF;
 
 impl ELF {
     pub fn linking(&mut self) {
-        let mut phdr: e::Phdr = e::init_phdr();
-        phdr.p_type = e::PT_LOAD;
-        phdr.p_offset = 0x1000;
-        phdr.p_vaddr = 0x400000;
-        phdr.p_paddr = 0x400000;
-        phdr.p_align = 0x1000;
-        phdr.p_filesz = self.sections[1].len() as u64; // remove the hardcode
-        phdr.p_memsz = self.sections[1].len() as u64; // remove the hardcode
-        phdr.p_flags = e::PF_R | e::PF_X | e::PF_W;
-        self.phdrs = Some(vec![phdr]);
-        self.ehdr.e_type = e::ET_EXEC;
-        self.ehdr.e_phoff = 0x40; // sizeof(Ehdr)
-        self.ehdr.e_phnum = 1;
-        self.ehdr.e_phentsize = 56; // sizeof(Phdr)
-        self.ehdr.e_shoff = (0x1000
-            + self.sections[1..]
-                .to_vec()
-                .iter()
-                .map(|sec| sec.len() as u16)
-                .sum::<u16>()) as u64;
+        self.init_phdr();
+        self.prepare_ehdr_for_staticlink();
         for _ in 0..0x1000 - 0x40 - 56 {
             self.sections[0].push(0x00);
         }
@@ -35,19 +18,16 @@ impl ELF {
         self.shdrs[1].sh_addr = 0x400000;
     }
     pub fn link_symbols(&mut self) {
-        let bin: Vec<u8> = self.sections[2].clone();
-        let strtab: Vec<u8> = self.sections[3].clone();
-        let symbol_number = bin.len() / 24;
-        let mut symbols: Vec<e::Symbol> = vec![e::init_nullsym()];
-        for i in 0..symbol_number - 1 {
-            let mut symbol: e::Symbol = e::Symbol::new_unsafe(bin[(i + 1) * 24..].to_vec());
+        let strtab: Vec<u8> = self.get_section(".strtab");
+        let mut symbols: Vec<e::Symbol> = self.get_symbols();
+        for symbol in symbols.iter_mut() {
             if strtab[symbol.st_name as usize] as char == '_' {
                 self.ehdr.e_entry = 0x400000 + symbol.st_value;
             }
             symbol.st_value += 0x400000;
-            symbols.push(symbol);
         }
-        self.sections[2] = e::symbols_to_vec(symbols);
+        let symtab_number: usize = self.get_section_number(".symtab");
+        self.sections[symtab_number] = e::symbols_to_vec(symbols);
         self.resolve_symbols();
     }
     pub fn resolve_symbols(&mut self) {
@@ -61,6 +41,44 @@ impl ELF {
                 self.sections[1][rel.r_offset as usize + idx] = *b;
             }
         }
+    }
+    fn prepare_ehdr_for_staticlink(&mut self) {
+        self.ehdr.e_type = e::ET_EXEC;
+        self.ehdr.e_phoff = 0x40; // sizeof(Ehdr)
+        self.ehdr.e_phnum = 1;
+        self.ehdr.e_phentsize = 56; // sizeof(Phdr)
+        self.ehdr.e_shoff = (0x1000
+            + self.sections[1..]
+                .to_vec()
+                .iter()
+                .map(|sec| sec.len() as u16)
+                .sum::<u16>()) as u64;
+    }
+    fn get_section(&self, name: &str) -> Vec<u8> {
+        self.sections[*self.names.get(name).unwrap()].clone()
+    }
+    fn get_symbols(&self) -> Vec<e::Symbol> {
+        let symbin: Vec<u8> = self.get_section(".symtab");
+        let symbol_number: usize = symbin.len() / e::Symbol::size();
+        let mut symbols: Vec<e::Symbol> = vec![e::init_nullsym()];
+        for i in 0..symbol_number - 1 {
+            symbols.push(e::Symbol::new_unsafe(
+                symbin[(i + 1) * e::Symbol::size()..].to_vec(),
+            ));
+        }
+        symbols
+    }
+    fn init_phdr(&mut self) {
+        let mut phdr: e::Phdr = e::init_phdr();
+        phdr.p_type = e::PT_LOAD;
+        phdr.p_offset = 0x1000;
+        phdr.p_vaddr = 0x400000;
+        phdr.p_paddr = 0x400000;
+        phdr.p_align = 0x1000;
+        phdr.p_filesz = self.sections[1].len() as u64; // remove the hardcode
+        phdr.p_memsz = self.sections[1].len() as u64; // remove the hardcode
+        phdr.p_flags = e::PF_R | e::PF_X | e::PF_W;
+        self.phdrs = Some(vec![phdr]);
     }
 }
 
