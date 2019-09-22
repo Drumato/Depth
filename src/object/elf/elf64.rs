@@ -152,6 +152,9 @@ impl Ehdr {
         }
         bb
     }
+    pub fn size() -> usize {
+        0x40
+    }
 }
 
 pub fn init_ehdr() -> Ehdr {
@@ -164,10 +167,10 @@ pub fn init_ehdr() -> Ehdr {
         e_phoff: 0,
         e_shoff: 0,
         e_flags: 0,
-        e_ehsize: 0x40,
+        e_ehsize: Ehdr::size() as u16,
         e_phentsize: 0,
         e_phnum: 0,
-        e_shentsize: 0x40,
+        e_shentsize: Shdr::size() as u16,
         e_shnum: 0,
         e_shstrndx: 0,
     }
@@ -229,6 +232,9 @@ impl Shdr {
             bb.push(b);
         }
         bb
+    }
+    pub fn size() -> usize {
+        0x40
     }
 }
 pub fn init_texthdr(size: u64) -> Shdr {
@@ -346,6 +352,9 @@ impl Phdr {
             bb.push(b);
         }
         bb
+    }
+    pub fn size() -> usize {
+        56
     }
 }
 
