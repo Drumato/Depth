@@ -83,6 +83,20 @@ impl Generator {
                 }
                 self.codes.push(modrm);
             }
+            "lea" => {
+                self.codes.push(self.set_rexprefix(&info.lop, &info.rop));
+                match &info.lop {
+                    Some(Operand::REG(_reg)) => {
+                        if let Some(Operand::ADDRESS(_content, offset)) = &info.rop {
+                            let modrm: u8 = self.set_modrm(&info.lop, &info.rop); // with MR
+                            self.codes.push(0x8d); // lea r64, r/m64
+                            self.codes.push(modrm);
+                            self.codes.push(*offset as u8);
+                        }
+                    }
+                    _ => (),
+                }
+            }
             "mov" => {
                 self.codes.push(self.set_rexprefix(&info.lop, &info.rop));
                 match &info.lop {
@@ -265,8 +279,16 @@ impl Generator {
                     _ => (),
                 }
             }
-            Some(Operand::ADDRESS(_content, _)) => {
+            Some(Operand::ADDRESS(content, _)) => {
                 rexprefix = 0x4c;
+                if let Operand::REG(name) = content.deref() {
+                    match name.as_str() {
+                        "r8" | "r9" | "r10" | "r11" | "r12" | "r13" | "r14" | "r15" => {
+                            rexprefix |= 0x01;
+                        }
+                        _ => (),
+                    }
+                }
             }
             _ => (),
         }
