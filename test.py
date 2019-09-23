@@ -45,7 +45,7 @@ def test_compile():
             )
             sys.exit(1)
         else:
-            print(f"[{filename}]{f.read()} => {Color.BLUE}{expect}{Color.CLEAR}")
+            print(f"[{filename}] => {Color.BLUE}{expect}{Color.CLEAR}")
     print(f"{Color.GREEN}All Test Passed.{Color.CLEAR}")
 
 
@@ -70,7 +70,7 @@ def test_link():
             )
             sys.exit(1)
         else:
-            print(f"[{filename}]{f.read()} => {Color.BLUE}{expect}{Color.CLEAR}")
+            print(f"[{filename}] => {Color.BLUE}{expect}{Color.CLEAR}")
     print(f"{Color.GREEN}All Test Passed.{Color.CLEAR}")
 
 
