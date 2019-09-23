@@ -210,7 +210,7 @@ Cargo.lock
 GRTAGS
 GTAGS
 GPATH
-test/*.dep
+test/*
 *.txt
 *.s
 a.out

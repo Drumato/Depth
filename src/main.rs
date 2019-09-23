@@ -41,35 +41,38 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         std::process::exit(0);
     }
-    let mut elf_file: elf::elf64::ELF = assemble(&matches, assembler_codes[0].clone());
-    let file_name;
+    let mut elf_files: Vec<elf::elf64::ELF> = assembler_codes
+        .iter()
+        .map(|code| assemble(code.to_string(), &matches))
+        .collect::<Vec<elf::elf64::ELF>>();
+    let mut elf_names: Vec<String> = Vec::new();
     if matches.is_present("stop-a") {
-        file_name = matches
-            .value_of("source")
-            .unwrap()
-            .split(".")
-            .collect::<Vec<&str>>()[0]
-            .to_string()
-            + ".o";
+        for idx in 0..elf_files.len() {
+            elf_names.push(file_names[idx].split(".").collect::<Vec<&str>>()[0].to_string() + ".o");
+        }
     } else {
-        file_name = "a.out".to_string();
-        elf_file.linking();
+        for idx in 0..elf_files.len() {
+            elf_names.push(file_names[idx].split(".").collect::<Vec<&str>>()[0].to_string());
+            elf_files[idx].linking();
+        }
     }
-    let file = std::fs::OpenOptions::new()
-        .create(true)
-        .read(true)
-        .write(true)
-        .mode(0o755)
-        .open(file_name)
-        .unwrap();
-    let mut writer = BufWriter::new(file);
-    match writer.write_all(&elf_file.to_vec()) {
-        Ok(_) => (),
-        Err(e) => eprintln!("{}", e),
-    }
-    match writer.flush() {
-        Ok(_) => (),
-        Err(e) => eprintln!("{}", e),
+    for (idx, file_name) in elf_names.iter().enumerate() {
+        let file = std::fs::OpenOptions::new()
+            .create(true)
+            .read(true)
+            .write(true)
+            .mode(0o755)
+            .open(file_name)
+            .unwrap();
+        let mut writer = BufWriter::new(file);
+        match writer.write_all(&elf_files[idx].to_vec()) {
+            Ok(_) => (),
+            Err(e) => eprintln!("{}", e),
+        }
+        match writer.flush() {
+            Ok(_) => (),
+            Err(e) => eprintln!("{}", e),
+        }
     }
     Ok(())
 }
@@ -91,12 +94,9 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
 
     genx64_phase(&matches, manager)
 }
-fn assemble(matches: &clap::ArgMatches, mut assembler_code: String) -> elf::elf64::ELF {
+fn assemble(mut assembler_code: String, matches: &clap::ArgMatches) -> elf::elf64::ELF {
     if !matches.is_present("stop-a") {
         assembler_code += "_start:\n  call main\n  mov rdi, rax\n  mov rax, 60\n  syscall\n";
-    }
-    if matches.value_of("source").unwrap().contains(".o") {
-        //return read_file(matches.value_of("source").unwrap());
     }
     let tokens: Vec<a::lex::Token> = a::lex::lexing(assembler_code);
     let (instructions, info_map, relas) = a::parse::parsing(tokens);
