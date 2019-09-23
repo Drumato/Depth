@@ -12,6 +12,10 @@ static mut CUR: usize = 0;
 static mut NEXT: usize = 1;
 static mut LIT: usize = 0;
 pub fn parsing(tokens: Vec<Token>) -> Vec<Func> {
+    unsafe {
+        CUR = 0;
+        NEXT = 1;
+    }
     let mut parser: Parser = Parser::new(tokens);
     parser.toplevel();
     parser.funcs

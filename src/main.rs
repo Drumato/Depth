@@ -23,21 +23,25 @@ mod link;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
-    let assembler_code: String = compile(&matches);
+    let mut file_names: Vec<String> = Vec::new();
+    let mut iter = matches.values_of("source").unwrap();
+    while let Some(name) = iter.next() {
+        file_names.push(name.to_string());
+    }
+    let assembler_codes: Vec<String> = file_names
+        .iter()
+        .map(|name| compile(name.to_string(), &matches))
+        .collect::<Vec<String>>();
     if matches.is_present("stop-c") {
-        let mut file = File::create(
-            matches
-                .value_of("source")
-                .unwrap()
-                .split(".")
-                .collect::<Vec<&str>>()[0]
-                .to_string()
-                + ".s",
-        )?;
-        file.write_all(assembler_code.as_bytes())?;
+        for (idx, assembler_code) in assembler_codes.iter().enumerate() {
+            let file_name: String =
+                file_names[idx].split(".").collect::<Vec<&str>>()[0].to_string() + ".s";
+            let mut file = File::create(file_name)?;
+            file.write_all(assembler_code.as_bytes())?;
+        }
         std::process::exit(0);
     }
-    let mut elf_file: elf::elf64::ELF = assemble(&matches, assembler_code);
+    let mut elf_file: elf::elf64::ELF = assemble(&matches, assembler_codes[0].clone());
     let file_name;
     if matches.is_present("stop-a") {
         file_name = matches
@@ -69,11 +73,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     Ok(())
 }
-fn compile(matches: &clap::ArgMatches) -> String {
-    if !matches.value_of("source").unwrap().contains(".dep") {
-        return read_file(matches.value_of("source").unwrap());
+fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
+    if !file_name.contains(".dep") {
+        return read_file(&file_name);
     }
-    let tokens: Vec<f::token::token::Token> = lex_phase(&matches);
+    let tokens: Vec<f::token::token::Token> = lex_phase(file_name, &matches);
     let funcs: Vec<f::parse::node::Func> = parse_phase(&matches, tokens);
     let mut manager: Manager = Manager::new(funcs);
     manager.semantics();
@@ -84,6 +88,7 @@ fn compile(matches: &clap::ArgMatches) -> String {
     if matches.is_present("dump-hir") {
         manager.dump_hir();
     }
+
     genx64_phase(&matches, manager)
 }
 fn assemble(matches: &clap::ArgMatches, mut assembler_code: String) -> elf::elf64::ELF {
@@ -170,8 +175,8 @@ fn assemble(matches: &clap::ArgMatches, mut assembler_code: String) -> elf::elf6
     elf_file
 }
 
-fn lex_phase(matches: &clap::ArgMatches) -> Vec<f::token::token::Token> {
-    let filecontent: String = read_file(matches.value_of("source").unwrap());
+fn lex_phase(file_name: String, matches: &clap::ArgMatches) -> Vec<f::token::token::Token> {
+    let filecontent: String = read_file(&file_name);
     let tokens: Vec<f::token::token::Token> = f::lex::lexing::lexing(filecontent);
     if matches.is_present("dump-token") {
         eprintln!("{}", "--------dumptoken--------".blue().bold());
