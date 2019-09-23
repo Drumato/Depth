@@ -17,6 +17,7 @@ mod ce;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufWriter, Write};
+use std::os::unix::fs::OpenOptionsExt;
 mod link;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -50,7 +51,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         file_name = "a.out".to_string();
         elf_file.linking();
     }
-    let mut writer = BufWriter::new(File::create(file_name).unwrap());
+    let file = std::fs::OpenOptions::new()
+        .create(true)
+        .read(true)
+        .write(true)
+        .mode(0o755)
+        .open(file_name)
+        .unwrap();
+    let mut writer = BufWriter::new(file);
     match writer.write_all(&elf_file.to_vec()) {
         Ok(_) => (),
         Err(e) => eprintln!("{}", e),
