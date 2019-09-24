@@ -1,11 +1,24 @@
 use super::super::object::elf::elf64 as e;
-
 use e::ELF;
+pub struct Linker {
+    pub objs: Vec<ELF>,
+}
+
+impl Linker {
+    pub fn linking(elf_files: Vec<ELF>) -> Self {
+        let mut linker: Linker = Self::new(elf_files);
+        linker.objs[0].linking();
+        linker
+    }
+    fn new(elf_files: Vec<ELF>) -> Self {
+        Self { objs: elf_files }
+    }
+}
 
 pub static BASE_ADDRESS: u64 = 0x400000;
 pub static PAGE_SIZE: u64 = 0x1000;
 impl ELF {
-    pub fn linking(&mut self) {
+    fn linking(&mut self) {
         self.init_phdr();
         self.prepare_ehdr_for_staticlink();
         self.padding();
@@ -14,7 +27,7 @@ impl ELF {
         let text_number: usize = self.get_section_number(".text");
         self.shdrs[text_number].sh_addr = BASE_ADDRESS;
     }
-    pub fn link_symbols(&mut self) {
+    fn link_symbols(&mut self) {
         let strtab: Vec<u8> = self.get_section(".strtab");
         let mut symbols: Vec<e::Symbol> = self.get_symbols();
         for symbol in symbols.iter_mut() {
@@ -27,7 +40,7 @@ impl ELF {
         self.sections[symtab_number] = e::symbols_to_vec(symbols);
         self.resolve_symbols();
     }
-    pub fn resolve_symbols(&mut self) {
+    fn resolve_symbols(&mut self) {
         let symbols: Vec<e::Symbol> = self.get_symbols();
         let mut relas: Vec<e::Rela> = self.get_relas(".relatext");
         for rel in relas.iter_mut() {

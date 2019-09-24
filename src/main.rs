@@ -41,7 +41,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         std::process::exit(0);
     }
-    let mut elf_files: Vec<elf::elf64::ELF> = assembler_codes
+    let elf_files: Vec<elf::elf64::ELF> = assembler_codes
         .iter()
         .map(|code| assemble(code.to_string(), &matches))
         .collect::<Vec<elf::elf64::ELF>>();
@@ -50,22 +50,35 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for idx in 0..elf_files.len() {
             elf_names.push(file_names[idx].split(".").collect::<Vec<&str>>()[0].to_string() + ".o");
         }
-    } else {
-        for idx in 0..elf_files.len() {
-            elf_names.push(file_names[idx].split(".").collect::<Vec<&str>>()[0].to_string());
-            elf_files[idx].linking();
+        for (idx, file_name) in elf_names.iter().enumerate() {
+            let file = std::fs::OpenOptions::new()
+                .create(true)
+                .read(true)
+                .write(true)
+                .mode(0o755)
+                .open(file_name)
+                .unwrap();
+            let mut writer = BufWriter::new(file);
+            match writer.write_all(&elf_files[idx].to_vec()) {
+                Ok(_) => (),
+                Err(e) => eprintln!("{}", e),
+            }
+            match writer.flush() {
+                Ok(_) => (),
+                Err(e) => eprintln!("{}", e),
+            }
         }
-    }
-    for (idx, file_name) in elf_names.iter().enumerate() {
+    } else {
+        let lkr: link::linker::Linker = link::linker::Linker::linking(elf_files);
         let file = std::fs::OpenOptions::new()
             .create(true)
             .read(true)
             .write(true)
             .mode(0o755)
-            .open(file_name)
+            .open("a.out")
             .unwrap();
         let mut writer = BufWriter::new(file);
-        match writer.write_all(&elf_files[idx].to_vec()) {
+        match writer.write_all(&lkr.objs[0].to_vec()) {
             Ok(_) => (),
             Err(e) => eprintln!("{}", e),
         }

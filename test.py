@@ -62,9 +62,7 @@ def test_link():
     for filename, expect in cases.items():
         fn = f"test/testa/{filename}"
         f = open(fn)
-        p = subprocess.Popen(
-            f"./target/debug/depth {fn} ; ./{fn.split('.')[0]}", shell=True
-        )
+        p = subprocess.Popen(f"./target/debug/depth {fn} ; ./a.out", shell=True)
         exit_status = p.wait()
         if exit_status != expect:
             print(
