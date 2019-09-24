@@ -112,7 +112,8 @@ impl Parser {
             | Token::SETGE
             | Token::SETE
             | Token::SETNE
-            | Token::CALL => {
+            | Token::CALL
+            | Token::NEG => {
                 self.next_token();
                 let entry: usize = self.entry;
                 self.entry += 1;

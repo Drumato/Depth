@@ -125,6 +125,12 @@ impl Generator {
                     _ => (),
                 }
             }
+            "neg" => {
+                self.codes.push(self.set_rexprefix(&info.lop, &info.rop));
+                self.codes.push(0xf7);
+                let modrm: u8 = self.set_modrm(&info.lop, &info.rop);
+                self.codes.push(modrm | 0x18);
+            }
             "push" => {
                 let mut opcode: u8 = 0x50;
                 if let Some(reg) = &info.lop {
