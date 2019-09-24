@@ -83,6 +83,22 @@ impl Generator {
                 }
                 self.codes.push(modrm);
             }
+            "jmp" => {
+                self.codes.push(0x48);
+                self.codes.push(0xc7);
+                self.codes.push(0xc0);
+                if let Some(Operand::SYMBOL(name)) = &info.lop {
+                    if let Some(rela) = self.rels_map.get_mut(name) {
+                        rela.r_offset = self.offset + self.codes.len() as u64;
+                    }
+                    if let None = self.symbol_map.get(name) {
+                        self.symbol_map.insert(name.to_string(), Vec::new());
+                    }
+                }
+                self.gen_immediate(0x00);
+                self.codes.push(0xff);
+                self.codes.push(0xe0);
+            }
             "lea" => {
                 self.codes.push(self.set_rexprefix(&info.lop, &info.rop));
                 match &info.lop {

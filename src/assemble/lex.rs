@@ -15,6 +15,7 @@ pub enum Token {
     CQO,
     IDIV,
     IMUL,
+    JMP,
     LEA,
     NEG,
     PUSH,
@@ -48,6 +49,7 @@ impl Token {
             Token::CQO => "cqo".to_string(),
             Token::IDIV => "idiv".to_string(),
             Token::IMUL => "imul".to_string(),
+            Token::JMP => "jmp".to_string(),
             Token::LEA => "lea".to_string(),
             Token::MOV => "mov".to_string(),
             Token::MOVZX => "movzx".to_string(),
@@ -130,7 +132,7 @@ fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
     let length: usize = count_len(input, |c| c.is_digit(10) || c == &'_' || c.is_alphabetic());
     let keywords: Vec<&str> = vec![
         "movzx", "ret", "push", "pop", "cqo", "add", "sub", "idiv", "imul", "cmp", "setl",
-        "syscall", "call", "setle", "setg", "setge", "sete", "setne", "lea", "neg", "mov",
+        "syscall", "call", "setle", "setg", "setge", "sete", "setne", "lea", "neg", "mov", "jmp",
     ];
     let types: Vec<Token> = vec![
         Token::MOVZX,
@@ -154,6 +156,7 @@ fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
         Token::LEA,
         Token::NEG,
         Token::MOV,
+        Token::JMP,
     ];
     for (idx, k) in keywords.iter().enumerate() {
         if input.starts_with(k) {
