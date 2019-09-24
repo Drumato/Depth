@@ -14,7 +14,6 @@ use object::elf;
 mod assemble;
 use assemble as a;
 mod ce;
-use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::os::unix::fs::OpenOptionsExt;
@@ -69,7 +68,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     } else {
-        let lkr: link::linker::Linker = link::linker::Linker::linking(elf_files);
+        let exec_file: elf::elf64::ELF = link::linker::Linker::linking(elf_files);
         let file = std::fs::OpenOptions::new()
             .create(true)
             .read(true)
@@ -78,7 +77,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .open("a.out")
             .unwrap();
         let mut writer = BufWriter::new(file);
-        match writer.write_all(&lkr.objs[0].to_vec()) {
+        match writer.write_all(&exec_file.to_vec()) {
             Ok(_) => (),
             Err(e) => eprintln!("{}", e),
         }
@@ -153,13 +152,7 @@ fn assemble(mut assembler_code: String, matches: &clap::ArgMatches) -> elf::elf6
             rela.r_info = (((idx + 1) << 32) + 1) as u64;
         }
     }
-    let mut elf_file = elf::elf64::ELF {
-        ehdr: elf::elf64::init_ehdr(),
-        sections: vec![],
-        shdrs: vec![],
-        phdrs: None,
-        names: HashMap::new(),
-    };
+    let mut elf_file = elf::elf64::ELF::init();
     let strtab: Vec<u8> = elf::elf64::strtab(strs);
     elf_file.add_section(vec![], elf::elf64::init_nullhdr(), "null");
     elf_file.add_section(total_code, elf::elf64::init_texthdr(total_len), ".text");
@@ -167,7 +160,7 @@ fn assemble(mut assembler_code: String, matches: &clap::ArgMatches) -> elf::elf6
     let symtab: Vec<u8> = elf::elf64::symbols_to_vec(symbols);
     elf_file.add_section(
         symtab,
-        elf::elf64::init_symtabhdr(24 * symbol_length as u64),
+        elf::elf64::init_symtabhdr(elf::elf64::Symbol::size() as u64 * symbol_length as u64),
         ".symtab",
     );
     let strtab_length = strtab.len() as u64;
@@ -175,7 +168,7 @@ fn assemble(mut assembler_code: String, matches: &clap::ArgMatches) -> elf::elf6
     let relas_length = relas.len() as u64;
     elf_file.add_section(
         elf::elf64::relas_to_vec(relas.values().collect::<Vec<&elf::elf64::Rela>>()),
-        elf::elf64::init_relahdr(24 * relas_length),
+        elf::elf64::init_relahdr(elf::elf64::Rela::size() as u64 * relas_length),
         ".relatext",
     );
     let shstrtab_length = shstrtab.len() as u64;

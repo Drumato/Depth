@@ -1,14 +1,75 @@
 use super::super::object::elf::elf64 as e;
-use e::ELF;
+use e::{Rela, Symbol, ELF};
 pub struct Linker {
     pub objs: Vec<ELF>,
 }
 
 impl Linker {
-    pub fn linking(elf_files: Vec<ELF>) -> Self {
-        let mut linker: Linker = Self::new(elf_files);
-        linker.objs[0].linking();
-        linker
+    pub fn linking(elf_files: Vec<ELF>) -> ELF {
+        let linker: Linker = Self::new(elf_files);
+        let mut exec_file: ELF = linker.build_binary();
+        exec_file.condition();
+        exec_file.linking();
+        exec_file
+    }
+    fn build_binary(&self) -> ELF {
+        let mut exec_file: ELF = ELF::init();
+        self.build_null(&mut exec_file);
+        self.build_text(&mut exec_file);
+        self.build_symtab(&mut exec_file);
+        self.build_strtab(&mut exec_file);
+        self.build_relatext(&mut exec_file);
+        self.build_shstrtab(&mut exec_file);
+        exec_file
+    }
+    fn build_null(&self, exec_file: &mut ELF) {
+        exec_file.add_section(vec![], e::init_nullhdr(), "null");
+    }
+    fn build_text(&self, exec_file: &mut ELF) {
+        let text: Vec<u8> = self.conbine_vec(self.get_sections(".text"));
+        let total_len: u64 = text.len() as u64;
+        exec_file.add_section(text, e::init_texthdr(total_len), ".text");
+    }
+    fn build_symtab(&self, exec_file: &mut ELF) {
+        let symtab: Vec<u8> = self.conbine_vec(self.get_sections(".symtab"));
+        let symtab_number: u64 = symtab.len() as u64 / Symbol::size() as u64;
+        exec_file.add_section(
+            symtab,
+            e::init_symtabhdr(Symbol::size() as u64 * symtab_number as u64),
+            ".symtab",
+        );
+    }
+    fn build_strtab(&self, exec_file: &mut ELF) {
+        let strtab: Vec<u8> = self.conbine_vec(self.get_sections(".strtab"));
+        let strtab_len: u64 = strtab.len() as u64;
+        exec_file.add_section(strtab, e::init_strtabhdr(strtab_len), ".strtab");
+    }
+    fn build_relatext(&self, exec_file: &mut ELF) {
+        let relatext: Vec<u8> = self.conbine_vec(self.get_sections(".relatext"));
+        let rela_number: u64 = relatext.len() as u64 / Rela::size() as u64;
+        exec_file.add_section(
+            relatext,
+            e::init_relahdr(Rela::size() as u64 * rela_number),
+            ".relatext",
+        );
+    }
+    fn build_shstrtab(&self, exec_file: &mut ELF) {
+        let shstrtab: Vec<u8> = self.conbine_vec(self.get_sections(".shstrtab"));
+        let shstrtab_len: u64 = shstrtab.len() as u64;
+        exec_file.add_section(shstrtab, e::init_strtabhdr(shstrtab_len), ".shstrtab");
+    }
+    fn get_sections(&self, name: &str) -> Vec<Vec<u8>> {
+        self.objs
+            .iter()
+            .map(|elf| elf.get_section(name))
+            .collect::<Vec<Vec<u8>>>()
+    }
+    fn conbine_vec(&self, mut vecvec: Vec<Vec<u8>>) -> Vec<u8> {
+        let mut total: Vec<u8> = Vec::new();
+        for vec in vecvec.iter_mut() {
+            total.append(vec);
+        }
+        total
     }
     fn new(elf_files: Vec<ELF>) -> Self {
         Self { objs: elf_files }

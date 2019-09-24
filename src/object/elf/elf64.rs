@@ -85,6 +85,15 @@ impl ELF {
             00
         }
     }
+    pub fn init() -> Self {
+        Self {
+            ehdr: init_ehdr(),
+            sections: vec![],
+            shdrs: vec![],
+            phdrs: None,
+            names: HashMap::new(),
+        }
+    }
 }
 pub static ET_REL: Elf64Half = 1;
 pub static ET_EXEC: Elf64Half = 2;
