@@ -125,6 +125,12 @@ impl Generator {
                     _ => (),
                 }
             }
+            "movzx" => {
+                self.codes.push(self.set_rexprefix(&info.rop, &info.lop));
+                self.codes.push(0x0f);
+                self.codes.push(0xb6);
+                self.codes.push(self.set_modrm(&info.rop, &info.lop)); // with MR
+            }
             "neg" => {
                 self.codes.push(self.set_rexprefix(&info.lop, &info.rop));
                 self.codes.push(0xf7);

@@ -8,6 +8,7 @@ pub enum Token {
     LBRACKET,
     RBRACKET,
     MOV,
+    MOVZX,
     ADD,
     CALL,
     CMP,
@@ -49,6 +50,7 @@ impl Token {
             Token::IMUL => "imul".to_string(),
             Token::LEA => "lea".to_string(),
             Token::MOV => "mov".to_string(),
+            Token::MOVZX => "movzx".to_string(),
             Token::NEG => "neg".to_string(),
             Token::PUSH => "push".to_string(),
             Token::POP => "pop".to_string(),
@@ -127,11 +129,11 @@ fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
 fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
     let length: usize = count_len(input, |c| c.is_digit(10) || c == &'_' || c.is_alphabetic());
     let keywords: Vec<&str> = vec![
-        "mov", "ret", "push", "pop", "cqo", "add", "sub", "idiv", "imul", "cmp", "setl", "syscall",
-        "call", "setle", "setg", "setge", "sete", "setne", "lea", "neg",
+        "movzx", "ret", "push", "pop", "cqo", "add", "sub", "idiv", "imul", "cmp", "setl",
+        "syscall", "call", "setle", "setg", "setge", "sete", "setne", "lea", "neg", "mov",
     ];
     let types: Vec<Token> = vec![
-        Token::MOV,
+        Token::MOVZX,
         Token::RET,
         Token::PUSH,
         Token::POP,
@@ -151,6 +153,7 @@ fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
         Token::SETNE,
         Token::LEA,
         Token::NEG,
+        Token::MOV,
     ];
     for (idx, k) in keywords.iter().enumerate() {
         if input.starts_with(k) {

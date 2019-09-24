@@ -126,7 +126,7 @@ impl Parser {
                 self.info_map.insert(entry, info);
                 Some(())
             }
-            Token::MOV | Token::ADD | Token::SUB | Token::CMP | Token::LEA => {
+            Token::MOV | Token::MOVZX | Token::ADD | Token::SUB | Token::CMP | Token::LEA => {
                 self.next_token();
                 let entry: usize = self.entry;
                 self.entry += 1;
