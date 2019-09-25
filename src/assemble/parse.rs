@@ -210,6 +210,10 @@ pub fn parsing(
     BTreeMap<usize, Info>,
     BTreeMap<String, Rela>,
 ) {
+    unsafe {
+        CUR = 0;
+        NEXT = 1;
+    }
     let mut parser: Parser = Parser {
         tokens: tokens,
         info_map: BTreeMap::new(),

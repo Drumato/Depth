@@ -1,5 +1,6 @@
 use super::super::object::elf::elf64 as e;
 use e::{Rela, Symbol, ELF};
+use std::collections::HashMap;
 pub struct Linker {
     pub objs: Vec<ELF>,
 }
@@ -18,6 +19,7 @@ impl Linker {
         self.build_text(&mut exec_file);
         self.build_symtab(&mut exec_file);
         self.build_strtab(&mut exec_file);
+        self.condition_symbols(&mut exec_file);
         self.build_relatext(&mut exec_file);
         self.build_shstrtab(&mut exec_file);
         exec_file
@@ -63,6 +65,42 @@ impl Linker {
             .iter()
             .map(|elf| elf.get_section(name))
             .collect::<Vec<Vec<u8>>>()
+    }
+    fn condition_symbols(&self, exec_file: &mut ELF) {
+        let strtabs: Vec<Vec<u8>> = self.get_sections(".strtab");
+        let mut offsets: Vec<usize> = vec![0; self.objs.len()];
+        for (idx, s) in strtabs.iter().enumerate() {
+            if idx == 0 {
+                offsets[idx] = 0;
+            } else {
+                offsets[idx] = s.len();
+            }
+        }
+        let mut symtab: Vec<Symbol> = exec_file.get_symbols();
+        let mut symap: HashMap<String, Symbol> = HashMap::new();
+        let mut fnum = 0;
+        for sym in symtab.iter_mut() {
+            if sym.st_name != 0 {
+                sym.st_name += offsets[fnum - 1] as u32;
+            } else {
+                fnum += 1;
+                continue;
+            }
+            let name: String = strtabs[fnum - 1]
+                [(sym.st_name as usize - offsets[fnum - 1]) as usize..]
+                .to_vec()
+                .iter()
+                .take_while(|b| *b != &00)
+                .map(|c| *c as char)
+                .collect();
+            if let Some(s) = symap.get(&name) {
+                sym.st_value = s.st_value;
+            } else {
+                symap.insert(name, sym.clone());
+            }
+        }
+        let symtab_number: usize = exec_file.get_section_number(".symtab");
+        exec_file.sections[symtab_number] = e::symbols_to_vec(symtab);
     }
     fn conbine_vec(&self, mut vecvec: Vec<Vec<u8>>) -> Vec<u8> {
         let mut total: Vec<u8> = Vec::new();

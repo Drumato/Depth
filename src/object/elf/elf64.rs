@@ -72,6 +72,7 @@ impl ELF {
             .splitn(name_count, |num| *num == 0x00)
             .enumerate()
         {
+            eprintln!("{},{}, idx->{}", self.sections.len(), self.shdrs.len(), idx);
             let b: Vec<&u8> = bb.iter().filter(|num| *num != &0x00).collect::<Vec<&u8>>();
             self.shdrs[idx + 1].sh_name = sh_name as u32;
             sh_name += (b.len() + 1) as u32;
@@ -399,6 +400,7 @@ pub static STB_GLOBAL: u8 = 1;
 //pub static STB_LOCAL: u8 = 0;
 pub static STT_FUNC: u8 = 2;
 #[repr(C)]
+#[derive(Clone)]
 pub struct Symbol {
     pub st_name: Elf64Word,
     pub st_info: u8,
