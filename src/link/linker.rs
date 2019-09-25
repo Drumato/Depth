@@ -19,9 +19,9 @@ impl Linker {
         self.build_text(&mut exec_file);
         self.build_symtab(&mut exec_file);
         self.build_strtab(&mut exec_file);
-        self.condition_symbols(&mut exec_file);
         self.build_relatext(&mut exec_file);
         self.build_shstrtab(&mut exec_file);
+        self.condition_symbols(&mut exec_file);
         exec_file
     }
     fn build_null(&self, exec_file: &mut ELF) {
