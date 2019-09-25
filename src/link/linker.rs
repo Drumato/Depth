@@ -33,7 +33,17 @@ impl Linker {
         exec_file.add_section(text, e::init_texthdr(total_len), ".text");
     }
     fn build_symtab(&self, exec_file: &mut ELF) {
-        let symtab: Vec<u8> = self.conbine_vec(self.get_sections(".symtab"));
+        let symtabs: Vec<Vec<u8>> = self.get_sections(".symtab");
+        let mut symbols: Vec<Symbol> = Vec::new();
+        for (idx, _tab) in symtabs.iter().enumerate() {
+            for sym in self.objs[idx].get_symbols().iter() {
+                if idx != 0 && sym.st_shndx == 0 && sym.st_info == 0 {
+                    continue;
+                }
+                symbols.push(sym.to_owned());
+            }
+        }
+        let symtab: Vec<u8> = e::symbols_to_vec(symbols);
         let symtab_number: u64 = symtab.len() as u64 / Symbol::size() as u64;
         exec_file.add_section(
             symtab,
@@ -47,16 +57,22 @@ impl Linker {
         exec_file.add_section(strtab, e::init_strtabhdr(strtab_len), ".strtab");
     }
     fn build_relatext(&self, exec_file: &mut ELF) {
-        let relatext: Vec<u8> = self.conbine_vec(self.get_sections(".relatext"));
+        let relatext: Vec<u8> = self.conbine_vec(self.get_sections(".rela.text"));
         let rela_number: u64 = relatext.len() as u64 / Rela::size() as u64;
         exec_file.add_section(
             relatext,
             e::init_relahdr(Rela::size() as u64 * rela_number),
-            ".relatext",
+            ".rela.text",
         );
     }
     fn build_shstrtab(&self, exec_file: &mut ELF) {
-        let shstrtab: Vec<u8> = self.conbine_vec(self.get_sections(".shstrtab"));
+        let shstrtab: Vec<u8> = e::strtab(vec![
+            ".text",
+            ".symtab",
+            ".strtab",
+            ".rela.text",
+            ".shstrtab",
+        ]);
         let shstrtab_len: u64 = shstrtab.len() as u64;
         exec_file.add_section(shstrtab, e::init_strtabhdr(shstrtab_len), ".shstrtab");
     }
@@ -141,7 +157,7 @@ impl ELF {
     }
     fn resolve_symbols(&mut self) {
         let symbols: Vec<e::Symbol> = self.get_symbols();
-        let mut relas: Vec<e::Rela> = self.get_relas(".relatext");
+        let mut relas: Vec<e::Rela> = self.get_relas(".rela.text");
         for rel in relas.iter_mut() {
             let address = symbols[e::Rela::bind(rel.r_info)].st_value as u32;
             for (idx, b) in address.to_le_bytes().to_vec().iter().enumerate() {
