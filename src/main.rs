@@ -99,12 +99,7 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
     if matches.is_present("dump-symbol") {
         manager.dump_symbol();
     }
-    manager.gen_irs();
-    if matches.is_present("dump-hir") {
-        manager.dump_hir();
-    }
-
-    genx64_phase(&matches, manager)
+    "".to_string()
 }
 fn assemble(mut assembler_code: String, matches: &clap::ArgMatches) -> elf::elf64::ELF {
     if !matches.is_present("stop-a") {
@@ -202,14 +197,6 @@ fn parse_phase(
         f::parse::node::dump_ast(&funcs);
     }
     funcs
-}
-fn genx64_phase(matches: &clap::ArgMatches, mut manager: Manager) -> String {
-    let mut assembler_code: String = manager.genx64();
-    if matches.is_present("intel") {
-        assembler_code = ".global main\n".to_string() + assembler_code.as_str();
-        assembler_code = ".intel_syntax noprefix\n".to_string() + assembler_code.as_str();
-    }
-    assembler_code
 }
 
 fn read_file(s: &str) -> String {

@@ -1,15 +1,11 @@
 use super::super::frontend::parse::node::Func;
+use super::super::frontend::sema::semantics::Type;
 use super::super::frontend::token::token::Token;
-use super::super::ir::hi::HIR;
-use super::semantics::Type;
 use std::collections::BTreeMap;
 extern crate colored;
 use colored::*;
 pub struct Manager {
     pub functions: Vec<Func>,
-    pub hirs: Vec<HIR>,
-    pub regnum: usize,
-    pub labelnum: usize,
     pub stack_offset: usize,
     pub cur_env: Env,
 }
@@ -18,9 +14,6 @@ impl Manager {
     pub fn new(funcs: Vec<Func>) -> Manager {
         Manager {
             functions: funcs,
-            hirs: Vec::with_capacity(2048),
-            regnum: 0,
-            labelnum: 0,
             stack_offset: 0,
             cur_env: Env::new(),
         }
@@ -38,12 +31,6 @@ impl Manager {
                     symbol.is_mutable
                 );
             }
-        }
-    }
-    pub fn dump_hir(&self) {
-        eprintln!("{}", "--------dumphir--------".blue().bold());
-        for ir in self.hirs.iter() {
-            eprintln!("{}", ir.string().green().bold());
         }
     }
 }

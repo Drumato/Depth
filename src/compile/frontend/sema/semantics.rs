@@ -1,7 +1,7 @@
-use super::super::super::ce::types::Error;
-use super::super::frontend::parse::node::{Func, Node};
-use super::super::frontend::token::token::Token;
-use super::manager::Manager;
+use super::super::super::super::ce::types::Error;
+use super::super::super::manager::manager::Manager;
+use super::super::parse::node::{Func, Node};
+use super::super::token::token::Token;
 
 #[derive(Clone, Eq, PartialEq)]
 pub enum Type {

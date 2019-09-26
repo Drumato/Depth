@@ -1,6 +1,6 @@
 use super::super::super::super::ce::types::Error;
 use super::super::super::manager::manager::{Env, Symbol};
-use super::super::super::manager::semantics::{IntType, Type};
+use super::super::sema::semantics::{IntType, Type};
 use super::super::token::token::Token;
 use super::node::{Func, Node};
 struct Parser {
