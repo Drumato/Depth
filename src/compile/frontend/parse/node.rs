@@ -3,21 +3,22 @@ use super::super::super::manager::semantics::Type;
 use super::super::token::token::Token;
 extern crate colored;
 use colored::*;
+type Child = Box<Node>;
 #[derive(Clone)]
 pub enum Node {
-    BINOP(Token, Box<Node>, Box<Node>, Option<Type>),
-    UNARY(Token, Box<Node>, Option<Type>),
+    BINOP(Token, Child, Child, Option<Type>),
+    UNARY(Token, Child, Option<Type>),
     NUMBER(Type),
-    INDEX(Box<Node>, Box<Node>),
-    CALL(String, Vec<Box<Node>>),
+    INDEX(Child, Child),
+    CALL(String, Vec<Child>),
     CHARLIT(char),
     ARRAYLIT(Vec<Node>, usize), // expression,number
     IDENT(String),
-    RETURN(Box<Node>),
-    IF(Box<Node>, Box<Node>, Option<Box<Node>>), // condition, block,else
-    BLOCK(Vec<Box<Node>>),
-    LET(String, Token, Box<Node>), // ident_name,type,expression
-    ASSIGN(String, Box<Node>),
+    RETURN(Child),
+    IF(Child, Child, Option<Child>), // condition, block,else
+    BLOCK(Vec<Child>),
+    LET(String, Token, Child), // ident_name,type,expression
+    ASSIGN(String, Child),
     DEFARG(String, Token),
     INVALID,
 }

@@ -1,6 +1,7 @@
 use super::super::super::super::ce::types::Error;
 use super::super::token::token::Token;
 
+type TokenLen = usize;
 pub fn lexing(mut input: String) -> Vec<Token> {
     let mut tokens: Vec<Token> = Vec::with_capacity(2048);
     while let Some((t, idx)) = tokenize(&input) {
@@ -17,7 +18,7 @@ pub fn lexing(mut input: String) -> Vec<Token> {
     tokens
 }
 
-fn tokenize(input: &String) -> Option<(Token, usize)> {
+fn tokenize(input: &String) -> Option<(Token, TokenLen)> {
     if input.len() == 0 {
         return None;
     }
@@ -26,7 +27,7 @@ fn tokenize(input: &String) -> Option<(Token, usize)> {
 
         c if c == '0' => Some((Token::INTEGER(0), 1)),
         c if is_decimal(c) => {
-            let length: usize = count_len(input, |c| c.is_ascii_digit());
+            let length: TokenLen = count_len(input, |c| c.is_ascii_digit());
             Some((
                 Token::INTEGER(input[..length].parse::<i128>().unwrap()),
                 length,
@@ -40,7 +41,7 @@ fn tokenize(input: &String) -> Option<(Token, usize)> {
         _ => tokenize_symbols(input),
     }
 }
-fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
+fn tokenize_symbols(input: &String) -> Option<(Token, TokenLen)> {
     if input.len() >= 2 {
         let multilength: String = std::str::from_utf8(&input.as_bytes()[0..2]).unwrap().into();
         if let Some(t) = tokenize_multisymbols(&multilength) {
@@ -74,8 +75,8 @@ fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
         }
     }
 }
-fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
-    let length: usize = count_len(input, |c| c.is_digit(10) || c == &'_' || c.is_alphabetic());
+fn tokenize_keywords(input: &String) -> Option<(Token, TokenLen)> {
+    let length: TokenLen = count_len(input, |c| c.is_digit(10) || c == &'_' || c.is_alphabetic());
     let keywords: Vec<&str> = vec![
         "return", "if", "else", "func", "let", "i8", "i16", "i32", "i64", "Pointer", "Array", "ch",
         "mut",
@@ -108,7 +109,7 @@ fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
 fn is_decimal(ch: char) -> bool {
     '1' <= ch && ch <= '9'
 }
-fn count_len(input: &String, f: fn(ch: &char) -> bool) -> usize {
+fn count_len(input: &String, f: fn(ch: &char) -> bool) -> TokenLen {
     input.chars().take_while(f).collect::<String>().len()
 }
 fn tokenize_multisymbols(input: &String) -> Option<Token> {
