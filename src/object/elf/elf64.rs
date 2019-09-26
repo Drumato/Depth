@@ -51,30 +51,42 @@ impl ELF {
     }
     pub fn condition(&mut self) {
         let mut offset = 0x40;
-        for shdr in self.shdrs.iter_mut() {
+        for (idx, shdr) in self.shdrs.iter_mut().enumerate() {
             shdr.sh_offset += offset;
             offset += shdr.sh_size;
+            shdr.sh_size = self.sections[idx].len() as u64;
+        }
+        let mut start: u64 = 0x40;
+        if self.ehdr.e_type == ET_EXEC {
+            start = 0x1000;
         }
         self.ehdr.e_shoff = self
             .sections
             .iter()
-            .fold(0x40, |sum, sec| sum + sec.len() as u64);
-        self.ehdr.e_shnum = self.sections.len() as u16; // 1 -> nullhdr
+            .fold(start, |sum, sec| sum + sec.len() as u64);
+        self.ehdr.e_shnum = self.sections.len() as u16;
         self.ehdr.e_shstrndx = self.ehdr.e_shnum - 1;
         let name_count = self.sections[self.ehdr.e_shstrndx as usize]
             .iter()
-            .filter(|num| *num == &('.' as u8))
+            .filter(|num| *num == &0x00)
             .collect::<Vec<&u8>>()
-            .len();
+            .len()
+            - 1;
         let mut sh_name = 1;
-        for (idx, bb) in self.sections[self.ehdr.e_shstrndx as usize][1..]
+        for (idx, bb) in self.sections[self.ehdr.e_shstrndx as usize]
             .to_vec()
             .splitn(name_count, |num| *num == 0x00)
             .enumerate()
         {
-            let b: Vec<&u8> = bb.iter().filter(|num| *num != &0x00).collect::<Vec<&u8>>();
-            self.shdrs[idx + 1].sh_name = sh_name as u32;
-            sh_name += (b.len() + 1) as u32;
+            if idx == 0 || idx >= self.ehdr.e_shnum as usize {
+                continue;
+            }
+            let b: Vec<&u8> = bb
+                .iter()
+                .take_while(|num| *num != &0x00)
+                .collect::<Vec<&u8>>();
+            self.shdrs[idx].sh_name = sh_name as u32;
+            sh_name += b.len() as u32 + 1;
         }
     }
     pub fn get_section_number(&self, name: &str) -> usize {
@@ -399,6 +411,7 @@ pub static STB_GLOBAL: u8 = 1;
 //pub static STB_LOCAL: u8 = 0;
 pub static STT_FUNC: u8 = 2;
 #[repr(C)]
+#[derive(Clone)]
 pub struct Symbol {
     pub st_name: Elf64Word,
     pub st_info: u8,

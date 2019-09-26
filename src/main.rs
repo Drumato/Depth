@@ -120,7 +120,7 @@ fn assemble(mut assembler_code: String, matches: &clap::ArgMatches) -> elf::elf6
         ".text",
         ".symtab",
         ".strtab",
-        ".relatext",
+        ".rela.text",
         ".shstrtab",
     ]);
     let strs: Vec<&str> = code_map
@@ -169,7 +169,7 @@ fn assemble(mut assembler_code: String, matches: &clap::ArgMatches) -> elf::elf6
     elf_file.add_section(
         elf::elf64::relas_to_vec(relas.values().collect::<Vec<&elf::elf64::Rela>>()),
         elf::elf64::init_relahdr(elf::elf64::Rela::size() as u64 * relas_length),
-        ".relatext",
+        ".rela.text",
     );
     let shstrtab_length = shstrtab.len() as u64;
     elf_file.add_section(
@@ -222,7 +222,8 @@ fn read_file(s: &str) -> String {
     if filepath.is_dir() {
         eprintln!("{} is directory.", filepath.to_str().unwrap());
     }
-    s.to_string()
+    eprintln!("{} not found", filepath.to_str().unwrap());
+    "".to_string()
 }
 fn dump_inst(
     instructions: &std::collections::BTreeMap<
