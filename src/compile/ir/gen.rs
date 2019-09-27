@@ -25,12 +25,14 @@ impl FrontManager {
                 self.add(Tac::IFF(cond_op, format!(".L{}", self.label)));
                 self.label += 1;
                 self.gen_stmt(*block.clone());
-                self.add(Tac::GOTO(format!(".L{}", self.label)));
                 if let Some(balter) = oalter {
+                    self.add(Tac::GOTO(format!(".L{}", self.label)));
                     self.add(Tac::LABEL(format!(".L{}", self.label - 1)));
                     self.gen_stmt(*balter.clone());
+                    self.add(Tac::LABEL(format!(".L{}", self.label)));
+                } else {
+                    self.add(Tac::LABEL(format!(".L{}", self.label - 1)));
                 }
-                self.add(Tac::LABEL(format!(".L{}", self.label)));
             }
             _ => (),
         }
