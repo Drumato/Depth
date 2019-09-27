@@ -1,5 +1,5 @@
 use super::super::super::super::ce::types::Error;
-use super::super::super::manager::manager::Manager;
+use super::super::frontmanager::frontmanager::FrontManager;
 use super::super::parse::node::{Func, Node};
 use super::super::token::token::Token;
 
@@ -83,7 +83,7 @@ impl Type {
     }
 }
 
-impl Manager {
+impl FrontManager {
     pub fn semantics(&mut self) {
         let func_num: usize = self.functions.len();
         let mut idx: usize = 0;

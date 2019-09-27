@@ -8,7 +8,8 @@ use colored::*;
 
 mod compile;
 use compile::frontend as f;
-use compile::manager::manager::Manager;
+use compile::ir::tac::Tac;
+use f::frontmanager::frontmanager as fm;
 mod object;
 use object::elf;
 mod assemble;
@@ -94,11 +95,12 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
     }
     let tokens: Vec<f::token::token::Token> = lex_phase(file_name, &matches);
     let funcs: Vec<f::parse::node::Func> = parse_phase(&matches, tokens);
-    let mut manager: Manager = Manager::new(funcs);
-    manager.semantics();
+    let mut front_manager: fm::FrontManager = fm::FrontManager::new(funcs);
+    front_manager.semantics();
     if matches.is_present("dump-symbol") {
-        manager.dump_symbol();
+        front_manager.dump_symbol();
     }
+    let _tacs: Vec<Tac> = front_manager.gen_tacs();
     "".to_string()
 }
 fn assemble(mut assembler_code: String, matches: &clap::ArgMatches) -> elf::elf64::ELF {

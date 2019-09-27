@@ -1,18 +1,18 @@
-use super::super::frontend::parse::node::Func;
-use super::super::frontend::sema::semantics::Type;
-use super::super::frontend::token::token::Token;
+use super::super::parse::node::Func;
+use super::super::sema::semantics::Type;
+use super::super::token::token::Token;
 use std::collections::BTreeMap;
 extern crate colored;
 use colored::*;
-pub struct Manager {
+pub struct FrontManager {
     pub functions: Vec<Func>,
     pub stack_offset: usize,
     pub cur_env: Env,
 }
 
-impl Manager {
-    pub fn new(funcs: Vec<Func>) -> Manager {
-        Manager {
+impl FrontManager {
+    pub fn new(funcs: Vec<Func>) -> FrontManager {
+        FrontManager {
             functions: funcs,
             stack_offset: 0,
             cur_env: Env::new(),
