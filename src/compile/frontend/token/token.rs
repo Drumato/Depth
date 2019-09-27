@@ -92,6 +92,25 @@ impl Token {
             _ => "".to_string(),
         }
     }
+    pub fn string_ir(&self) -> String {
+        match self {
+            Token::PLUS => "+".to_string(),
+            Token::MINUS => "-".to_string(),
+            Token::STAR => "*".to_string(),
+            Token::SLASH => "/".to_string(),
+            Token::PERCENT => "%".to_string(),
+            Token::LSHIFT => "<<".to_string(),
+            Token::RSHIFT => ">>".to_string(),
+            Token::LT => "<".to_string(),
+            Token::GT => ">".to_string(),
+            Token::LTEQ => "<=".to_string(),
+            Token::GTEQ => ">=".to_string(),
+            Token::EQ => "==".to_string(),
+            Token::NTEQ => "!=".to_string(),
+            Token::AMPERSAND => "&".to_string(),
+            _ => "(inv)".to_string(),
+        }
+    }
     pub fn start_stmt(token: &Token) -> Option<()> {
         match token {
             Token::LET

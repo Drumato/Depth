@@ -14,12 +14,14 @@ impl Lvalue {
 }
 pub enum Operand {
     INTLIT(i128),
+    CHARLIT(char),
     REG(Virtual, Physical),
     ID(String),
 }
 impl Operand {
     pub fn string(&self) -> String {
         match self {
+            Self::CHARLIT(value) => format!("'{}'", value),
             Self::INTLIT(value) => format!("{}", value),
             Self::REG(virt, _phys) => format!("t{}", virt),
             Self::ID(name) => name.to_string(),
@@ -27,15 +29,18 @@ impl Operand {
     }
 }
 pub enum Tac {
-    FUNC(String),
     EX(Lvalue, String, Operand, Operand),
     UNEX(Lvalue, String, Operand),
     RET(Operand),
+    IFF(Operand, String),
+    //IF(Operand, String),
+    GOTO(String),
+    LABEL(String),
 }
 impl Tac {
     pub fn string(&self) -> String {
         match self {
-            Self::FUNC(name) => format!("{}:", name),
+            Self::LABEL(name) => format!("{}:", name),
             Self::EX(lv, op, lop, rop) => format!(
                 "{} <- {} {} {}",
                 lv.string(),
@@ -45,6 +50,8 @@ impl Tac {
             ),
             Self::UNEX(lv, op, lop) => format!("{} <- {}{}", lv.string(), op, lop.string(),),
             Self::RET(op) => format!("ret {}", op.string()),
+            Self::IFF(cond, label) => format!("ifFalse {} goto {}", cond.string(), label),
+            Self::GOTO(label) => format!("goto {}", label),
         }
     }
 }

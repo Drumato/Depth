@@ -11,6 +11,7 @@ pub struct FrontManager {
     pub cur_env: Env,
     pub tacs: Vec<Tac>,
     pub virt: usize,
+    pub label: usize,
 }
 
 impl FrontManager {
@@ -21,6 +22,7 @@ impl FrontManager {
             cur_env: Env::new(),
             tacs: Vec::new(),
             virt: 0,
+            label: 0,
         }
     }
     pub fn dump_symbol(&self) {
