@@ -100,7 +100,13 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
     if matches.is_present("dump-symbol") {
         front_manager.dump_symbol();
     }
-    let _tacs: Vec<Tac> = front_manager.gen_tacs();
+    front_manager.gen_tacs();
+    let tacs: Vec<Tac> = front_manager.tacs;
+    if matches.is_present("dump-tac") {
+        for tac in tacs.iter() {
+            eprintln!("{}", tac.string());
+        }
+    }
     "".to_string()
 }
 fn assemble(mut assembler_code: String, matches: &clap::ArgMatches) -> elf::elf64::ELF {

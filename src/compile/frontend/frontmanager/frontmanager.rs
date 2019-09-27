@@ -1,3 +1,4 @@
+use super::super::super::ir::tac::Tac;
 use super::super::parse::node::Func;
 use super::super::sema::semantics::Type;
 use super::super::token::token::Token;
@@ -8,6 +9,8 @@ pub struct FrontManager {
     pub functions: Vec<Func>,
     pub stack_offset: usize,
     pub cur_env: Env,
+    pub tacs: Vec<Tac>,
+    pub virt: usize,
 }
 
 impl FrontManager {
@@ -16,6 +19,8 @@ impl FrontManager {
             functions: funcs,
             stack_offset: 0,
             cur_env: Env::new(),
+            tacs: Vec::new(),
+            virt: 0,
         }
     }
     pub fn dump_symbol(&self) {

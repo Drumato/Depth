@@ -20,9 +20,9 @@ args:
     - dump-symbol:
         long: dump-symbol
         help: dump symbol-tables each environments
-    - dump-hir:
-        long: dump-hir
-        help: dump hir
+    - dump-tac:
+        long: dump-tac
+        help: dump tac
     - dump-inst:
         long: dump-inst
         help: dump inst
