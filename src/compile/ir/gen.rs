@@ -34,6 +34,10 @@ impl FrontManager {
                     self.add(Tac::LABEL(format!(".L{}", self.label - 1)));
                 }
             }
+            Node::LET(name, _, bexpr) => {
+                let expr_op: Operand = self.gen_expr(*bexpr.clone()).unwrap();
+                self.add(Tac::LET(Lvalue::ID(name), expr_op));
+            }
             _ => (),
         }
     }
@@ -58,6 +62,8 @@ impl FrontManager {
             return None;
         } else if let Node::CHARLIT(c) = n {
             return Some(Operand::CHARLIT(c));
+        } else if let Node::IDENT(name) = n {
+            return Some(Operand::ID(name));
         }
         None
     }

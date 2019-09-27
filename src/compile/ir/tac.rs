@@ -32,6 +32,7 @@ pub enum Tac {
     EX(Lvalue, String, Operand, Operand),
     UNEX(Lvalue, String, Operand),
     RET(Operand),
+    LET(Lvalue, Operand),
     IFF(Operand, String),
     //IF(Operand, String),
     GOTO(String),
@@ -50,6 +51,7 @@ impl Tac {
             ),
             Self::UNEX(lv, op, lop) => format!("{} <- {}{}", lv.string(), op, lop.string(),),
             Self::RET(op) => format!("ret {}", op.string()),
+            Self::LET(lv, op) => format!("{} <- {}", lv.string(), op.string()),
             Self::IFF(cond, label) => format!("ifFalse {} goto {}", cond.string(), label),
             Self::GOTO(label) => format!("goto {}", label),
         }
