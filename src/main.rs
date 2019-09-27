@@ -103,6 +103,7 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
     front_manager.gen_tacs();
     let tacs: Vec<Tac> = front_manager.tacs;
     if matches.is_present("dump-tac") {
+        eprintln!("{}", "--------dump-tac--------".blue().bold());
         for tac in tacs.iter() {
             eprintln!("{}", tac.string());
         }

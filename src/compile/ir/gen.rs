@@ -13,7 +13,8 @@ impl FrontManager {
                 match st {
                     Node::RETURN(bch) => {
                         let ch: Node = *bch.clone();
-                        self.gen_expr(ch);
+                        let ret_op: Operand = self.gen_expr(ch).unwrap();
+                        self.add(Tac::RET(ret_op));
                     }
                     _ => (),
                 }
@@ -45,10 +46,17 @@ impl FrontManager {
             self.virt += 1;
             return Some(Operand::REG(virt, 0));
         } else if let Node::UNARY(op, blop, _) = n {
-            let _lop: Operand = self.gen_expr(*blop.clone()).unwrap();
-            return match op {
-                _ => None,
+            let lop: Operand = self.gen_expr(*blop.clone()).unwrap();
+            let op: String = match op {
+                Token::AMPERSAND => "&".to_string(),
+                Token::STAR => "*".to_string(),
+                Token::MINUS => "-".to_string(),
+                _ => "(inv)".to_string(),
             };
+            let virt = self.virt;
+            self.add(Tac::UNEX(Lvalue::REG(virt, 0), op, lop));
+            self.virt += 1;
+            return Some(Operand::REG(virt, 0));
         } else if let Node::NUMBER(t) = n {
             if let Type::INTEGER(ty) = t {
                 return Some(Operand::INTLIT(ty.val.unwrap()));

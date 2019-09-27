@@ -29,7 +29,8 @@ impl Operand {
 pub enum Tac {
     FUNC(String),
     EX(Lvalue, String, Operand, Operand),
-    //ST(),
+    UNEX(Lvalue, String, Operand),
+    RET(Operand),
 }
 impl Tac {
     pub fn string(&self) -> String {
@@ -42,6 +43,8 @@ impl Tac {
                 op,
                 rop.string()
             ),
+            Self::UNEX(lv, op, lop) => format!("{} <- {}{}", lv.string(), op, lop.string(),),
+            Self::RET(op) => format!("ret {}", op.string()),
         }
     }
 }
