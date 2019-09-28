@@ -17,6 +17,8 @@ pub enum Operand {
     CHARLIT(char),
     REG(Virtual, Physical),
     ID(String),
+    CALL(String, usize),
+    INDEX(Box<Operand>, Box<Operand>),
 }
 impl Operand {
     pub fn string(&self) -> String {
@@ -25,6 +27,8 @@ impl Operand {
             Self::INTLIT(value) => format!("{}", value),
             Self::REG(virt, _phys) => format!("t{}", virt),
             Self::ID(name) => name.to_string(),
+            Self::INDEX(lop, rop) => format!("{}[{}]", lop.string(), rop.string()),
+            Self::CALL(func, argc) => format!("call {}, {}", func, argc),
         }
     }
 }
@@ -32,9 +36,9 @@ pub enum Tac {
     EX(Lvalue, String, Operand, Operand),
     UNEX(Lvalue, String, Operand),
     RET(Operand),
+    PARAM(Operand),
     LET(Lvalue, Operand),
     IFF(Operand, String),
-    //IF(Operand, String),
     GOTO(String),
     LABEL(String),
 }
@@ -54,6 +58,7 @@ impl Tac {
             Self::LET(lv, op) => format!("{} <- {}", lv.string(), op.string()),
             Self::IFF(cond, label) => format!("ifFalse {} goto {}", cond.string(), label),
             Self::GOTO(label) => format!("goto {}", label),
+            Self::PARAM(arg) => format!("param {}", arg.string()),
         }
     }
 }

@@ -38,34 +38,58 @@ impl FrontManager {
                 let expr_op: Operand = self.gen_expr(*bexpr.clone()).unwrap();
                 self.add(Tac::LET(Lvalue::ID(name), expr_op));
             }
+            Node::ASSIGN(name, bexpr) => {
+                let expr_op: Operand = self.gen_expr(*bexpr.clone()).unwrap();
+                self.add(Tac::LET(Lvalue::ID(name), expr_op));
+            }
+            Node::BLOCK(stmts) => {
+                for st in stmts {
+                    self.gen_stmt(*st.clone());
+                }
+            }
             _ => (),
         }
     }
     fn gen_expr(&mut self, n: Node) -> Option<Operand> {
-        if let Node::BINOP(op, blop, brop, _) = n {
-            let lop: Operand = self.gen_expr(*blop.clone()).unwrap();
-            let rop: Operand = self.gen_expr(*brop.clone()).unwrap();
-            let virt = self.virt;
-            self.add(Tac::EX(Lvalue::REG(virt, 0), op.string_ir(), lop, rop));
-            self.virt += 1;
-            return Some(Operand::REG(virt, 0));
-        } else if let Node::UNARY(op, blop, _) = n {
-            let lop: Operand = self.gen_expr(*blop.clone()).unwrap();
-            let virt = self.virt;
-            self.add(Tac::UNEX(Lvalue::REG(virt, 0), op.string_ir(), lop));
-            self.virt += 1;
-            return Some(Operand::REG(virt, 0));
-        } else if let Node::NUMBER(t) = n {
-            if let Type::INTEGER(ty) = t {
-                return Some(Operand::INTLIT(ty.val.unwrap()));
+        match n {
+            Node::BINOP(op, blop, brop, _) => {
+                let lop: Operand = self.gen_expr(*blop.clone()).unwrap();
+                let rop: Operand = self.gen_expr(*brop.clone()).unwrap();
+                let virt = self.virt;
+                self.add(Tac::EX(Lvalue::REG(virt, 0), op.string_ir(), lop, rop));
+                self.virt += 1;
+                Some(Operand::REG(virt, 0))
             }
-            return None;
-        } else if let Node::CHARLIT(c) = n {
-            return Some(Operand::CHARLIT(c));
-        } else if let Node::IDENT(name) = n {
-            return Some(Operand::ID(name));
+            Node::UNARY(op, blop, _) => {
+                let lop: Operand = self.gen_expr(*blop.clone()).unwrap();
+                let virt = self.virt;
+                self.add(Tac::UNEX(Lvalue::REG(virt, 0), op.string_ir(), lop));
+                self.virt += 1;
+                Some(Operand::REG(virt, 0))
+            }
+            Node::NUMBER(t) => {
+                if let Type::INTEGER(ty) = t {
+                    return Some(Operand::INTLIT(ty.val.unwrap()));
+                }
+                None
+            }
+            Node::CHARLIT(c) => Some(Operand::CHARLIT(c)),
+            Node::IDENT(name) => Some(Operand::ID(name)),
+            Node::INDEX(bbase, bindex) => {
+                let base_op: Operand = self.gen_expr(*bbase.clone()).unwrap();
+                let index: Operand = self.gen_expr(*bindex.clone()).unwrap();
+                Some(Operand::INDEX(Box::new(base_op), Box::new(index)))
+            }
+            Node::CALL(name, args) => {
+                let len: usize = args.len();
+                for barg in args {
+                    let arg_op: Operand = self.gen_expr(*barg.clone()).unwrap();
+                    self.add(Tac::PARAM(arg_op));
+                }
+                Some(Operand::CALL(name, len))
+            }
+            _ => None,
         }
-        None
     }
     fn add(&mut self, tac: Tac) {
         self.tacs.push(tac);
