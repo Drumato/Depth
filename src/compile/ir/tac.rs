@@ -3,12 +3,14 @@ type Physical = usize;
 pub enum Lvalue {
     REG(Virtual, Physical),
     ID(String),
+    INDEX(Operand, Operand),
 }
 impl Lvalue {
     pub fn string(&self) -> String {
         match self {
             Self::REG(virt, _phys) => format!("t{}", virt),
             Self::ID(name) => name.to_string(),
+            Self::INDEX(lop, rop) => format!("{}[{}]", lop.string(), rop.string()),
         }
     }
 }

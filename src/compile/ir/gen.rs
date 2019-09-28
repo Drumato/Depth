@@ -88,6 +88,18 @@ impl FrontManager {
                 }
                 Some(Operand::CALL(name, len))
             }
+            Node::ARRAYLIT(elems, _) => {
+                let virt = self.virt;
+                self.virt += 1;
+                for (idx, elem) in elems.iter().enumerate() {
+                    let elem_op: Operand = self.gen_expr(elem.clone()).unwrap();
+                    self.add(Tac::LET(
+                        Lvalue::INDEX(Operand::REG(virt, 0), Operand::INTLIT(idx as i128)),
+                        elem_op,
+                    ));
+                }
+                Some(Operand::REG(virt, 0))
+            }
             _ => None,
         }
     }
