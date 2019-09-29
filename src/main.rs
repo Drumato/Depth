@@ -7,6 +7,7 @@ extern crate colored;
 use colored::*;
 
 mod compile;
+use compile::backend as b;
 use compile::frontend as f;
 use compile::ir::tac::Tac;
 use f::frontmanager::frontmanager as fm;
@@ -107,6 +108,11 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
         for tac in tacs.iter() {
             eprintln!("{}", tac.string());
         }
+    }
+    let mut optimizer: b::Optimizer = b::Optimizer::new(tacs);
+    optimizer.build_cfg();
+    if matches.is_present("dump-cfg") {
+        optimizer.dump_cfg();
     }
     "".to_string()
 }

@@ -26,6 +26,9 @@ args:
     - dump-inst:
         long: dump-inst
         help: dump inst
+    - dump-cfg:
+        long: dump-cfg
+        help: dump cfg
     - stop-c:
         short: C
         help: stop until compile

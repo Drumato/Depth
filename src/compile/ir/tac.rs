@@ -1,5 +1,6 @@
 type Virtual = usize;
 type Physical = usize;
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Lvalue {
     REG(Virtual, Physical),
     ID(String),
@@ -14,6 +15,7 @@ impl Lvalue {
         }
     }
 }
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Operand {
     INTLIT(i128),
     CHARLIT(char),
@@ -34,6 +36,7 @@ impl Operand {
         }
     }
 }
+#[derive(Clone)]
 pub enum Tac {
     EX(Lvalue, String, Operand, Operand),
     UNEX(Lvalue, String, Operand),
