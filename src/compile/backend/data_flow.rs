@@ -18,6 +18,22 @@ impl Optimizer {
                     self.add_pred(n, n - 1);
                     self.add_succ(n, n + 1);
                 }
+                Tac::UNEX(lv, _, op) => {
+                    self.cfg.def[n].insert(lv.clone());
+                    if self.check_use_value(&op) {
+                        self.cfg.used[n].insert(op.clone());
+                    }
+                    self.add_pred(n, n - 1);
+                    self.add_succ(n, n + 1);
+                }
+
+                Tac::PARAM(op) => {
+                    if self.check_use_value(&op) {
+                        self.cfg.used[n].insert(op.clone());
+                    }
+                    self.add_pred(n, n - 1);
+                    self.add_succ(n, n + 1);
+                }
                 Tac::LET(lv, op) => {
                     self.cfg.def[n].insert(lv.clone());
                     if self.check_use_value(&op) {
@@ -57,7 +73,6 @@ impl Optimizer {
                     }
                     self.add_succ(n, n + 1);
                 }
-                _ => (),
             }
         }
     }
