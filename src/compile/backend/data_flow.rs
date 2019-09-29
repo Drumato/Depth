@@ -26,6 +26,37 @@ impl Optimizer {
                     self.add_pred(n, n - 1);
                     self.add_succ(n, n + 1);
                 }
+                Tac::RET(op) => {
+                    if self.check_use_value(&op) {
+                        self.cfg.used[n].insert(op.clone());
+                    }
+                    self.add_pred(n, n - 1);
+                    self.add_succ(n, n + 1);
+                }
+                Tac::GOTO(label) => {
+                    self.add_pred(n, n - 1);
+                    if let Some(goto) = label_map.get(label) {
+                        self.add_succ(n, *goto);
+                        self.add_pred(*goto, n);
+                    }
+                }
+                Tac::IFF(op, label) => {
+                    self.add_pred(n, n - 1);
+                    if self.check_use_value(&op) {
+                        self.cfg.used[n].insert(op.clone());
+                    }
+                    self.add_succ(n, n + 1);
+                    if let Some(goto) = label_map.get(label) {
+                        self.add_succ(n, *goto);
+                        self.add_pred(*goto, n);
+                    }
+                }
+                Tac::LABEL(_) => {
+                    if n != 0 && !self.check_goto(n - 1) {
+                        self.add_pred(n, n - 1);
+                    }
+                    self.add_succ(n, n + 1);
+                }
                 _ => (),
             }
         }
@@ -43,6 +74,13 @@ impl Optimizer {
         match op {
             Operand::REG(_, _) => true,
             Operand::ID(_) => true,
+            _ => false,
+        }
+    }
+    fn check_goto(&self, n: usize) -> bool {
+        match self.tacs[n] {
+            Tac::IFF(_, _) => true,
+            Tac::GOTO(_) => true,
             _ => false,
         }
     }
