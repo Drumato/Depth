@@ -1,12 +1,15 @@
-use super::ir::tac::{Lvalue, Operand, Tac};
+use super::ir::tac::{Operand, Tac};
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::Write;
 pub mod data_flow;
+pub mod liveness;
 
 pub struct Optimizer {
     pub tacs: Vec<Tac>,
     pub cfg: ControlFlowGraph,
+    pub live_in: Vec<HashSet<Operand>>,
+    pub live_out: Vec<HashSet<Operand>>,
 }
 
 impl Optimizer {
@@ -15,6 +18,8 @@ impl Optimizer {
         Self {
             tacs: tac_vec,
             cfg: ControlFlowGraph::new(len),
+            live_in: Vec::new(),
+            live_out: Vec::new(),
         }
     }
     pub fn dump_cfg(&self) {
@@ -39,7 +44,7 @@ pub struct ControlFlowGraph {
     succ: Vec<HashSet<usize>>,
     pred: Vec<HashSet<usize>>,
     used: Vec<HashSet<Operand>>,
-    def: Vec<HashSet<Lvalue>>,
+    def: Vec<HashSet<Operand>>,
 }
 impl ControlFlowGraph {
     fn new(len: usize) -> Self {

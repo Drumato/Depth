@@ -114,6 +114,7 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
     if matches.is_present("dump-cfg") {
         optimizer.dump_cfg();
     }
+    optimizer.liveness();
     "".to_string()
 }
 fn assemble(mut assembler_code: String, matches: &clap::ArgMatches) -> elf::elf64::ELF {

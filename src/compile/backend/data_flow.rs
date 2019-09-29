@@ -1,4 +1,4 @@
-use super::super::ir::tac::{Operand, Tac};
+use super::super::ir::tac::{Lvalue, Operand, Tac};
 use super::Optimizer;
 use std::collections::HashMap;
 impl Optimizer {
@@ -8,7 +8,7 @@ impl Optimizer {
         for (n, t) in tacs.iter().enumerate() {
             match t {
                 Tac::EX(lv, _, lop, rop) => {
-                    self.cfg.def[n].insert(lv.clone());
+                    self.cfg.def[n].insert(lv_to_op(lv.clone()));
                     if self.check_use_value(&lop) {
                         self.cfg.used[n].insert(lop.clone());
                     }
@@ -19,7 +19,7 @@ impl Optimizer {
                     self.add_succ(n, n + 1);
                 }
                 Tac::UNEX(lv, _, op) => {
-                    self.cfg.def[n].insert(lv.clone());
+                    self.cfg.def[n].insert(lv_to_op(lv.clone()));
                     if self.check_use_value(&op) {
                         self.cfg.used[n].insert(op.clone());
                     }
@@ -35,7 +35,7 @@ impl Optimizer {
                     self.add_succ(n, n + 1);
                 }
                 Tac::LET(lv, op) => {
-                    self.cfg.def[n].insert(lv.clone());
+                    self.cfg.def[n].insert(lv_to_op(lv.clone()));
                     if self.check_use_value(&op) {
                         self.cfg.used[n].insert(op.clone());
                     }
@@ -106,5 +106,16 @@ impl Optimizer {
     }
     fn add_pred(&mut self, n: usize, edge: usize) {
         self.cfg.pred[n].insert(edge);
+    }
+}
+
+fn lv_to_op(lv: Lvalue) -> Operand {
+    if let Lvalue::REG(virt, phys) = &lv {
+        return Operand::REG(*virt, *phys);
+    } else if let Lvalue::ID(name) = &lv {
+        return Operand::ID(name.to_string());
+    } else {
+        eprintln!("can't convert {} to operand", lv.string());
+        return Operand::ID("(inv)".to_string());
     }
 }
