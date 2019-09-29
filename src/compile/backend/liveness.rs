@@ -4,13 +4,12 @@ use std::collections::HashSet;
 
 impl Optimizer {
     pub fn liveness(&mut self) {
-        let tacs = self.tacs.clone();
-        let mut live_in: Vec<HashSet<Operand>> = vec![HashSet::new(); tacs.len()];
-        let mut live_out: Vec<HashSet<Operand>> = vec![HashSet::new(); tacs.len()];
+        let mut live_in: Vec<HashSet<Operand>> = vec![HashSet::new(); self.tacs.len()];
+        let mut live_out: Vec<HashSet<Operand>> = vec![HashSet::new(); self.tacs.len()];
         'outer: loop {
             let mut in_sets: Vec<HashSet<Operand>> = Vec::new();
             let mut out_sets: Vec<HashSet<Operand>> = Vec::new();
-            for (idx, _t) in tacs.iter().rev().enumerate() {
+            for (idx, _t) in self.tacs.iter().rev().enumerate() {
                 in_sets.push(live_in[idx].clone());
                 out_sets.push(live_out[idx].clone());
                 for s in self.cfg.succ[idx].iter() {
@@ -31,13 +30,15 @@ impl Optimizer {
                 break 'outer;
             }
         }
-        self.live_in = live_in;
-        self.live_out = live_out;
-        for (idx, i) in self.live_in.iter().enumerate() {
-            eprintln!(
-                "\tlive_in[{}] {:?}  live_out[{}] {:?}",
-                idx, i, idx, &self.live_out[idx]
-            );
+        for (op, range) in self.living.iter_mut() {
+            for (idx, _t) in self.tacs.iter().enumerate() {
+                if !live_in[idx].contains(op) && live_out[idx].contains(op) {
+                    range.0 = idx;
+                }
+                if live_in[idx].contains(op) && !live_out[idx].contains(op) {
+                    range.1 = idx;
+                }
+            }
         }
     }
 }

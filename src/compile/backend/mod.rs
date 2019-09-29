@@ -1,15 +1,15 @@
 use super::ir::tac::{Operand, Tac};
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use std::fs::File;
 use std::io::Write;
 pub mod data_flow;
 pub mod liveness;
+pub mod regalloc;
 
 pub struct Optimizer {
     pub tacs: Vec<Tac>,
     pub cfg: ControlFlowGraph,
-    pub live_in: Vec<HashSet<Operand>>,
-    pub live_out: Vec<HashSet<Operand>>,
+    pub living: BTreeMap<Operand, (usize, usize)>,
 }
 
 impl Optimizer {
@@ -18,8 +18,7 @@ impl Optimizer {
         Self {
             tacs: tac_vec,
             cfg: ControlFlowGraph::new(len),
-            live_in: Vec::new(),
-            live_out: Vec::new(),
+            living: BTreeMap::new(),
         }
     }
     pub fn dump_cfg(&self) {
@@ -37,6 +36,11 @@ impl Optimizer {
         let file_name: String = "cfg.dot".to_string();
         let mut file = File::create(file_name).unwrap();
         file.write_all(out.as_bytes()).unwrap();
+    }
+    pub fn dump_liveness(&self) {
+        for (op, range) in self.living.iter() {
+            eprintln!("{} --> {}...{}", op.string(), range.0, range.1);
+        }
     }
 }
 

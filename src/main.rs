@@ -115,6 +115,10 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
         optimizer.dump_cfg();
     }
     optimizer.liveness();
+    if matches.is_present("dump-liveness") {
+        optimizer.dump_liveness();
+    }
+    optimizer.regalloc();
     "".to_string()
 }
 fn assemble(mut assembler_code: String, matches: &clap::ArgMatches) -> elf::elf64::ELF {

@@ -15,7 +15,7 @@ impl Lvalue {
         }
     }
 }
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(PartialOrd, Ord, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Operand {
     INTLIT(i128),
     CHARLIT(char),

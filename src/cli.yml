@@ -29,6 +29,9 @@ args:
     - dump-cfg:
         long: dump-cfg
         help: dump cfg
+    - dump-liveness:
+        long: dump-liveness
+        help: dump liveness
     - stop-c:
         short: C
         help: stop until compile

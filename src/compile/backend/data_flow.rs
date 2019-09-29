@@ -17,6 +17,7 @@ impl Optimizer {
                     }
                     self.add_pred(n, n - 1);
                     self.add_succ(n, n + 1);
+                    self.living.insert(lv_to_op(lv.clone()), (0, 0));
                 }
                 Tac::UNEX(lv, _, op) => {
                     self.cfg.def[n].insert(lv_to_op(lv.clone()));
@@ -25,6 +26,7 @@ impl Optimizer {
                     }
                     self.add_pred(n, n - 1);
                     self.add_succ(n, n + 1);
+                    self.living.insert(lv_to_op(lv.clone()), (0, 0));
                 }
 
                 Tac::PARAM(op) => {
@@ -41,6 +43,7 @@ impl Optimizer {
                     }
                     self.add_pred(n, n - 1);
                     self.add_succ(n, n + 1);
+                    self.living.insert(lv_to_op(lv.clone()), (0, 0));
                 }
                 Tac::RET(op) => {
                     if self.check_use_value(&op) {
