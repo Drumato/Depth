@@ -36,11 +36,11 @@ impl FrontManager {
             }
             Node::LET(name, _, bexpr) => {
                 let expr_op: Operand = self.gen_expr(*bexpr.clone()).unwrap();
-                self.add(Tac::LET(Lvalue::ID(name), expr_op));
+                self.add(Tac::LET(Lvalue::ID(name, 0), expr_op));
             }
             Node::ASSIGN(name, bexpr) => {
                 let expr_op: Operand = self.gen_expr(*bexpr.clone()).unwrap();
-                self.add(Tac::LET(Lvalue::ID(name), expr_op));
+                self.add(Tac::LET(Lvalue::ID(name, 0), expr_op));
             }
             Node::BLOCK(stmts) => {
                 for st in stmts {
@@ -74,7 +74,7 @@ impl FrontManager {
                 None
             }
             Node::CHARLIT(c) => Some(Operand::CHARLIT(c)),
-            Node::IDENT(name) => Some(Operand::ID(name)),
+            Node::IDENT(name) => Some(Operand::ID(name, 0)),
             Node::INDEX(bbase, bindex) => {
                 let base_op: Operand = self.gen_expr(*bbase.clone()).unwrap();
                 let index: Operand = self.gen_expr(*bindex.clone()).unwrap();

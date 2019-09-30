@@ -23,6 +23,9 @@ args:
     - dump-tac:
         long: dump-tac
         help: dump tac
+    - dump-tacp:
+        long: dump-tacp
+        help: dump tac with physical-num
     - dump-inst:
         long: dump-inst
         help: dump inst

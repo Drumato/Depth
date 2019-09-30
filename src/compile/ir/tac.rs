@@ -3,15 +3,25 @@ type Physical = usize;
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Lvalue {
     REG(Virtual, Physical),
-    ID(String),
+    ID(String, Physical),
     INDEX(Operand, Operand),
 }
 impl Lvalue {
     pub fn string(&self) -> String {
         match self {
             Self::REG(virt, _phys) => format!("t{}", virt),
-            Self::ID(name) => name.to_string(),
+            Self::ID(name, _) => name.to_string(),
             Self::INDEX(lop, rop) => format!("{}[{}]", lop.string(), rop.string()),
+        }
+    }
+    pub fn to_op(lv: Self) -> Operand {
+        if let Lvalue::REG(virt, phys) = lv {
+            return Operand::REG(virt, phys);
+        } else if let Lvalue::ID(name, _) = lv {
+            return Operand::ID(name.to_string(), 0);
+        } else {
+            eprintln!("can't convert {} to operand", lv.string());
+            return Operand::ID("(inv)".to_string(), 0);
         }
     }
 }
@@ -20,7 +30,7 @@ pub enum Operand {
     INTLIT(i128),
     CHARLIT(char),
     REG(Virtual, Physical),
-    ID(String),
+    ID(String, Physical),
     CALL(String, usize),
     INDEX(Box<Operand>, Box<Operand>),
 }
@@ -30,7 +40,7 @@ impl Operand {
             Self::CHARLIT(value) => format!("'{}'", value),
             Self::INTLIT(value) => format!("{}", value),
             Self::REG(virt, _phys) => format!("t{}", virt),
-            Self::ID(name) => name.to_string(),
+            Self::ID(name, _) => name.to_string(),
             Self::INDEX(lop, rop) => format!("{}[{}]", lop.string(), rop.string()),
             Self::CALL(func, argc) => format!("call {}, {}", func, argc),
         }

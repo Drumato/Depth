@@ -1,40 +1,159 @@
-use super::super::ir::tac::Operand;
+use super::super::ir::tac::{Lvalue, Operand, Tac};
 use super::Optimizer;
-use std::collections::{BTreeMap, HashSet};
+use std::collections::BTreeMap;
 
-static AVAILABLE_REG: usize = 9; // rax, rdx, rcx, rdi, rsi, r8, r9, r10, r11
-
+static AVAILABLE_X64: usize = 9;
 impl Optimizer {
     pub fn regalloc(&mut self) {
-        let mut reg_maps: Vec<HashSet<Operand>> = vec![HashSet::new(); self.tacs.len()];
-        let mut graph: Vec<Vec<bool>> = vec![vec![false; self.living.len()]; self.living.len()];
-        let mut vars: BTreeMap<Operand, usize> = BTreeMap::new();
-        for (idx, (op, _range)) in self.living.iter().enumerate() {
-            vars.insert(op.clone(), idx);
-        }
-        for (idx, t) in self.tacs.iter_mut().enumerate() {
-            for (op, range) in self.living.iter() {
-                if range.0 <= idx && idx <= range.1 {
-                    reg_maps[idx].insert(op.clone());
-                }
+        use std::iter::FromIterator;
+        let mut living_list = Vec::from_iter(self.living.clone());
+        let mut living_list_copy = living_list.clone();
+        let mut reg_map: BTreeMap<Operand, usize> = BTreeMap::new();
+        let mut active_list: Vec<(Operand, (usize, usize))> = Vec::new();
+        let mut registers: Vec<Option<usize>> = (0..9).map(|num| Some(num)).collect();
+        living_list.sort_by(|&(_, r1), &(_, r2)| r1.0.cmp(&r2.0));
+        for (var, range) in living_list.iter_mut() {
+            let mut num: usize = 100;
+            if let Some(n) = registers.iter().find(|x| x.is_some()) {
+                num = n.unwrap();
             }
-            for op in reg_maps[idx].iter() {
-                for op2 in reg_maps[idx].iter() {
-                    if op == op2 {
-                        continue;
+            match var {
+                Operand::REG(ref mut _virt, ref mut phys) => {
+                    if num < AVAILABLE_X64 {
+                        *phys = num;
+                        reg_map.insert(var.clone(), num);
+                        registers[num] = None;
+                        for (op, r) in living_list_copy.iter_mut() {
+                            *op = var.clone();
+                            if range.0 <= r.0 && r.1 <= range.1 || range.0 <= r.0 && r.0 <= range.1
+                            {
+                                active_list.push((op.clone(), *range));
+                            }
+                        }
+                        self.sort_active(&mut active_list);
+                    } else {
+                        eprintln!("spill occured (not implemented)");
                     }
-                    graph[*vars.get(op).unwrap()][*vars.get(op2).unwrap()] = true;
                 }
+                Operand::ID(ref mut _name, ref mut phys) => {
+                    if num < AVAILABLE_X64 {
+                        *phys = num;
+                        reg_map.insert(var.clone(), num);
+                        registers[num] = None;
+                        for (op, r) in living_list_copy.iter() {
+                            if range.0 <= r.0 && r.1 <= range.1 || range.0 <= r.0 && r.0 <= range.1
+                            {
+                                active_list.push((op.clone(), *range));
+                            }
+                        }
+                        self.sort_active(&mut active_list);
+                    } else {
+                        eprintln!("spill occured (not implemented)");
+                    }
+                }
+                _ => (),
+            }
+            let remove_list: Vec<usize> = active_list
+                .iter()
+                .filter(|(_op, r)| r.1 < range.0)
+                .enumerate()
+                .map(|(idx, _)| idx)
+                .collect();
+            for i in remove_list.iter() {
+                let mut return_reg: usize = 0;
+                if let Operand::REG(_, phys) = active_list[*i].0 {
+                    return_reg = phys;
+                } else if let Operand::ID(_, phys) = active_list[*i].0 {
+                    return_reg = phys;
+                }
+                active_list.remove(*i);
+                registers[return_reg] = Some(return_reg);
             }
         }
-        /*
-        println!("graph {{\n");
-        for (g, edges) in graph.iter() {
-            for edge in edges.iter() {
-                println!("\t{} -- {};\n", g.string(), edge.string());
+        self.living = living_list
+            .into_iter()
+            .collect::<BTreeMap<Operand, (usize, usize)>>();
+        /* allocating reg into tac*/
+        let mut tacs = self.tacs.clone();
+        for t in tacs.iter_mut() {
+            match t {
+                Tac::EX(lv, _, lop, rop) => {
+                    let op2 = lop.clone();
+                    if let Operand::REG(ref mut _virt, ref mut phys) = lop {
+                        *phys = *reg_map.get(&op2).unwrap();
+                    } else if let Operand::ID(ref mut _name, ref mut phys) = lop {
+                        *phys = *reg_map.get(&op2).unwrap();
+                    }
+                    let op2 = rop.clone();
+                    if let Operand::REG(ref mut _virt, ref mut phys) = rop {
+                        *phys = *reg_map.get(&op2).unwrap();
+                    } else if let Operand::ID(ref mut _name, ref mut phys) = rop {
+                        *phys = *reg_map.get(&op2).unwrap();
+                    }
+                    let op2 = Lvalue::to_op(lv.clone());
+                    if let Lvalue::REG(ref mut _virt, ref mut phys) = lv {
+                        *phys = *reg_map.get(&op2).unwrap();
+                    } else if let Lvalue::ID(ref mut _name, ref mut phys) = lv {
+                        *phys = *reg_map.get(&op2).unwrap();
+                    }
+                }
+                Tac::UNEX(lv, _, op) => {
+                    let op2 = op.clone();
+                    if let Operand::REG(ref mut _virt, ref mut phys) = op {
+                        *phys = *reg_map.get(&op2).unwrap();
+                    } else if let Operand::ID(ref mut _name, ref mut phys) = op {
+                        *phys = *reg_map.get(&op2).unwrap();
+                    }
+                    let op2 = Lvalue::to_op(lv.clone());
+                    if let Lvalue::REG(ref mut _virt, ref mut phys) = lv {
+                        *phys = *reg_map.get(&op2).unwrap();
+                    } else if let Lvalue::ID(ref mut _name, ref mut phys) = lv {
+                        *phys = *reg_map.get(&op2).unwrap();
+                    }
+                }
+                Tac::RET(op) => {
+                    let op2 = op.clone();
+                    if let Operand::REG(ref mut _virt, ref mut phys) = op {
+                        *phys = *reg_map.get(&op2).unwrap();
+                    } else if let Operand::ID(ref mut _name, ref mut phys) = op {
+                        *phys = *reg_map.get(&op2).unwrap();
+                    }
+                }
+                Tac::PARAM(op) => {
+                    let op2 = op.clone();
+                    if let Operand::REG(ref mut _virt, ref mut phys) = op {
+                        *phys = *reg_map.get(&op2).unwrap();
+                    } else if let Operand::ID(ref mut _name, ref mut phys) = op {
+                        *phys = *reg_map.get(&op2).unwrap();
+                    }
+                }
+                Tac::LET(lv, op) => {
+                    let op2 = op.clone();
+                    if let Operand::REG(ref mut _virt, ref mut phys) = op {
+                        *phys = *reg_map.get(&op2).unwrap();
+                    } else if let Operand::ID(ref mut _name, ref mut phys) = op {
+                        *phys = *reg_map.get(&op2).unwrap();
+                    }
+                    let op2 = Lvalue::to_op(lv.clone());
+                    if let Lvalue::REG(ref mut _virt, ref mut phys) = lv {
+                        *phys = *reg_map.get(&op2).unwrap();
+                    } else if let Lvalue::ID(ref mut _name, ref mut phys) = lv {
+                        *phys = *reg_map.get(&op2).unwrap();
+                    }
+                }
+                Tac::IFF(op, _label) => {
+                    let op2 = op.clone();
+                    if let Operand::REG(ref mut _virt, ref mut phys) = op {
+                        *phys = *reg_map.get(&op2).unwrap();
+                    } else if let Operand::ID(ref mut _name, ref mut phys) = op {
+                        *phys = *reg_map.get(&op2).unwrap();
+                    }
+                }
+                _ => (),
             }
         }
-        println!("}} \n");
-        */
+    }
+    fn sort_active(&self, active_list: &mut Vec<(Operand, (usize, usize))>) {
+        active_list.sort_by(|&(_, r1), &(_, r2)| r1.1.cmp(&r2.1));
     }
 }

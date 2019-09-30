@@ -8,7 +8,7 @@ impl Optimizer {
         for (n, t) in tacs.iter().enumerate() {
             match t {
                 Tac::EX(lv, _, lop, rop) => {
-                    self.cfg.def[n].insert(lv_to_op(lv.clone()));
+                    self.cfg.def[n].insert(Lvalue::to_op(lv.clone()));
                     if self.check_use_value(&lop) {
                         self.cfg.used[n].insert(lop.clone());
                     }
@@ -17,16 +17,16 @@ impl Optimizer {
                     }
                     self.add_pred(n, n - 1);
                     self.add_succ(n, n + 1);
-                    self.living.insert(lv_to_op(lv.clone()), (0, 0));
+                    self.living.insert(Lvalue::to_op(lv.clone()), (0, 0));
                 }
                 Tac::UNEX(lv, _, op) => {
-                    self.cfg.def[n].insert(lv_to_op(lv.clone()));
+                    self.cfg.def[n].insert(Lvalue::to_op(lv.clone()));
                     if self.check_use_value(&op) {
                         self.cfg.used[n].insert(op.clone());
                     }
                     self.add_pred(n, n - 1);
                     self.add_succ(n, n + 1);
-                    self.living.insert(lv_to_op(lv.clone()), (0, 0));
+                    self.living.insert(Lvalue::to_op(lv.clone()), (0, 0));
                 }
 
                 Tac::PARAM(op) => {
@@ -37,13 +37,13 @@ impl Optimizer {
                     self.add_succ(n, n + 1);
                 }
                 Tac::LET(lv, op) => {
-                    self.cfg.def[n].insert(lv_to_op(lv.clone()));
+                    self.cfg.def[n].insert(Lvalue::to_op(lv.clone()));
                     if self.check_use_value(&op) {
                         self.cfg.used[n].insert(op.clone());
                     }
                     self.add_pred(n, n - 1);
                     self.add_succ(n, n + 1);
-                    self.living.insert(lv_to_op(lv.clone()), (0, 0));
+                    self.living.insert(Lvalue::to_op(lv.clone()), (0, 0));
                 }
                 Tac::RET(op) => {
                     if self.check_use_value(&op) {
@@ -91,7 +91,7 @@ impl Optimizer {
     fn check_use_value(&self, op: &Operand) -> bool {
         match op {
             Operand::REG(_, _) => true,
-            Operand::ID(_) => true,
+            Operand::ID(_, _) => true,
             _ => false,
         }
     }
@@ -109,16 +109,5 @@ impl Optimizer {
     }
     fn add_pred(&mut self, n: usize, edge: usize) {
         self.cfg.pred[n].insert(edge);
-    }
-}
-
-fn lv_to_op(lv: Lvalue) -> Operand {
-    if let Lvalue::REG(virt, phys) = &lv {
-        return Operand::REG(*virt, *phys);
-    } else if let Lvalue::ID(name) = &lv {
-        return Operand::ID(name.to_string());
-    } else {
-        eprintln!("can't convert {} to operand", lv.string());
-        return Operand::ID("(inv)".to_string());
     }
 }
