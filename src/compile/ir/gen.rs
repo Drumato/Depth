@@ -7,7 +7,8 @@ impl FrontManager {
     pub fn gen_tacs(&mut self) {
         let functions = self.functions.clone();
         for func in functions.iter() {
-            self.add(Tac::LABEL(func.name.clone()));
+            self.add(Tac::FUNCNAME(func.name.clone()));
+            self.add(Tac::PROLOGUE(self.stack_offset));
             for st in func.stmts.iter() {
                 self.gen_stmt(st.clone());
             }
@@ -18,6 +19,7 @@ impl FrontManager {
             Node::RETURN(bch) => {
                 let ch: Node = *bch.clone();
                 let ret_op: Operand = self.gen_expr(ch).unwrap();
+                self.add(Tac::EPILOGUE);
                 self.add(Tac::RET(ret_op));
             }
             Node::IF(bcond, block, oalter) => {
@@ -36,7 +38,13 @@ impl FrontManager {
             }
             Node::LET(name, _, bexpr) => {
                 let expr_op: Operand = self.gen_expr(*bexpr.clone()).unwrap();
-                self.add(Tac::LET(Operand::ID(name, 0), expr_op));
+                let mut stack_offset = 0;
+                if let Some(sym) = self.cur_env.table.get(&name) {
+                    stack_offset = sym.stack_offset;
+                } else {
+                    eprintln!("{} is not defined.", name);
+                }
+                self.add(Tac::LET(Operand::ID(name, stack_offset), expr_op));
             }
             Node::ASSIGN(name, bexpr) => {
                 let expr_op: Operand = self.gen_expr(*bexpr.clone()).unwrap();
@@ -74,7 +82,15 @@ impl FrontManager {
                 None
             }
             Node::CHARLIT(c) => Some(Operand::CHARLIT(c)),
-            Node::IDENT(name) => Some(Operand::ID(name, 0)),
+            Node::IDENT(name) => {
+                let mut stack_offset = 0;
+                if let Some(sym) = self.cur_env.table.get(&name) {
+                    stack_offset = sym.stack_offset;
+                } else {
+                    eprintln!("{} is not defined.", name);
+                }
+                Some(Operand::ID(name, stack_offset))
+            }
             Node::INDEX(bbase, bindex) => {
                 let base_op: Operand = self.gen_expr(*bbase.clone()).unwrap();
                 let index: Operand = self.gen_expr(*bindex.clone()).unwrap();

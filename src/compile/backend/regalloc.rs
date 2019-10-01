@@ -35,22 +35,6 @@ impl Optimizer {
                         eprintln!("spill occured (not implemented)");
                     }
                 }
-                Operand::ID(ref mut _name, ref mut phys) => {
-                    if num < AVAILABLE_X64 {
-                        *phys = num;
-                        reg_map.insert(var.string(), num);
-                        registers[num] = None;
-                        for (op, r) in living_list_copy.iter() {
-                            if range.0 <= r.0 && r.1 <= range.1 || range.0 <= r.0 && r.0 <= range.1
-                            {
-                                active_list.push((op.clone(), *range));
-                            }
-                        }
-                        self.sort_active(&mut active_list);
-                    } else {
-                        eprintln!("spill occured (not implemented)");
-                    }
-                }
                 _ => (),
             }
             let remove_list: Vec<usize> = active_list
@@ -62,8 +46,6 @@ impl Optimizer {
             for i in remove_list.iter() {
                 let mut return_reg: usize = 0;
                 if let Operand::REG(_, phys) = active_list[*i].0 {
-                    return_reg = phys;
-                } else if let Operand::ID(_, phys) = active_list[*i].0 {
                     return_reg = phys;
                 }
                 active_list.remove(*i);
@@ -81,19 +63,13 @@ impl Optimizer {
                     let op2 = lop.clone();
                     if let Operand::REG(ref mut _virt, ref mut phys) = lop {
                         *phys = *reg_map.get(&op2.string()).unwrap();
-                    } else if let Operand::ID(ref mut _name, ref mut phys) = lop {
-                        *phys = *reg_map.get(&op2.string()).unwrap();
                     }
                     let op2 = rop.clone();
                     if let Operand::REG(ref mut _virt, ref mut phys) = rop {
                         *phys = *reg_map.get(&op2.string()).unwrap();
-                    } else if let Operand::ID(ref mut _name, ref mut phys) = rop {
-                        *phys = *reg_map.get(&op2.string()).unwrap();
                     }
                     let op2 = lv.clone();
                     if let Operand::REG(ref mut _virt, ref mut phys) = lv {
-                        *phys = *reg_map.get(&op2.string()).unwrap();
-                    } else if let Operand::ID(ref mut _name, ref mut phys) = lv {
                         *phys = *reg_map.get(&op2.string()).unwrap();
                     }
                 }
@@ -101,13 +77,9 @@ impl Optimizer {
                     let op2 = op.clone();
                     if let Operand::REG(ref mut _virt, ref mut phys) = op {
                         *phys = *reg_map.get(&op2.string()).unwrap();
-                    } else if let Operand::ID(ref mut _name, ref mut phys) = op {
-                        *phys = *reg_map.get(&op2.string()).unwrap();
                     }
                     let op2 = lv.clone();
                     if let Operand::REG(ref mut _virt, ref mut phys) = lv {
-                        *phys = *reg_map.get(&op2.string()).unwrap();
-                    } else if let Operand::ID(ref mut _name, ref mut phys) = lv {
                         *phys = *reg_map.get(&op2.string()).unwrap();
                     }
                 }
@@ -115,15 +87,11 @@ impl Optimizer {
                     let op2 = op.clone();
                     if let Operand::REG(ref mut _virt, ref mut phys) = op {
                         *phys = *reg_map.get(&op2.string()).unwrap();
-                    } else if let Operand::ID(ref mut _name, ref mut phys) = op {
-                        *phys = *reg_map.get(&op2.string()).unwrap();
                     }
                 }
                 Tac::PARAM(op) => {
                     let op2 = op.clone();
                     if let Operand::REG(ref mut _virt, ref mut phys) = op {
-                        *phys = *reg_map.get(&op2.string()).unwrap();
-                    } else if let Operand::ID(ref mut _name, ref mut phys) = op {
                         *phys = *reg_map.get(&op2.string()).unwrap();
                     }
                 }
@@ -131,21 +99,15 @@ impl Optimizer {
                     let op2 = op.clone();
                     if let Operand::REG(ref mut _virt, ref mut phys) = op {
                         *phys = *reg_map.get(&op2.string()).unwrap();
-                    } else if let Operand::ID(ref mut _name, ref mut phys) = op {
-                        *phys = *reg_map.get(&op2.string()).unwrap();
                     }
                     let op2 = lv.clone();
                     if let Operand::REG(ref mut _virt, ref mut phys) = lv {
-                        *phys = *reg_map.get(&op2.string()).unwrap();
-                    } else if let Operand::ID(ref mut _name, ref mut phys) = lv {
                         *phys = *reg_map.get(&op2.string()).unwrap();
                     }
                 }
                 Tac::IFF(op, _label) => {
                     let op2 = op.clone();
                     if let Operand::REG(ref mut _virt, ref mut phys) = op {
-                        *phys = *reg_map.get(&op2.string()).unwrap();
-                    } else if let Operand::ID(ref mut _name, ref mut phys) = op {
                         *phys = *reg_map.get(&op2.string()).unwrap();
                     }
                 }

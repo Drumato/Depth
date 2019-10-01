@@ -1,11 +1,12 @@
 type Virtual = usize;
 type Physical = usize;
+type Offset = usize;
 #[derive(PartialOrd, Ord, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Operand {
     INTLIT(i128),
     CHARLIT(char),
     REG(Virtual, Physical),
-    ID(String, Physical),
+    ID(String, Offset),
     CALL(String, usize),
     INDEX(Box<Operand>, Box<Operand>),
 }
@@ -31,11 +32,15 @@ pub enum Tac {
     IFF(Operand, String),
     GOTO(String),
     LABEL(String),
+    FUNCNAME(String),
+    PROLOGUE(usize),
+    EPILOGUE,
 }
 impl Tac {
     pub fn string(&self) -> String {
         match self {
             Self::LABEL(name) => format!("{}:", name),
+            Self::FUNCNAME(name) => format!("{}:", name),
             Self::EX(lv, op, lop, rop) => format!(
                 "{} <- {} {} {}",
                 lv.string(),
@@ -49,6 +54,8 @@ impl Tac {
             Self::IFF(cond, label) => format!("ifFalse {} goto {}", cond.string(), label),
             Self::GOTO(label) => format!("goto {}", label),
             Self::PARAM(arg) => format!("param {}", arg.string()),
+            Self::PROLOGUE(offset) => format!("prologue {}", offset),
+            Self::EPILOGUE => "epilogue".to_string(),
         }
     }
 }
