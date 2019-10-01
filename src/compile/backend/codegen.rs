@@ -109,6 +109,42 @@ impl Generator {
                         self.lirs.push(x64::IR::DIVREG(*p, *p2));
                     }
                 }
+                "%" => {
+                    if let Operand::REG(_virt, p2) = rop {
+                        self.lirs.push(x64::IR::MODREG(*p, *p2));
+                    } else if let Operand::INTLIT(value) = rop {
+                        if *phys != *p {
+                            self.lirs.push(x64::IR::STOREREG(*phys, *p));
+                        }
+                        self.lirs.push(x64::IR::MODIMM(*phys, *value));
+                    } else if let Operand::ID(_name, p2) = rop {
+                        self.lirs.push(x64::IR::MODREG(*p, *p2));
+                    }
+                }
+                "<<" => {
+                    if let Operand::REG(_virt, p2) = rop {
+                        self.lirs.push(x64::IR::LSHIFTREG(*p, *p2));
+                    } else if let Operand::INTLIT(value) = rop {
+                        if *phys != *p {
+                            self.lirs.push(x64::IR::STOREREG(*phys, *p));
+                        }
+                        self.lirs.push(x64::IR::LSHIFTIMM(*phys, *value));
+                    } else if let Operand::ID(_name, p2) = rop {
+                        self.lirs.push(x64::IR::LSHIFTREG(*p, *p2));
+                    }
+                }
+                ">>" => {
+                    if let Operand::REG(_virt, p2) = rop {
+                        self.lirs.push(x64::IR::RSHIFTREG(*p, *p2));
+                    } else if let Operand::INTLIT(value) = rop {
+                        if *phys != *p {
+                            self.lirs.push(x64::IR::STOREREG(*phys, *p));
+                        }
+                        self.lirs.push(x64::IR::RSHIFTIMM(*phys, *value));
+                    } else if let Operand::ID(_name, p2) = rop {
+                        self.lirs.push(x64::IR::RSHIFTREG(*p, *p2));
+                    }
+                }
                 _ => (),
             }
         } else if let Operand::ID(_name, p) = lop {
@@ -123,6 +159,9 @@ impl Generator {
                         self.lirs.push(x64::IR::ADDIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::ADDREG(*p, *p2));
+                        if *phys != *p {
+                            self.lirs.push(x64::IR::STOREREG(*phys, *p));
+                        }
                     }
                 }
                 "-" => {
@@ -135,6 +174,9 @@ impl Generator {
                         self.lirs.push(x64::IR::SUBIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::SUBREG(*p, *p2));
+                        if *phys != *p {
+                            self.lirs.push(x64::IR::STOREREG(*phys, *p));
+                        }
                     }
                 }
                 "*" => {
@@ -147,6 +189,9 @@ impl Generator {
                         self.lirs.push(x64::IR::MULIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::MULREG(*p, *p2));
+                        if *phys != *p {
+                            self.lirs.push(x64::IR::STOREREG(*phys, *p));
+                        }
                     }
                 }
                 "/" => {
@@ -159,6 +204,54 @@ impl Generator {
                         self.lirs.push(x64::IR::DIVIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::DIVREG(*p, *p2));
+                        if *phys != *p {
+                            self.lirs.push(x64::IR::STOREREG(*phys, *p));
+                        }
+                    }
+                }
+                "%" => {
+                    if let Operand::REG(_virt, p2) = rop {
+                        self.lirs.push(x64::IR::MODREG(*p, *p2));
+                    } else if let Operand::INTLIT(value) = rop {
+                        if *phys != *p {
+                            self.lirs.push(x64::IR::STOREREG(*phys, *p));
+                        }
+                        self.lirs.push(x64::IR::MODIMM(*phys, *value));
+                    } else if let Operand::ID(_name, p2) = rop {
+                        self.lirs.push(x64::IR::MODREG(*p, *p2));
+                        if *phys != *p {
+                            self.lirs.push(x64::IR::STOREREG(*phys, *p));
+                        }
+                    }
+                }
+                "<<" => {
+                    if let Operand::REG(_virt, p2) = rop {
+                        self.lirs.push(x64::IR::LSHIFTREG(*p, *p2));
+                    } else if let Operand::INTLIT(value) = rop {
+                        if *phys != *p {
+                            self.lirs.push(x64::IR::STOREREG(*phys, *p));
+                        }
+                        self.lirs.push(x64::IR::LSHIFTIMM(*phys, *value));
+                    } else if let Operand::ID(_name, p2) = rop {
+                        self.lirs.push(x64::IR::LSHIFTREG(*p, *p2));
+                        if *phys != *p {
+                            self.lirs.push(x64::IR::STOREREG(*phys, *p));
+                        }
+                    }
+                }
+                ">>" => {
+                    if let Operand::REG(_virt, p2) = rop {
+                        self.lirs.push(x64::IR::RSHIFTREG(*p, *p2));
+                    } else if let Operand::INTLIT(value) = rop {
+                        if *phys != *p {
+                            self.lirs.push(x64::IR::STOREREG(*phys, *p));
+                        }
+                        self.lirs.push(x64::IR::RSHIFTIMM(*phys, *value));
+                    } else if let Operand::ID(_name, p2) = rop {
+                        self.lirs.push(x64::IR::RSHIFTREG(*p, *p2));
+                        if *phys != *p {
+                            self.lirs.push(x64::IR::STOREREG(*phys, *p));
+                        }
                     }
                 }
                 _ => (),
@@ -200,6 +293,33 @@ impl Generator {
                         self.lirs.push(x64::IR::DIVIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::DIVREG(*phys, *p2));
+                    }
+                }
+                "%" => {
+                    if let Operand::REG(_virt, p2) = rop {
+                        self.lirs.push(x64::IR::MODREG(*phys, *p2));
+                    } else if let Operand::INTLIT(value) = rop {
+                        self.lirs.push(x64::IR::MODIMM(*phys, *value));
+                    } else if let Operand::ID(_name, p2) = rop {
+                        self.lirs.push(x64::IR::MODREG(*phys, *p2));
+                    }
+                }
+                "<<" => {
+                    if let Operand::REG(_virt, p2) = rop {
+                        self.lirs.push(x64::IR::LSHIFTREG(*phys, *p2));
+                    } else if let Operand::INTLIT(value) = rop {
+                        self.lirs.push(x64::IR::LSHIFTIMM(*phys, *value));
+                    } else if let Operand::ID(_name, p2) = rop {
+                        self.lirs.push(x64::IR::LSHIFTREG(*phys, *p2));
+                    }
+                }
+                ">>" => {
+                    if let Operand::REG(_virt, p2) = rop {
+                        self.lirs.push(x64::IR::RSHIFTREG(*phys, *p2));
+                    } else if let Operand::INTLIT(value) = rop {
+                        self.lirs.push(x64::IR::RSHIFTIMM(*phys, *value));
+                    } else if let Operand::ID(_name, p2) = rop {
+                        self.lirs.push(x64::IR::RSHIFTREG(*phys, *p2));
                     }
                 }
                 _ => (),
@@ -254,6 +374,45 @@ impl Generator {
                     out += &(format!("  mov {}, rax\n", gr(dst)).as_str());
                     out += "  pop rdx\n";
                     out += "  pop rax\n";
+                }
+                x64::IR::MODREG(dst, src) => {
+                    out += "  push rax\n";
+                    out += "  push rdx\n";
+                    out += &(format!("  mov rax, {}\n", gr(dst)).as_str());
+                    out += "  cqo\n";
+                    out += &(format!("  idiv {}\n", gr(src)).as_str());
+                    out += &(format!("  mov {}, rdx\n", gr(dst)).as_str());
+                    out += "  pop rdx\n";
+                    out += "  pop rax\n";
+                }
+                x64::IR::MODIMM(dst, value) => {
+                    out += "  push rax\n";
+                    out += "  push rdx\n";
+                    out += &(format!("  mov rax, {}\n", gr(dst)).as_str());
+                    out += "  cqo\n";
+                    out += &(format!("  mov r12, {}\n", value).as_str());
+                    out += "  idiv r12\n";
+                    out += &(format!("  mov {}, rdx\n", gr(dst)).as_str());
+                    out += "  pop rdx\n";
+                    out += "  pop rax\n";
+                }
+                x64::IR::LSHIFTREG(dst, src) => {
+                    out += "  push rcx\n";
+                    out += &(format!("  mov rcx, {}\n", gr(src)).as_str());
+                    out += &(format!("  sal {}, cl\n", gr(dst)).as_str());
+                    out += "  pop rcx\n";
+                }
+                x64::IR::LSHIFTIMM(dst, value) => {
+                    out += &(format!("  sal {}, {}\n", gr(dst), value));
+                }
+                x64::IR::RSHIFTREG(dst, src) => {
+                    out += "  push rcx\n";
+                    out += &(format!("  mov rcx, {}\n", gr(src)).as_str());
+                    out += &(format!("  sar {}, cl\n", gr(dst)).as_str());
+                    out += "  pop rcx\n";
+                }
+                x64::IR::RSHIFTIMM(dst, value) => {
+                    out += &(format!("  sar {}, {}\n", gr(dst), value));
                 }
                 x64::IR::LABEL(name) => {
                     out += &(format!("{}:\n", name).as_str());
