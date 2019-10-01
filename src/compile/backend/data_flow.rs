@@ -1,4 +1,4 @@
-use super::super::ir::tac::{Lvalue, Operand, Tac};
+use super::super::ir::tac::{Operand, Tac};
 use super::Optimizer;
 use std::collections::HashMap;
 impl Optimizer {
@@ -8,7 +8,7 @@ impl Optimizer {
         for (n, t) in tacs.iter().enumerate() {
             match t {
                 Tac::EX(lv, _, lop, rop) => {
-                    self.cfg.def[n].insert(Lvalue::to_op(lv.clone()));
+                    self.cfg.def[n].insert(lv.clone());
                     if self.check_use_value(&lop) {
                         self.cfg.used[n].insert(lop.clone());
                     }
@@ -17,16 +17,16 @@ impl Optimizer {
                     }
                     self.add_pred(n, n - 1);
                     self.add_succ(n, n + 1);
-                    self.living.insert(Lvalue::to_op(lv.clone()), (0, 0));
+                    self.living.insert(lv.clone(), (0, 0));
                 }
                 Tac::UNEX(lv, _, op) => {
-                    self.cfg.def[n].insert(Lvalue::to_op(lv.clone()));
+                    self.cfg.def[n].insert(lv.clone());
                     if self.check_use_value(&op) {
                         self.cfg.used[n].insert(op.clone());
                     }
                     self.add_pred(n, n - 1);
                     self.add_succ(n, n + 1);
-                    self.living.insert(Lvalue::to_op(lv.clone()), (0, 0));
+                    self.living.insert(lv.clone(), (0, 0));
                 }
 
                 Tac::PARAM(op) => {
@@ -37,13 +37,13 @@ impl Optimizer {
                     self.add_succ(n, n + 1);
                 }
                 Tac::LET(lv, op) => {
-                    self.cfg.def[n].insert(Lvalue::to_op(lv.clone()));
+                    self.cfg.def[n].insert(lv.clone());
                     if self.check_use_value(&op) {
                         self.cfg.used[n].insert(op.clone());
                     }
                     self.add_pred(n, n - 1);
                     self.add_succ(n, n + 1);
-                    self.living.insert(Lvalue::to_op(lv.clone()), (0, 0));
+                    self.living.insert(lv.clone(), (0, 0));
                 }
                 Tac::RET(op) => {
                     if self.check_use_value(&op) {

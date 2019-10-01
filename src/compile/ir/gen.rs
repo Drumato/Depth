@@ -1,7 +1,7 @@
 use super::super::frontend::frontmanager::frontmanager::FrontManager;
 use super::super::frontend::parse::node::Node;
 use super::super::frontend::sema::semantics::Type;
-use super::tac::{Lvalue, Operand, Tac};
+use super::tac::{Operand, Tac};
 
 impl FrontManager {
     pub fn gen_tacs(&mut self) {
@@ -36,11 +36,11 @@ impl FrontManager {
             }
             Node::LET(name, _, bexpr) => {
                 let expr_op: Operand = self.gen_expr(*bexpr.clone()).unwrap();
-                self.add(Tac::LET(Lvalue::ID(name, 0), expr_op));
+                self.add(Tac::LET(Operand::ID(name, 0), expr_op));
             }
             Node::ASSIGN(name, bexpr) => {
                 let expr_op: Operand = self.gen_expr(*bexpr.clone()).unwrap();
-                self.add(Tac::LET(Lvalue::ID(name, 0), expr_op));
+                self.add(Tac::LET(Operand::ID(name, 0), expr_op));
             }
             Node::BLOCK(stmts) => {
                 for st in stmts {
@@ -56,14 +56,14 @@ impl FrontManager {
                 let lop: Operand = self.gen_expr(*blop.clone()).unwrap();
                 let rop: Operand = self.gen_expr(*brop.clone()).unwrap();
                 let virt = self.virt;
-                self.add(Tac::EX(Lvalue::REG(virt, 0), op.string_ir(), lop, rop));
+                self.add(Tac::EX(Operand::REG(virt, 0), op.string_ir(), lop, rop));
                 self.virt += 1;
                 Some(Operand::REG(virt, 0))
             }
             Node::UNARY(op, blop, _) => {
                 let lop: Operand = self.gen_expr(*blop.clone()).unwrap();
                 let virt = self.virt;
-                self.add(Tac::UNEX(Lvalue::REG(virt, 0), op.string_ir(), lop));
+                self.add(Tac::UNEX(Operand::REG(virt, 0), op.string_ir(), lop));
                 self.virt += 1;
                 Some(Operand::REG(virt, 0))
             }
@@ -94,7 +94,10 @@ impl FrontManager {
                 for (idx, elem) in elems.iter().enumerate() {
                     let elem_op: Operand = self.gen_expr(elem.clone()).unwrap();
                     self.add(Tac::LET(
-                        Lvalue::INDEX(Operand::REG(virt, 0), Operand::INTLIT(idx as i128)),
+                        Operand::INDEX(
+                            Box::new(Operand::REG(virt, 0)),
+                            Box::new(Operand::INTLIT(idx as i128)),
+                        ),
                         elem_op,
                     ));
                 }

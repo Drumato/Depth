@@ -119,7 +119,11 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
         optimizer.dump_liveness();
     }
     optimizer.regalloc();
-    "".to_string()
+    let mut assembler_code: String = b::codegen::genx64(optimizer.tacs);
+    if matches.is_present("intel") {
+        assembler_code = format!(".intel_syntax noprefix\n.global main\n{}", assembler_code);
+    }
+    assembler_code
 }
 fn assemble(mut assembler_code: String, matches: &clap::ArgMatches) -> elf::elf64::ELF {
     if !matches.is_present("stop-a") {
