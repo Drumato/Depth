@@ -312,7 +312,7 @@ impl Generator {
                 }
                 _ => (),
             }
-            self.lirs.push(x64::IR::RETURNREG(9));
+            self.lirs.push(x64::IR::LOADREG(0, 9));
         } else if let Operand::INTLIT(value) = lop {
             self.lirs.push(x64::IR::REGIMM(*phys, *value));
             match op.as_str() {
@@ -688,6 +688,9 @@ impl Generator {
                 }
                 x64::IR::LOADMEM(r, offset) => {
                     out += &(format!("  mov {}, -{}[rbp]\n", gr(r), offset).as_str());
+                }
+                x64::IR::LOADREG(r, r2) => {
+                    out += &(format!("  mov {}, {}\n", gr(r), gr(r2)).as_str());
                 }
                 x64::IR::REGIMM(r, value) => {
                     out += &(format!("  mov {}, {}\n", gr(r), value).as_str());
