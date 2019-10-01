@@ -65,6 +65,9 @@ impl Generator {
                     if let Operand::REG(_virt, p2) = rop {
                         self.lirs.push(x64::IR::ADDREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
+                        if *phys != *p {
+                            self.lirs.push(x64::IR::STOREREG(*phys, *p));
+                        }
                         self.lirs.push(x64::IR::ADDIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::ADDREG(*p, *p2));
@@ -74,6 +77,9 @@ impl Generator {
                     if let Operand::REG(_virt, p2) = rop {
                         self.lirs.push(x64::IR::SUBREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
+                        if *phys != *p {
+                            self.lirs.push(x64::IR::STOREREG(*phys, *p));
+                        }
                         self.lirs.push(x64::IR::SUBIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::SUBREG(*p, *p2));
@@ -83,6 +89,9 @@ impl Generator {
                     if let Operand::REG(_virt, p2) = rop {
                         self.lirs.push(x64::IR::MULREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
+                        if *phys != *p {
+                            self.lirs.push(x64::IR::STOREREG(*phys, *p));
+                        }
                         self.lirs.push(x64::IR::MULIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::MULREG(*p, *p2));
@@ -92,6 +101,9 @@ impl Generator {
                     if let Operand::REG(_virt, p2) = rop {
                         self.lirs.push(x64::IR::DIVREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
+                        if *phys != *p {
+                            self.lirs.push(x64::IR::STOREREG(*phys, *p));
+                        }
                         self.lirs.push(x64::IR::DIVIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::DIVREG(*p, *p2));
@@ -105,6 +117,9 @@ impl Generator {
                     if let Operand::REG(_virt, p2) = rop {
                         self.lirs.push(x64::IR::ADDREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
+                        if *phys != *p {
+                            self.lirs.push(x64::IR::STOREREG(*phys, *p));
+                        }
                         self.lirs.push(x64::IR::ADDIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::ADDREG(*p, *p2));
@@ -114,6 +129,9 @@ impl Generator {
                     if let Operand::REG(_virt, p2) = rop {
                         self.lirs.push(x64::IR::SUBREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
+                        if *phys != *p {
+                            self.lirs.push(x64::IR::STOREREG(*phys, *p));
+                        }
                         self.lirs.push(x64::IR::SUBIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::SUBREG(*p, *p2));
@@ -123,6 +141,9 @@ impl Generator {
                     if let Operand::REG(_virt, p2) = rop {
                         self.lirs.push(x64::IR::MULREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
+                        if *phys != *p {
+                            self.lirs.push(x64::IR::STOREREG(*phys, *p));
+                        }
                         self.lirs.push(x64::IR::MULIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::MULREG(*p, *p2));
@@ -132,6 +153,9 @@ impl Generator {
                     if let Operand::REG(_virt, p2) = rop {
                         self.lirs.push(x64::IR::DIVREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
+                        if *phys != *p {
+                            self.lirs.push(x64::IR::STOREREG(*phys, *p));
+                        }
                         self.lirs.push(x64::IR::DIVIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::DIVREG(*p, *p2));
