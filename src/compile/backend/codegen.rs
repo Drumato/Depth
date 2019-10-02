@@ -29,7 +29,12 @@ impl Generator {
             match t {
                 Tac::EX(lv, op, lop, rop) => {
                     if let Operand::REG(_virt, phys) = lv {
-                        self.ex_reg_id(phys, op, lop, rop);
+                        self.ex_reg(phys, op, lop, rop);
+                    }
+                }
+                Tac::UNEX(lv, op, lop) => {
+                    if let Operand::REG(_virt, phys) = lv {
+                        self.unex_reg(phys, op, lop);
                     }
                 }
                 Tac::RET(op) => {
@@ -61,21 +66,36 @@ impl Generator {
                 Tac::PROLOGUE(stack_offset) => {
                     self.lirs.push(x64::IR::PROLOGUE(*stack_offset));
                 }
-                Tac::EPILOGUE => {
-                    self.lirs.push(x64::IR::EPILOGUE);
+                _ => (),
+            }
+        }
+    }
+    fn unex_reg(&mut self, phys: &usize, op: &String, lop: &Operand) {
+        if let Operand::REG(_virs, p) = lop {
+            match op.as_str() {
+                "-" => {
+                    self.lirs.push(x64::IR::NEGREG(*p));
+                }
+                _ => (),
+            }
+        } else if let Operand::INTLIT(value) = lop {
+            self.lirs.push(x64::IR::REGIMM(*phys, *value));
+            match op.as_str() {
+                "-" => {
+                    self.lirs.push(x64::IR::NEGREG(*phys));
                 }
                 _ => (),
             }
         }
     }
-    fn ex_reg_id(&mut self, phys: &usize, op: &String, lop: &Operand, rop: &Operand) {
+    fn ex_reg(&mut self, phys: &usize, op: &String, lop: &Operand, rop: &Operand) {
         if let Operand::REG(_virt, p) = lop {
             match op.as_str() {
                 "+" => {
                     if let Operand::REG(_virt, p2) = rop {
                         self.lirs.push(x64::IR::ADDREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
-                        self.lirs.push(x64::IR::ADDIMM(*phys, *value));
+                        self.lirs.push(x64::IR::ADDIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::ADDMEM(*p, *p2));
                     }
@@ -84,7 +104,7 @@ impl Generator {
                     if let Operand::REG(_virt, p2) = rop {
                         self.lirs.push(x64::IR::SUBREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
-                        self.lirs.push(x64::IR::SUBIMM(*phys, *value));
+                        self.lirs.push(x64::IR::SUBIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::SUBMEM(*p, *p2));
                     }
@@ -93,7 +113,7 @@ impl Generator {
                     if let Operand::REG(_virt, p2) = rop {
                         self.lirs.push(x64::IR::MULREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
-                        self.lirs.push(x64::IR::MULIMM(*phys, *value));
+                        self.lirs.push(x64::IR::MULIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::MULMEM(*p, *p2));
                     }
@@ -102,7 +122,7 @@ impl Generator {
                     if let Operand::REG(_virt, p2) = rop {
                         self.lirs.push(x64::IR::DIVREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
-                        self.lirs.push(x64::IR::DIVIMM(*phys, *value));
+                        self.lirs.push(x64::IR::DIVIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::DIVMEM(*p, *p2));
                     }
@@ -111,7 +131,7 @@ impl Generator {
                     if let Operand::REG(_virt, p2) = rop {
                         self.lirs.push(x64::IR::MODREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
-                        self.lirs.push(x64::IR::MODIMM(*phys, *value));
+                        self.lirs.push(x64::IR::MODIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::MODMEM(*p, *p2));
                     }
@@ -120,7 +140,7 @@ impl Generator {
                     if let Operand::REG(_virt, p2) = rop {
                         self.lirs.push(x64::IR::LSHIFTREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
-                        self.lirs.push(x64::IR::LSHIFTIMM(*phys, *value));
+                        self.lirs.push(x64::IR::LSHIFTIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::LSHIFTMEM(*p, *p2));
                     }
@@ -129,7 +149,7 @@ impl Generator {
                     if let Operand::REG(_virt, p2) = rop {
                         self.lirs.push(x64::IR::RSHIFTREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
-                        self.lirs.push(x64::IR::RSHIFTIMM(*phys, *value));
+                        self.lirs.push(x64::IR::RSHIFTIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::RSHIFTMEM(*p, *p2));
                     }
@@ -138,7 +158,7 @@ impl Generator {
                     if let Operand::REG(_virt, p2) = rop {
                         self.lirs.push(x64::IR::LTREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
-                        self.lirs.push(x64::IR::LTIMM(*phys, *value));
+                        self.lirs.push(x64::IR::LTIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::LTMEM(*p, *p2));
                     }
@@ -147,7 +167,7 @@ impl Generator {
                     if let Operand::REG(_virt, p2) = rop {
                         self.lirs.push(x64::IR::LTEQREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
-                        self.lirs.push(x64::IR::LTEQIMM(*phys, *value));
+                        self.lirs.push(x64::IR::LTEQIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::LTEQMEM(*p, *p2));
                     }
@@ -156,7 +176,7 @@ impl Generator {
                     if let Operand::REG(_virt, p2) = rop {
                         self.lirs.push(x64::IR::GTREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
-                        self.lirs.push(x64::IR::GTIMM(*phys, *value));
+                        self.lirs.push(x64::IR::GTIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::GTMEM(*p, *p2));
                     }
@@ -165,7 +185,7 @@ impl Generator {
                     if let Operand::REG(_virt, p2) = rop {
                         self.lirs.push(x64::IR::GTEQREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
-                        self.lirs.push(x64::IR::GTEQIMM(*phys, *value));
+                        self.lirs.push(x64::IR::GTEQIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::GTEQMEM(*p, *p2));
                     }
@@ -174,7 +194,7 @@ impl Generator {
                     if let Operand::REG(_virt, p2) = rop {
                         self.lirs.push(x64::IR::EQREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
-                        self.lirs.push(x64::IR::EQIMM(*phys, *value));
+                        self.lirs.push(x64::IR::EQIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::EQMEM(*p, *p2));
                     }
@@ -183,13 +203,14 @@ impl Generator {
                     if let Operand::REG(_virt, p2) = rop {
                         self.lirs.push(x64::IR::NTEQREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
-                        self.lirs.push(x64::IR::NTEQIMM(*phys, *value));
+                        self.lirs.push(x64::IR::NTEQIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::NTEQMEM(*p, *p2));
                     }
                 }
                 _ => (),
             }
+            self.lirs.push(x64::IR::LOADREG(*phys, *p));
         } else if let Operand::ID(_name, p) = lop {
             self.lirs.push(x64::IR::LOADMEM(9, *p));
             match op.as_str() {
@@ -666,6 +687,9 @@ impl Generator {
                     out += "  setne al\n";
                     out += &(format!("  movzx {}, al\n", gr(dst)).as_str());
                 }
+                x64::IR::NEGREG(r) => {
+                    out += &(format!("  neg {}\n", gr(r)));
+                }
                 x64::IR::LABEL(name) => {
                     out += &(format!("{}:\n", name).as_str());
                 }
@@ -676,14 +700,20 @@ impl Generator {
                     if *r != 0 {
                         out += &(format!("  mov rax, {}\n", gr(r)).as_str());
                     }
+                    out += "  mov rsp, rbp\n";
+                    out += "  pop rbp\n";
                     out += "  ret\n";
                 }
                 x64::IR::RETURNMEM(offset) => {
                     out += &(format!("  mov rax, -{}[rbp]\n", offset).as_str());
+                    out += "  mov rsp, rbp\n";
+                    out += "  pop rbp\n";
                     out += "  ret\n";
                 }
                 x64::IR::RETURNIMM(value) => {
                     out += &(format!("  mov rax, {}\n", value).as_str());
+                    out += "  mov rsp, rbp\n";
+                    out += "  pop rbp\n";
                     out += "  ret\n";
                 }
                 x64::IR::LOADMEM(r, offset) => {
@@ -699,10 +729,6 @@ impl Generator {
                     out += "  push rbp\n";
                     out += "  mov rbp, rsp\n";
                     out += &(format!("  sub rsp, {}\n", !7 & offset + 7));
-                }
-                x64::IR::EPILOGUE => {
-                    out += "  mov rsp, rbp\n";
-                    out += "  pop rbp\n";
                 }
             }
         }

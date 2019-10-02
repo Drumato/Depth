@@ -2,7 +2,6 @@ type REG = usize;
 type OFFSET = usize;
 pub enum IR {
     PROLOGUE(usize),
-    EPILOGUE,
     REGIMM(REG, i128),
     STOREREG(REG, REG),
     STOREIMM(REG, i128),
@@ -46,6 +45,7 @@ pub enum IR {
     NTEQREG(REG, REG),
     NTEQIMM(REG, i128),
     NTEQMEM(REG, OFFSET),
+    NEGREG(REG),
     LOADMEM(REG, OFFSET),
     LOADREG(REG, REG),
     RETURNREG(REG),

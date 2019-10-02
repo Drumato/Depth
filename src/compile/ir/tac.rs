@@ -34,7 +34,6 @@ pub enum Tac {
     LABEL(String),
     FUNCNAME(String),
     PROLOGUE(usize),
-    EPILOGUE,
 }
 impl Tac {
     pub fn string(&self) -> String {
@@ -55,7 +54,6 @@ impl Tac {
             Self::GOTO(label) => format!("goto {}", label),
             Self::PARAM(arg) => format!("param {}", arg.string()),
             Self::PROLOGUE(offset) => format!("prologue {}", offset),
-            Self::EPILOGUE => "epilogue".to_string(),
         }
     }
 }

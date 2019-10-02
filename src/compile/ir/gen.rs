@@ -19,7 +19,6 @@ impl FrontManager {
             Node::RETURN(bch) => {
                 let ch: Node = *bch.clone();
                 let ret_op: Operand = self.gen_expr(ch).unwrap();
-                self.add(Tac::EPILOGUE);
                 self.add(Tac::RET(ret_op));
             }
             Node::IF(bcond, block, oalter) => {

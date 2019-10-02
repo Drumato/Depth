@@ -82,12 +82,6 @@ impl Optimizer {
                     }
                     self.add_succ(n, n + 1);
                 }
-                Tac::EPILOGUE => {
-                    if n != 0 && !self.check_goto(n - 1) {
-                        self.add_pred(n, n - 1);
-                    }
-                    self.add_succ(n, n + 1);
-                }
                 Tac::LABEL(_) => {
                     if n != 0 && !self.check_goto(n - 1) {
                         self.add_pred(n, n - 1);

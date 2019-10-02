@@ -45,11 +45,13 @@ impl Optimizer {
                 .collect();
             for i in remove_list.iter() {
                 let mut return_reg: usize = 0;
-                if let Operand::REG(_, phys) = active_list[*i].0 {
-                    return_reg = phys;
+                if *i < active_list.len() {
+                    if let Operand::REG(_, phys) = active_list[*i].0 {
+                        return_reg = phys;
+                    }
+                    active_list.remove(*i);
+                    registers[return_reg] = Some(return_reg);
                 }
-                active_list.remove(*i);
-                registers[return_reg] = Some(return_reg);
             }
         }
         self.living = living_list
