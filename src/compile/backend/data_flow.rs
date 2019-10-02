@@ -28,8 +28,11 @@ impl Optimizer {
                     self.add_succ(n, n + 1);
                     self.living.insert(lv.clone(), (0, 0));
                 }
-
-                Tac::PARAM(op) => {
+                Tac::PUSHARG(_, _) => {
+                    self.add_pred(n, n - 1);
+                    self.add_succ(n, n + 1);
+                }
+                Tac::PARAM(_, op) => {
                     if self.check_use_value(&op) {
                         self.cfg.used[n].insert(op.clone());
                     }

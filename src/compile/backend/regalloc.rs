@@ -91,7 +91,7 @@ impl Optimizer {
                         *phys = *reg_map.get(&op2.string()).unwrap();
                     }
                 }
-                Tac::PARAM(op) => {
+                Tac::PARAM(_, op) => {
                     let op2 = op.clone();
                     if let Operand::REG(ref mut _virt, ref mut phys) = op {
                         *phys = *reg_map.get(&op2.string()).unwrap();

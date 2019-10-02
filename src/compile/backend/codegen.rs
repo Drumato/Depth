@@ -1,11 +1,16 @@
 use super::super::ir::lir::x64;
 use super::super::ir::tac::{Operand, Tac};
 static X64_REGS: [&str; 9] = ["rax", "rdx", "rcx", "rdi", "rsi", "r8", "r9", "r10", "r11"];
+static X64_ARGREGS: [&str; 6] = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"];
+static mut ARGREG: usize = 0;
 fn gr(n: &usize) -> &str {
     if *n == 9 {
         return "r12";
     }
     X64_REGS[*n]
+}
+fn argr(r: usize) -> &'static str {
+    X64_ARGREGS[r]
 }
 pub fn genx64(tacs: Vec<Tac>) -> String {
     let mut generator = Generator::new(tacs);
@@ -70,8 +75,26 @@ impl Generator {
                 Tac::PROLOGUE(stack_offset) => {
                     self.lirs.push(x64::IR::PROLOGUE(*stack_offset));
                 }
+                Tac::PUSHARG(reg, arg) => {
+                    self.lirs.push(x64::IR::PUSHARG(*reg, *arg));
+                }
+                Tac::PARAM(reg, op) => {
+                    if let Operand::REG(_virt, p) = op {
+                        self.lirs.push(x64::IR::ARGREG(*reg, *p));
+                    } else if let Operand::INTLIT(v) = op {
+                        self.lirs.push(x64::IR::ARGIMM(*reg, *v));
+                    } else if let Operand::ID(_name, offset) = op {
+                        self.lirs.push(x64::IR::ARGMEM(*reg, *offset));
+                    } else if let Operand::CALL(name, _length) = op {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::ARGREG(*reg, 0));
+                    }
+                }
                 _ => (),
             }
+            unsafe {
+                ARGREG = 0;
+            };
         }
     }
     fn unex_reg(&mut self, phys: &usize, op: &String, lop: &Operand) {
@@ -841,6 +864,9 @@ impl Generator {
                 }
                 x64::IR::CALL(name) => {
                     out += &(format!("  call {}\n", name).as_str());
+                    unsafe {
+                        ARGREG = 0;
+                    };
                 }
                 x64::IR::LABEL(name) => {
                     out += &(format!("{}:\n", name).as_str());
@@ -882,6 +908,18 @@ impl Generator {
                 }
                 x64::IR::REGIMM(r, value) => {
                     out += &(format!("  mov {}, {}\n", gr(r), value).as_str());
+                }
+                x64::IR::PUSHARG(r, offset) => {
+                    out += &(format!("  mov -{}[rbp], {}\n", offset, argr(*r)).as_str());
+                }
+                x64::IR::ARGREG(r, r2) => {
+                    out += &(format!("  mov {}, {}\n", argr(*r), gr(r2)));
+                }
+                x64::IR::ARGMEM(r, offset) => {
+                    out += &(format!("  mov {}, -{}[rbp]\n", argr(*r), offset));
+                }
+                x64::IR::ARGIMM(r, v) => {
+                    out += &(format!("  mov {}, {}\n", argr(*r), v));
                 }
                 x64::IR::PROLOGUE(offset) => {
                     out += "  push rbp\n";

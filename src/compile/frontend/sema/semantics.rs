@@ -99,6 +99,8 @@ impl FrontManager {
                         self.stack_offset += Type::from_type(ty.clone()).size();
                         if let Some(ref mut arg) = self.cur_env.table.get_mut(&arg_name) {
                             arg.stack_offset = self.stack_offset;
+                        } else {
+                            eprintln!("{} can't attaching the stack.", arg_name);
                         }
                     }
                     _ => (),

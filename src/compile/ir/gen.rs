@@ -7,8 +7,18 @@ impl FrontManager {
     pub fn gen_tacs(&mut self) {
         let functions = self.functions.clone();
         for func in functions.iter() {
+            self.cur_env = func.env.clone();
             self.add(Tac::FUNCNAME(func.name.clone()));
             self.add(Tac::PROLOGUE(self.stack_offset));
+            for (idx, arg) in func.args.iter().enumerate() {
+                if let Node::DEFARG(name, _) = arg {
+                    let mut stack_offset: usize = 0;
+                    if let Some(sym) = self.cur_env.table.get(name) {
+                        stack_offset = sym.stack_offset;
+                    }
+                    self.add(Tac::PUSHARG(idx, stack_offset));
+                }
+            }
             for st in func.stmts.iter() {
                 self.gen_stmt(st.clone());
             }
@@ -97,9 +107,9 @@ impl FrontManager {
             }
             Node::CALL(name, args) => {
                 let len: usize = args.len();
-                for barg in args {
+                for (idx, barg) in args.iter().enumerate() {
                     let arg_op: Operand = self.gen_expr(*barg.clone()).unwrap();
-                    self.add(Tac::PARAM(arg_op));
+                    self.add(Tac::PARAM(idx, arg_op));
                 }
                 Some(Operand::CALL(name, len))
             }

@@ -58,5 +58,9 @@ pub enum IR {
     RETURNCALL(SYMBOL),
     CALL(SYMBOL),
     LABEL(SYMBOL),
+    PUSHARG(REG, OFFSET),
+    ARGREG(REG, REG),
+    ARGIMM(REG, i128),
+    ARGMEM(REG, OFFSET),
     JMP(String),
 }
