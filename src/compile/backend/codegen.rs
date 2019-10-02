@@ -121,6 +121,9 @@ impl Generator {
                         self.lirs.push(x64::IR::ADDIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::ADDMEM(*p, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::ADDREG(*p, 0));
                     }
                 }
                 "-" => {
@@ -130,6 +133,9 @@ impl Generator {
                         self.lirs.push(x64::IR::SUBIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::SUBMEM(*p, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::SUBREG(*p, 0));
                     }
                 }
                 "*" => {
@@ -139,6 +145,9 @@ impl Generator {
                         self.lirs.push(x64::IR::MULIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::MULMEM(*p, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::MULREG(*p, 0));
                     }
                 }
                 "/" => {
@@ -148,6 +157,9 @@ impl Generator {
                         self.lirs.push(x64::IR::DIVIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::DIVMEM(*p, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::DIVREG(*p, 0));
                     }
                 }
                 "%" => {
@@ -157,6 +169,9 @@ impl Generator {
                         self.lirs.push(x64::IR::MODIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::MODMEM(*p, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::MODREG(*p, 0));
                     }
                 }
                 "<<" => {
@@ -166,6 +181,9 @@ impl Generator {
                         self.lirs.push(x64::IR::LSHIFTIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::LSHIFTMEM(*p, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::LSHIFTREG(*p, 0));
                     }
                 }
                 ">>" => {
@@ -175,6 +193,9 @@ impl Generator {
                         self.lirs.push(x64::IR::RSHIFTIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::RSHIFTMEM(*p, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::RSHIFTREG(*p, 0));
                     }
                 }
                 "<" => {
@@ -184,6 +205,9 @@ impl Generator {
                         self.lirs.push(x64::IR::LTIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::LTMEM(*p, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::LTREG(*p, 0));
                     }
                 }
                 "<=" => {
@@ -193,6 +217,9 @@ impl Generator {
                         self.lirs.push(x64::IR::LTEQIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::LTEQMEM(*p, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::LTEQREG(*p, 0));
                     }
                 }
                 ">" => {
@@ -202,6 +229,9 @@ impl Generator {
                         self.lirs.push(x64::IR::GTIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::GTMEM(*p, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::GTREG(*p, 0));
                     }
                 }
                 ">=" => {
@@ -211,6 +241,9 @@ impl Generator {
                         self.lirs.push(x64::IR::GTEQIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::GTEQMEM(*p, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::GTEQREG(*p, 0));
                     }
                 }
                 "==" => {
@@ -220,6 +253,9 @@ impl Generator {
                         self.lirs.push(x64::IR::EQIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::EQMEM(*p, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::EQREG(*p, 0));
                     }
                 }
                 "!=" => {
@@ -229,6 +265,9 @@ impl Generator {
                         self.lirs.push(x64::IR::NTEQIMM(*p, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::NTEQMEM(*p, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::NTEQREG(*p, 0));
                     }
                 }
                 _ => (),
@@ -244,6 +283,9 @@ impl Generator {
                         self.lirs.push(x64::IR::ADDIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::ADDMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::ADDREG(*phys, 0));
                     }
                 }
                 "-" => {
@@ -253,6 +295,9 @@ impl Generator {
                         self.lirs.push(x64::IR::SUBIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::SUBMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::SUBREG(*phys, 0));
                     }
                 }
                 "*" => {
@@ -262,6 +307,9 @@ impl Generator {
                         self.lirs.push(x64::IR::MULIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::MULMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::MULREG(*phys, 0));
                     }
                 }
                 "/" => {
@@ -271,6 +319,9 @@ impl Generator {
                         self.lirs.push(x64::IR::DIVIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::DIVMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::DIVREG(*phys, 0));
                     }
                 }
                 "%" => {
@@ -280,6 +331,9 @@ impl Generator {
                         self.lirs.push(x64::IR::MODIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::MODMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::MODREG(*phys, 0));
                     }
                 }
                 "<<" => {
@@ -289,6 +343,9 @@ impl Generator {
                         self.lirs.push(x64::IR::LSHIFTIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::LSHIFTMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::LSHIFTREG(*phys, 0));
                     }
                 }
                 ">>" => {
@@ -298,6 +355,9 @@ impl Generator {
                         self.lirs.push(x64::IR::RSHIFTIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::RSHIFTMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::RSHIFTREG(*phys, 0));
                     }
                 }
                 "<" => {
@@ -307,6 +367,9 @@ impl Generator {
                         self.lirs.push(x64::IR::LTIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::LTMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::LTREG(*phys, 0));
                     }
                 }
                 "<=" => {
@@ -316,6 +379,9 @@ impl Generator {
                         self.lirs.push(x64::IR::LTEQIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::LTEQMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::LTEQREG(*phys, 0));
                     }
                 }
                 ">" => {
@@ -325,6 +391,9 @@ impl Generator {
                         self.lirs.push(x64::IR::GTIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::GTMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::GTREG(*phys, 0));
                     }
                 }
                 ">=" => {
@@ -334,6 +403,9 @@ impl Generator {
                         self.lirs.push(x64::IR::GTEQIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::GTEQMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::GTREG(*phys, 0));
                     }
                 }
                 "==" => {
@@ -343,6 +415,9 @@ impl Generator {
                         self.lirs.push(x64::IR::EQIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::EQMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::STOREREG(*offset, 0));
                     }
                 }
                 "!=" => {
@@ -352,6 +427,9 @@ impl Generator {
                         self.lirs.push(x64::IR::NTEQIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::NTEQMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::STOREREG(*offset, 0));
                     }
                 }
                 _ => (),
@@ -366,6 +444,9 @@ impl Generator {
                         self.lirs.push(x64::IR::ADDIMM(*phys, *v2));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::ADDMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::ADDREG(*phys, 0));
                     }
                 }
                 "-" => {
@@ -375,6 +456,9 @@ impl Generator {
                         self.lirs.push(x64::IR::SUBIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::SUBMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::SUBREG(*phys, 0));
                     }
                 }
                 "*" => {
@@ -384,6 +468,9 @@ impl Generator {
                         self.lirs.push(x64::IR::MULIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::MULMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::MULREG(*phys, 0));
                     }
                 }
                 "/" => {
@@ -393,6 +480,9 @@ impl Generator {
                         self.lirs.push(x64::IR::DIVIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::DIVMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::DIVREG(*phys, 0));
                     }
                 }
                 "%" => {
@@ -402,6 +492,9 @@ impl Generator {
                         self.lirs.push(x64::IR::MODIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::MODMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::MODREG(*phys, 0));
                     }
                 }
                 "<<" => {
@@ -411,6 +504,9 @@ impl Generator {
                         self.lirs.push(x64::IR::LSHIFTIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::LSHIFTMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::LSHIFTREG(*phys, 0));
                     }
                 }
                 ">>" => {
@@ -420,6 +516,9 @@ impl Generator {
                         self.lirs.push(x64::IR::RSHIFTIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::RSHIFTMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::RSHIFTREG(*phys, 0));
                     }
                 }
                 "<" => {
@@ -429,6 +528,9 @@ impl Generator {
                         self.lirs.push(x64::IR::LTIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::LTMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::LTREG(*phys, 0));
                     }
                 }
                 ">" => {
@@ -438,6 +540,9 @@ impl Generator {
                         self.lirs.push(x64::IR::GTIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::GTMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::GTREG(*phys, 0));
                     }
                 }
                 "<=" => {
@@ -447,6 +552,9 @@ impl Generator {
                         self.lirs.push(x64::IR::LTEQIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::LTEQMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::LTEQREG(*phys, 0));
                     }
                 }
                 ">=" => {
@@ -456,6 +564,9 @@ impl Generator {
                         self.lirs.push(x64::IR::GTEQIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::GTEQMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::GTEQREG(*phys, 0));
                     }
                 }
                 "==" => {
@@ -465,6 +576,9 @@ impl Generator {
                         self.lirs.push(x64::IR::EQIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::EQMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::EQREG(*phys, 0));
                     }
                 }
                 "!=" => {
@@ -474,6 +588,9 @@ impl Generator {
                         self.lirs.push(x64::IR::NTEQIMM(*phys, *value));
                     } else if let Operand::ID(_name, p2) = rop {
                         self.lirs.push(x64::IR::NTEQMEM(*phys, *p2));
+                    } else if let Operand::CALL(name, _length) = rop {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::NTEQREG(*phys, 0));
                     }
                 }
                 _ => (),
@@ -721,6 +838,9 @@ impl Generator {
                 }
                 x64::IR::DEREFREG(r) => {
                     out += &(format!("  mov {}, [{}]\n", gr(r), gr(r)).as_str());
+                }
+                x64::IR::CALL(name) => {
+                    out += &(format!("  call {}\n", name).as_str());
                 }
                 x64::IR::LABEL(name) => {
                     out += &(format!("{}:\n", name).as_str());

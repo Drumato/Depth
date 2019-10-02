@@ -56,6 +56,7 @@ pub enum IR {
     RETURNIMM(i128),
     RETURNMEM(OFFSET),
     RETURNCALL(SYMBOL),
+    CALL(SYMBOL),
     LABEL(SYMBOL),
     JMP(String),
 }
