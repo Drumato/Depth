@@ -86,6 +86,14 @@ impl Generator {
                 }
                 _ => (),
             }
+        } else if let Operand::ID(_virt, offset) = lop {
+            self.lirs.push(x64::IR::LOADMEM(*phys, *offset));
+            match op.as_str() {
+                "-" => {
+                    self.lirs.push(x64::IR::NEGREG(*phys));
+                }
+                _ => (),
+            }
         }
     }
     fn ex_reg(&mut self, phys: &usize, op: &String, lop: &Operand, rop: &Operand) {
