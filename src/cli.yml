@@ -20,12 +20,21 @@ args:
     - dump-symbol:
         long: dump-symbol
         help: dump symbol-tables each environments
-    - dump-hir:
-        long: dump-hir
-        help: dump hir
+    - dump-tac:
+        long: dump-tac
+        help: dump tac
+    - dump-tacp:
+        long: dump-tacp
+        help: dump tac with physical-num
     - dump-inst:
         long: dump-inst
         help: dump inst
+    - dump-cfg:
+        long: dump-cfg
+        help: dump cfg
+    - dump-liveness:
+        long: dump-liveness
+        help: dump liveness
     - stop-c:
         short: C
         help: stop until compile
