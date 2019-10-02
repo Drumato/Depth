@@ -76,8 +76,12 @@ impl Generator {
                 "-" => {
                     self.lirs.push(x64::IR::NEGREG(*p));
                 }
+                "*" => {
+                    self.lirs.push(x64::IR::DEREFREG(*p));
+                }
                 _ => (),
             }
+            self.lirs.push(x64::IR::LOADREG(*phys, *p));
         } else if let Operand::INTLIT(value) = lop {
             self.lirs.push(x64::IR::REGIMM(*phys, *value));
             match op.as_str() {
@@ -87,10 +91,17 @@ impl Generator {
                 _ => (),
             }
         } else if let Operand::ID(_virt, offset) = lop {
-            self.lirs.push(x64::IR::LOADMEM(*phys, *offset));
             match op.as_str() {
                 "-" => {
+                    self.lirs.push(x64::IR::LOADMEM(*phys, *offset));
                     self.lirs.push(x64::IR::NEGREG(*phys));
+                }
+                "&" => {
+                    self.lirs.push(x64::IR::ADDRESSMEM(*phys, *offset));
+                }
+                "*" => {
+                    self.lirs.push(x64::IR::LOADMEM(*phys, *offset));
+                    self.lirs.push(x64::IR::DEREFREG(*phys));
                 }
                 _ => (),
             }
@@ -697,6 +708,12 @@ impl Generator {
                 }
                 x64::IR::NEGREG(r) => {
                     out += &(format!("  neg {}\n", gr(r)));
+                }
+                x64::IR::ADDRESSMEM(r, offset) => {
+                    out += &(format!("  lea {}, -{}[rbp]\n", gr(r), offset).as_str());
+                }
+                x64::IR::DEREFREG(r) => {
+                    out += &(format!("  mov {}, [{}]\n", gr(r), gr(r)).as_str());
                 }
                 x64::IR::LABEL(name) => {
                     out += &(format!("{}:\n", name).as_str());
