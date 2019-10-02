@@ -1,14 +1,13 @@
-use super::super::super::ce::types::Error;
-use super::super::frontend::parse::node::{Func, Node};
-use super::super::frontend::token::token::Token;
-use super::manager::Manager;
+use super::super::super::super::ce::types::Error;
+use super::super::frontmanager::frontmanager::FrontManager;
+use super::super::parse::node::{Func, Node};
+use super::super::token::token::Token;
 
 #[derive(Clone, Eq, PartialEq)]
 pub enum Type {
     INTEGER(IntType),
     CHAR(Option<char>),
-    POINTER(Box<Type>, usize),      // type_size
-    ARRAY(Box<Type>, usize, usize), // elem_type,ary_size,size
+    POINTER(Box<Type>, usize), // type_size
     UNKNOWN,
 }
 #[derive(Clone, Eq, PartialEq)]
@@ -31,7 +30,6 @@ impl Type {
                 Some(char_val) => format!("CHAR<{}>", char_val),
                 None => "CHAR".to_string(),
             },
-            Type::ARRAY(elem, ary_size, _) => format!("ARRAY<{},{}>", elem.string(), ary_size),
             Type::UNKNOWN => "UNKNOWN".to_string(),
         }
     }
@@ -40,7 +38,6 @@ impl Type {
             Type::INTEGER(int_type) => int_type.type_size,
             Type::POINTER(_, size) => *size,
             Type::CHAR(_) => 4,
-            Type::ARRAY(elem, ary_size, _) => elem.size() * ary_size,
             Type::UNKNOWN => 42,
         }
     }
@@ -66,24 +63,13 @@ impl Type {
                 let ptr_to: Token = unsafe { Box::into_raw(bptr_to).read() };
                 Type::POINTER(Box::new(Type::from_type(ptr_to)), 8)
             }
-            Token::ARRAY(belem_type, bary_size) => {
-                let elem_typet: Token = unsafe { Box::into_raw(belem_type).read() };
-                let ary_size: Token = unsafe { Box::into_raw(bary_size).read() };
-                let elem_type: Type = Type::from_type(elem_typet);
-                let size: usize = elem_type.size();
-                let belem: Box<Type> = Box::new(elem_type);
-                if let Token::INTEGER(int) = ary_size {
-                    return Type::ARRAY(belem, int as usize, int as usize * size);
-                }
-                Type::ARRAY(belem, 0, 0)
-            }
             Token::CHAR => Type::CHAR(None),
             _ => Type::UNKNOWN,
         }
     }
 }
 
-impl Manager {
+impl FrontManager {
     pub fn semantics(&mut self) {
         let func_num: usize = self.functions.len();
         let mut idx: usize = 0;
@@ -99,6 +85,8 @@ impl Manager {
                         self.stack_offset += Type::from_type(ty.clone()).size();
                         if let Some(ref mut arg) = self.cur_env.table.get_mut(&arg_name) {
                             arg.stack_offset = self.stack_offset;
+                        } else {
+                            eprintln!("{} can't attaching the stack.", arg_name);
                         }
                     }
                     _ => (),
@@ -111,7 +99,7 @@ impl Manager {
             idx += 1;
         }
     }
-    fn walk(&mut self, mut n: Node) -> Type {
+    fn walk(&mut self, n: Node) -> Type {
         match n {
             Node::IDENT(ident_name) => {
                 if let Some(var) = self.cur_env.table.get(&ident_name) {
@@ -147,38 +135,7 @@ impl Manager {
                 }
             }
             Node::NUMBER(ty) => ty,
-            Node::INDEX(barray, _) => {
-                let array: Node = unsafe { Box::into_raw(barray).read() };
-                let elem_type: Type = match self.walk(array.clone()) {
-                    Type::ARRAY(elem, _, _) => unsafe { Box::into_raw(elem).read() },
-                    _ => Type::UNKNOWN,
-                };
-                let ident_name: String = match array {
-                    Node::IDENT(name) => name,
-                    _ => "".to_string(),
-                };
-                if let Some(var) = self.cur_env.table.get(&ident_name) {
-                    var.ty.clone()
-                } else {
-                    elem_type
-                }
-            }
             Node::CHARLIT(char_val) => Type::CHAR(Some(char_val)),
-            Node::ARRAYLIT(ref mut elems, ref mut num) => {
-                let mut fin_type: Type = Type::UNKNOWN;
-                let mut total_size: usize = 0;
-                let length: usize = elems.len();
-                for elem in elems.iter() {
-                    let elem_type: Type = self.walk(elem.clone());
-                    total_size += elem_type.size();
-                    fin_type = elem_type;
-                }
-                if let Some(ref mut array) = self.cur_env.table.get_mut(&format!("Array{}", num)) {
-                    self.stack_offset += total_size;
-                    array.stack_offset = self.stack_offset;
-                }
-                Type::ARRAY(Box::new(fin_type), length, total_size)
-            }
             Node::RETURN(bstmt) => {
                 let stmt: Node = unsafe { Box::into_raw(bstmt).read() };
                 self.walk(stmt);
@@ -213,10 +170,6 @@ impl Manager {
                         let expr_type: Type = self.walk(expr);
                         self.check_type(Type::CHAR(ochar_val), expr_type);
                         self.stack_offset += 4;
-                    }
-                    Type::ARRAY(belem, ary_size, size) => {
-                        let expr_type: Type = self.walk(expr);
-                        self.check_type(Type::ARRAY(belem, ary_size, size), expr_type);
                     }
                     _ => (),
                 }
@@ -259,20 +212,6 @@ impl Manager {
             }
             Type::CHAR(_) => {
                 if let Type::CHAR(_) = rtype {
-                    ();
-                } else {
-                    Error::TYPE.found(&format!(
-                        "difference type between {} and {}",
-                        ltype.string(),
-                        rtype.string()
-                    ));
-                }
-            }
-            Type::ARRAY(blelem, _, _) => {
-                if let Type::ARRAY(brelem, _, _) = rtype {
-                    let lelem: Type = unsafe { Box::into_raw(blelem).read() };
-                    let relem: Type = unsafe { Box::into_raw(brelem).read() };
-                    self.check_builtin_type(lelem, relem);
                     ();
                 } else {
                     Error::TYPE.found(&format!(

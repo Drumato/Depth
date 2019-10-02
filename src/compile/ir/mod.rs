@@ -1,1 +1,3 @@
-pub mod hi;
+pub mod gen;
+pub mod lir;
+pub mod tac;

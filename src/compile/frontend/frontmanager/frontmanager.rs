@@ -1,28 +1,28 @@
-use super::super::frontend::parse::node::Func;
-use super::super::frontend::token::token::Token;
-use super::super::ir::hi::HIR;
-use super::semantics::Type;
+use super::super::super::ir::tac::Tac;
+use super::super::parse::node::Func;
+use super::super::sema::semantics::Type;
+use super::super::token::token::Token;
 use std::collections::BTreeMap;
 extern crate colored;
 use colored::*;
-pub struct Manager {
+pub struct FrontManager {
     pub functions: Vec<Func>,
-    pub hirs: Vec<HIR>,
-    pub regnum: usize,
-    pub labelnum: usize,
     pub stack_offset: usize,
     pub cur_env: Env,
+    pub tacs: Vec<Tac>,
+    pub virt: usize,
+    pub label: usize,
 }
 
-impl Manager {
-    pub fn new(funcs: Vec<Func>) -> Manager {
-        Manager {
+impl FrontManager {
+    pub fn new(funcs: Vec<Func>) -> FrontManager {
+        FrontManager {
             functions: funcs,
-            hirs: Vec::with_capacity(2048),
-            regnum: 0,
-            labelnum: 0,
             stack_offset: 0,
             cur_env: Env::new(),
+            tacs: Vec::new(),
+            virt: 0,
+            label: 0,
         }
     }
     pub fn dump_symbol(&self) {
@@ -38,12 +38,6 @@ impl Manager {
                     symbol.is_mutable
                 );
             }
-        }
-    }
-    pub fn dump_hir(&self) {
-        eprintln!("{}", "--------dumphir--------".blue().bold());
-        for ir in self.hirs.iter() {
-            eprintln!("{}", ir.string().green().bold());
         }
     }
 }

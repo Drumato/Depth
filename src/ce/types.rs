@@ -5,7 +5,6 @@ pub enum Error {
     TYPE,
     ELF,
     ASSEMBLE,
-    UNDEFINED,
 }
 
 impl Error {
@@ -18,7 +17,6 @@ impl Error {
             Error::TYPE => "TypeError".to_string(),
             Error::ELF => "ELFError".to_string(),
             Error::ASSEMBLE => "AssembleError".to_string(),
-            Error::UNDEFINED => "UndefinedError".to_string(),
         }
     }
 }

@@ -7,8 +7,10 @@ extern crate colored;
 use colored::*;
 
 mod compile;
+use compile::backend as b;
 use compile::frontend as f;
-use compile::manager::manager::Manager;
+use compile::ir::tac::Tac;
+use f::frontmanager::frontmanager as fm;
 mod object;
 use object::elf;
 mod assemble;
@@ -94,17 +96,34 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
     }
     let tokens: Vec<f::token::token::Token> = lex_phase(file_name, &matches);
     let funcs: Vec<f::parse::node::Func> = parse_phase(&matches, tokens);
-    let mut manager: Manager = Manager::new(funcs);
-    manager.semantics();
+    let mut front_manager: fm::FrontManager = fm::FrontManager::new(funcs);
+    front_manager.semantics();
     if matches.is_present("dump-symbol") {
-        manager.dump_symbol();
+        front_manager.dump_symbol();
     }
-    manager.gen_irs();
-    if matches.is_present("dump-hir") {
-        manager.dump_hir();
+    front_manager.gen_tacs();
+    let tacs: Vec<Tac> = front_manager.tacs;
+    if matches.is_present("dump-tac") {
+        eprintln!("{}", "--------dump-tac--------".blue().bold());
+        for tac in tacs.iter() {
+            eprintln!("{}", tac.string());
+        }
     }
-
-    genx64_phase(&matches, manager)
+    let mut optimizer: b::Optimizer = b::Optimizer::new(tacs);
+    optimizer.build_cfg();
+    if matches.is_present("dump-cfg") {
+        optimizer.dump_cfg();
+    }
+    optimizer.liveness();
+    if matches.is_present("dump-liveness") {
+        optimizer.dump_liveness();
+    }
+    optimizer.regalloc();
+    let mut assembler_code: String = b::codegen::genx64(optimizer.tacs);
+    if matches.is_present("intel") {
+        assembler_code = format!(".intel_syntax noprefix\n.global main\n{}", assembler_code);
+    }
+    assembler_code
 }
 fn assemble(mut assembler_code: String, matches: &clap::ArgMatches) -> elf::elf64::ELF {
     if !matches.is_present("stop-a") {
@@ -202,14 +221,6 @@ fn parse_phase(
         f::parse::node::dump_ast(&funcs);
     }
     funcs
-}
-fn genx64_phase(matches: &clap::ArgMatches, mut manager: Manager) -> String {
-    let mut assembler_code: String = manager.genx64();
-    if matches.is_present("intel") {
-        assembler_code = ".global main\n".to_string() + assembler_code.as_str();
-        assembler_code = ".intel_syntax noprefix\n".to_string() + assembler_code.as_str();
-    }
-    assembler_code
 }
 
 fn read_file(s: &str) -> String {
