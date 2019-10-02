@@ -8,7 +8,6 @@ pub enum Operand {
     REG(Virtual, Physical),
     ID(String, Offset),
     CALL(String, usize),
-    INDEX(Box<Operand>, Box<Operand>),
 }
 impl Operand {
     pub fn string(&self) -> String {
@@ -17,7 +16,6 @@ impl Operand {
             Self::INTLIT(value) => format!("{}", value),
             Self::REG(virt, _phys) => format!("t{}", virt),
             Self::ID(name, _) => name.to_string(),
-            Self::INDEX(lop, rop) => format!("{}[{}]", lop.string(), rop.string()),
             Self::CALL(func, argc) => format!("call {}, {}", func, argc),
         }
     }

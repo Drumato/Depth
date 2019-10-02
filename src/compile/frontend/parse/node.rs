@@ -9,10 +9,8 @@ pub enum Node {
     BINOP(Token, Child, Child, Option<Type>),
     UNARY(Token, Child, Option<Type>),
     NUMBER(Type),
-    INDEX(Child, Child),
     CALL(String, Vec<Child>),
     CHARLIT(char),
-    ARRAYLIT(Vec<Node>, usize), // expression,number
     IDENT(String),
     RETURN(Child),
     IF(Child, Child, Option<Child>), // condition, block,else
@@ -28,7 +26,6 @@ impl Node {
             Node::BINOP(op, lhs, rhs, _) => {
                 format!("{}({}, {})", op.string(), lhs.string(), rhs.string())
             }
-            Node::INDEX(array, expr) => format!("{}[{}]", array.string(), expr.string()),
             Node::UNARY(op, inner, _) => format!("{}({})", op.string(), inner.string()),
             Node::NUMBER(ty) => match ty {
                 Type::INTEGER(int_type) => format!("INT-Node<{}>", int_type.val.unwrap()),
@@ -69,13 +66,6 @@ impl Node {
                 expr.string()
             ),
             Node::CHARLIT(char_val) => format!("CHARLIT<{}>", char_val),
-            Node::ARRAYLIT(elems, _) => {
-                let elems_string: String = elems
-                    .into_iter()
-                    .map(|b| b.string() + ",")
-                    .collect::<String>();
-                format!("ARRAY({})", elems_string)
-            }
             Node::IDENT(ident_name) => format!("IDENT<{}>", ident_name),
             Node::DEFARG(arg, ty) => format!("DEFARG<{},{}>", arg, ty.string()),
         }

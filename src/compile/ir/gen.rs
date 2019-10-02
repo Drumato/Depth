@@ -57,7 +57,13 @@ impl FrontManager {
             }
             Node::ASSIGN(name, bexpr) => {
                 let expr_op: Operand = self.gen_expr(*bexpr.clone()).unwrap();
-                self.add(Tac::LET(Operand::ID(name, 0), expr_op));
+                let mut stack_offset = 0;
+                if let Some(sym) = self.cur_env.table.get(&name) {
+                    stack_offset = sym.stack_offset;
+                } else {
+                    eprintln!("{} is not defined.", name);
+                }
+                self.add(Tac::LET(Operand::ID(name, stack_offset), expr_op));
             }
             Node::BLOCK(stmts) => {
                 for st in stmts {
@@ -100,11 +106,6 @@ impl FrontManager {
                 }
                 Some(Operand::ID(name, stack_offset))
             }
-            Node::INDEX(bbase, bindex) => {
-                let base_op: Operand = self.gen_expr(*bbase.clone()).unwrap();
-                let index: Operand = self.gen_expr(*bindex.clone()).unwrap();
-                Some(Operand::INDEX(Box::new(base_op), Box::new(index)))
-            }
             Node::CALL(name, args) => {
                 let len: usize = args.len();
                 for (idx, barg) in args.iter().enumerate() {
@@ -112,21 +113,6 @@ impl FrontManager {
                     self.add(Tac::PARAM(idx, arg_op));
                 }
                 Some(Operand::CALL(name, len))
-            }
-            Node::ARRAYLIT(elems, _) => {
-                let virt = self.virt;
-                self.virt += 1;
-                for (idx, elem) in elems.iter().enumerate() {
-                    let elem_op: Operand = self.gen_expr(elem.clone()).unwrap();
-                    self.add(Tac::LET(
-                        Operand::INDEX(
-                            Box::new(Operand::REG(virt, 0)),
-                            Box::new(Operand::INTLIT(idx as i128)),
-                        ),
-                        elem_op,
-                    ));
-                }
-                Some(Operand::REG(virt, 0))
             }
             _ => None,
         }
