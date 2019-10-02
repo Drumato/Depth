@@ -1,11 +1,13 @@
 type REG = usize;
 type OFFSET = usize;
+type SYMBOL = String;
 pub enum IR {
-    PROLOGUE(usize),
+    PROLOGUE(OFFSET),
     REGIMM(REG, i128),
     STOREREG(REG, REG),
     STOREIMM(REG, i128),
     STOREMEM(REG, OFFSET),
+    STORECALL(REG, SYMBOL),
     ADDREG(REG, REG),
     ADDIMM(REG, i128),
     ADDMEM(REG, OFFSET),
@@ -53,6 +55,7 @@ pub enum IR {
     RETURNREG(REG),
     RETURNIMM(i128),
     RETURNMEM(OFFSET),
-    LABEL(String),
+    RETURNCALL(SYMBOL),
+    LABEL(SYMBOL),
     JMP(String),
 }
