@@ -90,7 +90,20 @@ impl Generator {
                         self.lirs.push(x64::IR::ARGREG(*reg, 0));
                     }
                 }
-                _ => (),
+                Tac::IFF(op, label) => {
+                    if let Operand::REG(_virt, p) = op {
+                        self.lirs.push(x64::IR::CMPREG(*p));
+                    } else if let Operand::ID(_name, offset) = op {
+                        self.lirs.push(x64::IR::CMPMEM(*offset));
+                    } else if let Operand::CALL(name, _length) = op {
+                        self.lirs.push(x64::IR::CALL(name.to_owned()));
+                        self.lirs.push(x64::IR::CMPREG(0));
+                    }
+                    self.lirs.push(x64::IR::JZ(label.to_owned()));
+                }
+                Tac::GOTO(label) => {
+                    self.lirs.push(x64::IR::JMP(label.to_owned()));
+                }
             }
             unsafe {
                 ARGREG = 0;
@@ -872,7 +885,7 @@ impl Generator {
                     out += &(format!("{}:\n", name).as_str());
                 }
                 x64::IR::JMP(label) => {
-                    out += &(format!("  {}\n", label).as_str());
+                    out += &(format!("  jmp {}\n", label).as_str());
                 }
                 x64::IR::RETURNREG(r) => {
                     if *r != 0 {
@@ -927,6 +940,15 @@ impl Generator {
                     if *offset != 0 {
                         out += &(format!("  sub rsp, {}\n", !7 & offset + 7));
                     }
+                }
+                x64::IR::CMPREG(r) => {
+                    out += &(format!("  cmp {}, 0\n", gr(r)).as_str());
+                }
+                x64::IR::CMPMEM(offset) => {
+                    out += &(format!("  cmp -{}[rbp], 0\n", offset).as_str());
+                }
+                x64::IR::JZ(label) => {
+                    out += &(format!("  jz {}\n", label).as_str());
                 }
             }
         }

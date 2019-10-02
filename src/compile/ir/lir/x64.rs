@@ -62,5 +62,8 @@ pub enum IR {
     ARGREG(REG, REG),
     ARGIMM(REG, i128),
     ARGMEM(REG, OFFSET),
+    CMPMEM(OFFSET),
+    CMPREG(REG),
+    JZ(String),
     JMP(String),
 }
