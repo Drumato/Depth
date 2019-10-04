@@ -1,7 +1,7 @@
 type Virtual = usize;
 type Physical = usize;
 type Offset = usize;
-type Index = Option<usize>;
+type Index = Option<Box<Operand>>;
 #[derive(PartialOrd, Ord, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Operand {
     INTLIT(i128),
@@ -25,11 +25,11 @@ impl Operand {
             Self::CHARLIT(value) => format!("'{}'", value),
             Self::INTLIT(value) => format!("{}", value),
             Self::REG(virt, _phys, oind) => match oind {
-                Some(index) => format!("t{}[{}]", virt, index),
+                Some(index) => format!("t{}[{}]", virt, index.dump_st()),
                 None => format!("t{}", virt),
             },
             Self::ID(name, _, oind) => match oind {
-                Some(index) => format!("{}[{}]", name, index),
+                Some(index) => format!("{}[{}]", name, index.dump_st()),
                 None => name.to_string(),
             },
             Self::CALL(func, argc) => format!("call {}, {}", func, argc),

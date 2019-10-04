@@ -112,7 +112,11 @@ impl FrontManager {
                 for (idx, elem) in belems.iter().enumerate() {
                     let elem_op: Operand = self.gen_expr(elem.clone()).unwrap();
                     self.add(Tac::LET(
-                        Operand::ID(format!("Array{}", num), stack_offset, Some(idx)),
+                        Operand::ID(
+                            format!("Array{}", num),
+                            stack_offset,
+                            Some(Box::new(Operand::INTLIT(idx as i128))),
+                        ),
                         elem_op,
                     ));
                 }
@@ -121,18 +125,14 @@ impl FrontManager {
             Node::INDEX(bbase, bindex) => {
                 let base_op: Operand = self.gen_expr(*bbase.clone()).unwrap();
                 let index_op: Operand = self.gen_expr(*bindex.clone()).unwrap();
-                if let Operand::INTLIT(val) = &index_op {
-                    match base_op {
-                        Operand::ID(name, stack_offset, _) => {
-                            Some(Operand::ID(name, stack_offset, Some(*val as usize)))
-                        }
-                        Operand::REG(_virt, _phys, _) => {
-                            Some(Operand::REG(self.virt, 0, Some(*val as usize)))
-                        }
-                        _ => None,
+                match base_op {
+                    Operand::ID(name, stack_offset, _) => {
+                        Some(Operand::ID(name, stack_offset, Some(Box::new(index_op))))
                     }
-                } else {
-                    None // not implemented yet
+                    Operand::REG(_virt, _phys, _) => {
+                        Some(Operand::REG(self.virt, 0, Some(Box::new(index_op))))
+                    }
+                    _ => None,
                 }
             }
             Node::IDENT(name) => {

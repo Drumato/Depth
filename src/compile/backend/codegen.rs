@@ -48,8 +48,11 @@ impl Generator {
                     } else if let Operand::INTLIT(value) = op {
                         self.lirs.push(x64::IR::RETURNIMM(*value));
                     } else if let Operand::ID(_name, phys, oind) = op {
-                        if let Some(idx) = oind {
-                            self.lirs.push(x64::IR::RETURNMEM(*phys - idx * 8));
+                        if let Some(bop) = oind {
+                            if let Operand::INTLIT(idx) = *bop.clone() {
+                                self.lirs
+                                    .push(x64::IR::RETURNMEM(*phys - (idx as usize) * 8));
+                            }
                         } else {
                             self.lirs.push(x64::IR::RETURNMEM(*phys));
                         }
@@ -59,16 +62,24 @@ impl Generator {
                 }
                 Tac::LET(lv, op) => {
                     if let Operand::ID(_name, offset, oind) = lv {
-                        if let Some(idx) = oind {
-                            if let Operand::REG(_virt, p, _oind) = op {
-                                self.lirs.push(x64::IR::STOREREG(*offset - idx * 8, *p));
-                            } else if let Operand::INTLIT(v) = op {
-                                self.lirs.push(x64::IR::STOREIMM(*offset - idx * 8, *v));
-                            } else if let Operand::ID(_name, p, _oind) = op {
-                                self.lirs.push(x64::IR::STOREMEM(*offset - idx * 8, *p));
-                            } else if let Operand::CALL(name, _length) = op {
-                                self.lirs
-                                    .push(x64::IR::STORECALL(*offset - idx * 8, name.to_owned()));
+                        if let Some(bop) = oind {
+                            let ind_op: Operand = *bop.clone();
+                            if let Operand::INTLIT(idx) = ind_op {
+                                if let Operand::REG(_virt, p, _oind) = op {
+                                    self.lirs
+                                        .push(x64::IR::STOREREG(*offset - (idx as usize) * 8, *p));
+                                } else if let Operand::INTLIT(v) = op {
+                                    self.lirs
+                                        .push(x64::IR::STOREIMM(*offset - (idx as usize) * 8, *v));
+                                } else if let Operand::ID(_name, p, _oind) = op {
+                                    self.lirs
+                                        .push(x64::IR::STOREMEM(*offset - (idx as usize) * 8, *p));
+                                } else if let Operand::CALL(name, _length) = op {
+                                    self.lirs.push(x64::IR::STORECALL(
+                                        *offset - (idx as usize) * 8,
+                                        name.to_owned(),
+                                    ));
+                                }
                             }
                         } else {
                             if let Operand::REG(_virt, p, _oind) = op {
