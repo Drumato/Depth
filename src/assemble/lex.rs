@@ -15,12 +15,15 @@ pub enum Token {
     CQO,
     IDIV,
     IMUL,
+    JZ,
     JMP,
     LEA,
     NEG,
     PUSH,
     POP,
     RET,
+    SAL,
+    SAR,
     SETL,
     SETLE,
     SETG,
@@ -50,6 +53,7 @@ impl Token {
             Token::IDIV => "idiv".to_string(),
             Token::IMUL => "imul".to_string(),
             Token::JMP => "jmp".to_string(),
+            Token::JZ => "jz".to_string(),
             Token::LEA => "lea".to_string(),
             Token::MOV => "mov".to_string(),
             Token::MOVZX => "movzx".to_string(),
@@ -63,6 +67,8 @@ impl Token {
             Token::SETGE => "setge".to_string(),
             Token::SETE => "sete".to_string(),
             Token::SETNE => "setne".to_string(),
+            Token::SAR => "sar".to_string(),
+            Token::SAL => "sal".to_string(),
             Token::SUB => "sub".to_string(),
             Token::SYSCALL => "syscall".to_string(),
             Token::SYMBOL(name) => name.to_string(),
@@ -99,7 +105,7 @@ fn tokenize(input: &String) -> Option<(Token, usize)> {
         return None;
     }
     match input.as_bytes()[0] as char {
-        c if c.is_alphabetic() || c == '_' => tokenize_keywords(input),
+        c if c.is_alphabetic() || c == '_' || c == '.' => tokenize_keywords(input),
         c if c == '0' => Some((Token::INTEGER(0), 1)),
         c if is_decimal(c) => {
             let length: usize = count_len(input, |c| c.is_ascii_digit());
@@ -129,10 +135,13 @@ fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
     }
 }
 fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
-    let length: usize = count_len(input, |c| c.is_digit(10) || c == &'_' || c.is_alphabetic());
+    let length: usize = count_len(input, |c| {
+        c.is_digit(10) || c == &'_' || c.is_alphabetic() || c == &'.'
+    });
     let keywords: Vec<&str> = vec![
-        "movzx", "ret", "push", "pop", "cqo", "add", "sub", "idiv", "imul", "cmp", "setl",
-        "syscall", "call", "setle", "setg", "setge", "sete", "setne", "lea", "neg", "mov", "jmp",
+        "movzx", "ret", "push", "pop", "cqo", "add", "sub", "idiv", "imul", "cmp", "setle",
+        "syscall", "call", "setl", "setge", "setg", "sete", "setne", "lea", "neg", "mov", "jmp",
+        "sal", "sar", "jz",
     ];
     let types: Vec<Token> = vec![
         Token::MOVZX,
@@ -145,21 +154,24 @@ fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
         Token::IDIV,
         Token::IMUL,
         Token::CMP,
-        Token::SETL,
+        Token::SETLE,
         Token::SYSCALL,
         Token::CALL,
-        Token::SETLE,
-        Token::SETG,
+        Token::SETL,
         Token::SETGE,
+        Token::SETG,
         Token::SETE,
         Token::SETNE,
         Token::LEA,
         Token::NEG,
         Token::MOV,
         Token::JMP,
+        Token::SAL,
+        Token::SAR,
+        Token::JZ,
     ];
     for (idx, k) in keywords.iter().enumerate() {
-        if input.starts_with(k) {
+        if input.len() >= k.to_string().len() && input[..k.to_string().len()] == k.to_string() {
             return Some((types[idx].clone(), length));
         }
     }

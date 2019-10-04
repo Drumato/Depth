@@ -1,7 +1,7 @@
 func main(){
-  return add()
+  return adb()
 }
 
-func add(){
+func adb(){
   return 30
 }

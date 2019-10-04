@@ -28,7 +28,7 @@ impl Operand {
     pub fn number(name: &str) -> u8 {
         match name {
             "al" | "ax" | "eax" | "rax" | "r8" => 0b000,
-            "rcx" | "r9" => 0b001,
+            "cl" | "cx" | "ecx" | "rcx" | "r9" => 0b001,
             "rdx" | "r10" => 0b010,
             "rbx" | "r11" => 0b011,
             "rsp" | "r12" => 0b100,
@@ -105,7 +105,6 @@ impl Parser {
             Token::PUSH
             | Token::POP
             | Token::IDIV
-            | Token::IMUL
             | Token::SETL
             | Token::SETLE
             | Token::SETG
@@ -114,7 +113,8 @@ impl Parser {
             | Token::SETNE
             | Token::CALL
             | Token::NEG
-            | Token::JMP => {
+            | Token::JMP
+            | Token::JZ => {
                 self.next_token();
                 let entry: usize = self.entry;
                 self.entry += 1;
@@ -127,7 +127,15 @@ impl Parser {
                 self.info_map.insert(entry, info);
                 Some(())
             }
-            Token::MOV | Token::MOVZX | Token::ADD | Token::SUB | Token::CMP | Token::LEA => {
+            Token::MOV
+            | Token::MOVZX
+            | Token::ADD
+            | Token::SUB
+            | Token::CMP
+            | Token::LEA
+            | Token::IMUL
+            | Token::SAR
+            | Token::SAL => {
                 self.next_token();
                 let entry: usize = self.entry;
                 self.entry += 1;

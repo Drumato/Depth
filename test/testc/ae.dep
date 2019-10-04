@@ -1,7 +1,7 @@
 func main(){
-  return add(20,40)
+  return ade(20,40)
 }
 
-func add(x:i64,y:i64){
+func ade(x:i64,y:i64){
   return x+y
 }

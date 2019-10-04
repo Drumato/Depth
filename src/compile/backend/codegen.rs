@@ -641,7 +641,7 @@ impl Generator {
                     out += &(format!("  mov -{}[rbp], {}\n", dst, gr(src)).as_str());
                 }
                 x64::IR::STOREIMM(dst, value) => {
-                    out += &(format!("  mov QWORD PTR -{}[rbp], {}\n", dst, value).as_str());
+                    out += &(format!("  mov -{}[rbp], {}\n", dst, value).as_str());
                 }
                 x64::IR::STOREMEM(dst, offset) => {
                     out += &(format!("  mov r12, -{}[rbp]\n", offset).as_str());
