@@ -34,32 +34,7 @@ def test_compile():
     for filename, expect in cases.items():
         fn = f"test/testc/{filename}"
         f = open(fn)
-        p = subprocess.Popen(f"./target/debug/depth {fn} ; ./a.out", shell=True)
-        exit_status = p.wait()
-        if exit_status != expect:
-            print(
-                f"[{filename}]{f.read()} => {Color.RED}{expect} expected but got {exit_status}{Color.CLEAR}"
-            )
-            sys.exit(1)
-        else:
-            print(f"[{filename}] => {Color.BLUE}{expect}{Color.CLEAR}")
-    print(f"{Color.GREEN}All Test Passed.{Color.CLEAR}")
-
-
-def test_link():
-    print(f"{Color.GREEN}++++++++++++++++ test-linking ++++++++++++++++{Color.CLEAR}")
-    f = open("test/testa/expect.txt", "r")
-    content = f.read()
-    cases = {}
-    cases = {
-        line.split()[0]: int(line.split()[1])
-        for line in content.split("\n")
-        if len(line) > 0
-    }
-    for filename, expect in cases.items():
-        fn = f"test/testa/{filename}"
-        f = open(fn)
-        p = subprocess.Popen(f"./target/debug/depth {fn} ;./a.out", shell=True)
+        p = subprocess.Popen(f"./target/debug/depth {fn}  ; ./a.out", shell=True)
         exit_status = p.wait()
         if exit_status != expect:
             print(
@@ -81,5 +56,4 @@ if __name__ == "__main__":
     print(
         f"test-only-compile time -> {Color.BLUE}{round(compile_time,2)}{Color.CLEAR}s"
     )
-    print(f"test-link time -> {Color.BLUE}{round(link_time,2)}{Color.CLEAR}s")
     # make()

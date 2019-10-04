@@ -232,8 +232,10 @@ fn read_file(s: &str) -> String {
     }
     if filepath.is_dir() {
         eprintln!("{} is directory.", filepath.to_str().unwrap());
+    } else {
+        eprintln!("{} not found", filepath.to_str().unwrap());
+        std::process::exit(1);
     }
-    eprintln!("{} not found", filepath.to_str().unwrap());
     "".to_string()
 }
 fn dump_inst(

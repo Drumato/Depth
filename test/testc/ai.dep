@@ -1,5 +1,4 @@
-const x : i64 = 30
 func main(){
-  return 0
+  let x : Array<i64,3> = [1,5,15]
+  return x[2]
 }
-const y : i64 = 30

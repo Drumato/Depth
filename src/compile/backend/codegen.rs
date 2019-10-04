@@ -47,22 +47,41 @@ impl Generator {
                         self.lirs.push(x64::IR::RETURNREG(*phys));
                     } else if let Operand::INTLIT(value) = op {
                         self.lirs.push(x64::IR::RETURNIMM(*value));
-                    } else if let Operand::ID(_name, phys, _oind) = op {
-                        self.lirs.push(x64::IR::RETURNMEM(*phys));
+                    } else if let Operand::ID(_name, phys, oind) = op {
+                        if let Some(idx) = oind {
+                            self.lirs.push(x64::IR::RETURNMEM(*phys - idx * 8));
+                        } else {
+                            self.lirs.push(x64::IR::RETURNMEM(*phys));
+                        }
                     } else if let Operand::CALL(name, _length) = op {
                         self.lirs.push(x64::IR::RETURNCALL(name.to_owned()));
                     }
                 }
                 Tac::LET(lv, op) => {
-                    if let Operand::ID(_name, offset, _oind) = lv {
-                        if let Operand::REG(_virt, p, _oind) = op {
-                            self.lirs.push(x64::IR::STOREREG(*offset, *p));
-                        } else if let Operand::INTLIT(v) = op {
-                            self.lirs.push(x64::IR::STOREIMM(*offset, *v));
-                        } else if let Operand::ID(_name, p, _oind) = op {
-                            self.lirs.push(x64::IR::STOREMEM(*offset, *p));
-                        } else if let Operand::CALL(name, _length) = op {
-                            self.lirs.push(x64::IR::STORECALL(*offset, name.to_owned()));
+                    if let Operand::ID(_name, offset, oind) = lv {
+                        if let Some(idx) = oind {
+                            if let Operand::REG(_virt, p, _oind) = op {
+                                self.lirs.push(x64::IR::STOREREG(*offset - idx * 8, *p));
+                            } else if let Operand::INTLIT(v) = op {
+                                self.lirs.push(x64::IR::STOREIMM(*offset - idx * 8, *v));
+                            } else if let Operand::ID(_name, p, _oind) = op {
+                                self.lirs.push(x64::IR::STOREMEM(*offset - idx * 8, *p));
+                            } else if let Operand::CALL(name, _length) = op {
+                                self.lirs
+                                    .push(x64::IR::STORECALL(*offset - idx * 8, name.to_owned()));
+                            }
+                        } else {
+                            if let Operand::REG(_virt, p, _oind) = op {
+                                self.lirs.push(x64::IR::STOREREG(*offset, *p));
+                            } else if let Operand::INTLIT(v) = op {
+                                self.lirs.push(x64::IR::STOREIMM(*offset, *v));
+                            } else if let Operand::ID(n, off, _oind) = op {
+                                if !n.contains("Array") {
+                                    self.lirs.push(x64::IR::STOREMEM(*offset, *off));
+                                }
+                            } else if let Operand::CALL(name, _length) = op {
+                                self.lirs.push(x64::IR::STORECALL(*offset, name.to_owned()));
+                            }
                         }
                     }
                 }

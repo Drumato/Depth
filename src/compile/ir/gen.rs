@@ -102,6 +102,39 @@ impl FrontManager {
                 None
             }
             Node::CHARLIT(c) => Some(Operand::CHARLIT(c)),
+            Node::ARRAYLIT(belems, num) => {
+                let mut stack_offset = 0;
+                if let Some(sym) = self.cur_env.table.get(&format!("Array{}", num)) {
+                    stack_offset = sym.stack_offset;
+                } else {
+                    eprintln!("Array{} is not defined.", num);
+                }
+                for (idx, elem) in belems.iter().enumerate() {
+                    let elem_op: Operand = self.gen_expr(elem.clone()).unwrap();
+                    self.add(Tac::LET(
+                        Operand::ID(format!("Array{}", num), stack_offset, Some(idx)),
+                        elem_op,
+                    ));
+                }
+                Some(Operand::ID(format!("Array{}", num), stack_offset, None))
+            }
+            Node::INDEX(bbase, bindex) => {
+                let base_op: Operand = self.gen_expr(*bbase.clone()).unwrap();
+                let index_op: Operand = self.gen_expr(*bindex.clone()).unwrap();
+                if let Operand::INTLIT(val) = &index_op {
+                    match base_op {
+                        Operand::ID(name, stack_offset, _) => {
+                            Some(Operand::ID(name, stack_offset, Some(*val as usize)))
+                        }
+                        Operand::REG(_virt, _phys, _) => {
+                            Some(Operand::REG(self.virt, 0, Some(*val as usize)))
+                        }
+                        _ => None,
+                    }
+                } else {
+                    None // not implemented yet
+                }
+            }
             Node::IDENT(name) => {
                 let mut stack_offset = 0;
                 if let Some(sym) = self.cur_env.table.get(&name) {
