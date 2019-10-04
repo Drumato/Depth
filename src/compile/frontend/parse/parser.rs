@@ -10,10 +10,12 @@ struct Parser {
 }
 static mut CUR: usize = 0;
 static mut NEXT: usize = 1;
+static mut LIT: usize = 0;
 pub fn parsing(tokens: Vec<Token>) -> Vec<Func> {
     unsafe {
         CUR = 0;
         NEXT = 1;
+        LIT = 0;
     }
     let mut parser: Parser = Parser::new(tokens);
     parser.toplevel();
@@ -243,7 +245,14 @@ impl Parser {
             self.next_token();
             return Node::UNARY(op, Box::new(self.unary()), None);
         }
-        self.term()
+        let n: Node = self.term();
+        if !self.check(&Token::LBRACKET) {
+            return n;
+        }
+        self.next_token();
+        let expr: Node = self.expr();
+        self.consume(&Token::RBRACKET);
+        Node::INDEX(Box::new(n), Box::new(expr))
     }
     fn defarg(&mut self) -> Node {
         let mut mutable: bool = false;
@@ -278,6 +287,29 @@ impl Parser {
             Token::CHARLIT(char_val) => {
                 self.next_token();
                 Node::CHARLIT(*char_val)
+            }
+            Token::LBRACKET => {
+                self.next_token();
+                let mut elems: Vec<Node> = Vec::new();
+                loop {
+                    if let &Token::RBRACKET = self.cur_token() {
+                        break;
+                    }
+                    elems.push(self.expr());
+                    if !self.consume(&Token::COMMA) {
+                        self.consume(&Token::RBRACKET);
+                        break;
+                    }
+                }
+                self.cur_env.table.insert(
+                    format!("Array{}", unsafe { LIT }),
+                    Symbol::new(0, Token::EOF, false),
+                );
+                let num = unsafe { LIT };
+                unsafe {
+                    LIT += 1;
+                }
+                Node::ARRAYLIT(elems, num)
             }
             _ => {
                 Error::PARSE.found(&format!("unexpected {} while parsing term", t.string(),));
@@ -364,6 +396,16 @@ impl Parser {
                 let inner: Token = self.consume_typename();
                 self.consume(&Token::GT);
                 Token::POINTER(Box::new(inner))
+            }
+            Token::ARRAY(_, _) => {
+                self.next_token();
+                self.consume(&Token::LT);
+                let elem_type: Token = self.consume_typename();
+                self.consume(&Token::COMMA);
+                let ary_size: Token = self.get_token();
+                self.next_token();
+                self.consume(&Token::GT);
+                Token::ARRAY(Box::new(elem_type), Box::new(ary_size))
             }
             _ => {
                 Error::PARSE.found(&format!("expected typename but got {}", t.string()));

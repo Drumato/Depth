@@ -18,6 +18,8 @@ pub enum Node {
     LET(String, Token, Child), // ident_name,type,expression
     ASSIGN(String, Child),
     DEFARG(String, Token),
+    INDEX(Child, Child),
+    ARRAYLIT(Vec<Node>, usize),
     INVALID,
 }
 impl Node {
@@ -31,6 +33,14 @@ impl Node {
                 Type::INTEGER(int_type) => format!("INT-Node<{}>", int_type.val.unwrap()),
                 _ => format!("UNKNOWN"),
             },
+            Node::INDEX(array, expr) => format!("{}[{}]", array.string(), expr.string()),
+            Node::ARRAYLIT(elems, _) => {
+                let elems_string: String = elems
+                    .into_iter()
+                    .map(|b| b.string() + ",")
+                    .collect::<String>();
+                format!("ARRAY({})", elems_string)
+            }
             Node::RETURN(expr) => format!("RETURN({})", expr.string()),
             Node::IF(cond, stmt, alter) => match alter {
                 Some(else_block) => format!(
