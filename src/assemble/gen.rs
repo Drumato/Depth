@@ -134,9 +134,16 @@ impl Generator {
                         }
                     }
                     Some(Operand::ADDRESS(_content, offset)) => {
-                        self.codes.push(0x89); // mov r/m64, r64
-                        self.codes.push(self.set_modrm(&info.lop, &info.rop)); // with RM
-                        self.codes.push(*offset as u8);
+                        if let Some(Operand::REG(_reg)) = &info.rop {
+                            self.codes.push(0x89); // mov r/m64, r64
+                            self.codes.push(self.set_modrm(&info.lop, &info.rop)); // with RM
+                            self.codes.push(*offset as u8);
+                        } else if let Some(Operand::IMM(value)) = info.rop {
+                            self.codes.push(0xc7);
+                            self.codes.push(self.set_modrm(&info.lop, &info.rop));
+                            self.codes.push(*offset as u8);
+                            self.gen_immediate(value);
+                        }
                     }
                     _ => (),
                 }
@@ -308,8 +315,11 @@ impl Generator {
                 }
             }
             Some(Operand::ADDRESS(content, _)) => {
-                rexprefix = 0x4c;
+                rexprefix = 0x40;
                 if let Operand::REG(name) = content.deref() {
+                    if name.starts_with("r") {
+                        rexprefix |= 0x08;
+                    }
                     match name.as_str() {
                         "r8" | "r9" | "r10" | "r11" | "r12" | "r13" | "r14" | "r15" => {
                             rexprefix |= 0x01;
