@@ -35,7 +35,7 @@ def test_compile():
         fn = f"test/testc/{filename}"
         f = open(fn)
         p = subprocess.Popen(
-            f"./target/debug/depth {fn} --intel -C;  gcc {fn.split('.')[0]}.s ; ./a.out",
+            f"./target/debug/depth {fn} -C --intel ; gcc {fn.split('.')[0]}.s ;./a.out",
             shell=True,
         )
         exit_status = p.wait()
@@ -62,7 +62,7 @@ def test_link():
     for filename, expect in cases.items():
         fn = f"test/testa/{filename}"
         f = open(fn)
-        p = subprocess.Popen(f"./target/debug/depth {fn} ; ./a.out", shell=True)
+        p = subprocess.Popen(f"./target/debug/depth {fn} ;./a.out", shell=True)
         exit_status = p.wait()
         if exit_status != expect:
             print(

@@ -53,7 +53,7 @@ impl FrontManager {
                 } else {
                     eprintln!("{} is not defined.", name);
                 }
-                self.add(Tac::LET(Operand::ID(name, stack_offset), expr_op));
+                self.add(Tac::LET(Operand::ID(name, stack_offset, None), expr_op));
             }
             Node::ASSIGN(name, bexpr) => {
                 let expr_op: Operand = self.gen_expr(*bexpr.clone()).unwrap();
@@ -63,7 +63,7 @@ impl FrontManager {
                 } else {
                     eprintln!("{} is not defined.", name);
                 }
-                self.add(Tac::LET(Operand::ID(name, stack_offset), expr_op));
+                self.add(Tac::LET(Operand::ID(name, stack_offset, None), expr_op));
             }
             Node::BLOCK(stmts) => {
                 for st in stmts {
@@ -79,16 +79,21 @@ impl FrontManager {
                 let lop: Operand = self.gen_expr(*blop.clone()).unwrap();
                 let rop: Operand = self.gen_expr(*brop.clone()).unwrap();
                 let virt = self.virt;
-                self.add(Tac::EX(Operand::REG(virt, 0), op.string_ir(), lop, rop));
+                self.add(Tac::EX(
+                    Operand::REG(virt, 0, None),
+                    op.string_ir(),
+                    lop,
+                    rop,
+                ));
                 self.virt += 1;
-                Some(Operand::REG(virt, 0))
+                Some(Operand::REG(virt, 0, None))
             }
             Node::UNARY(op, blop, _) => {
                 let lop: Operand = self.gen_expr(*blop.clone()).unwrap();
                 let virt = self.virt;
-                self.add(Tac::UNEX(Operand::REG(virt, 0), op.string_ir(), lop));
+                self.add(Tac::UNEX(Operand::REG(virt, 0, None), op.string_ir(), lop));
                 self.virt += 1;
-                Some(Operand::REG(virt, 0))
+                Some(Operand::REG(virt, 0, None))
             }
             Node::NUMBER(t) => {
                 if let Type::INTEGER(ty) = t {
@@ -104,7 +109,7 @@ impl FrontManager {
                 } else {
                     eprintln!("{} is not defined.", name);
                 }
-                Some(Operand::ID(name, stack_offset))
+                Some(Operand::ID(name, stack_offset, None))
             }
             Node::CALL(name, args) => {
                 let len: usize = args.len();

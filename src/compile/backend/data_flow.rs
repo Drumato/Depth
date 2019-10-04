@@ -105,8 +105,8 @@ impl Optimizer {
     }
     fn check_use_value(&self, op: &Operand) -> bool {
         match op {
-            Operand::REG(_, _) => true,
-            Operand::ID(_, _) => true,
+            Operand::REG(_, _, _) => true,
+            Operand::ID(_, _, _) => true,
             _ => false,
         }
     }
