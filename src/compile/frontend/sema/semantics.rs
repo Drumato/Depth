@@ -1,5 +1,5 @@
 use super::super::super::super::ce::types::Error;
-use super::super::frontmanager::frontmanager::FrontManager;
+use super::super::frontmanager::frontmanager::{Env, FrontManager};
 use super::super::parse::node::{Func, Node};
 use super::super::token::token::Token;
 
@@ -96,8 +96,16 @@ impl FrontManager {
             for arg in f.args {
                 match arg {
                     Node::DEFARG(arg_name, ty) => {
-                        self.stack_offset += Type::from_type(ty.clone()).size();
-                        if let Some(ref mut arg) = self.cur_env.table.get_mut(&arg_name) {
+                        if let Token::IDENT(name) = &ty {
+                            if let Some(t) = self.get_type(name) {
+                                self.stack_offset += t.size();
+                            } else {
+                                Error::TYPE.found(&format!("'{}' is not defined yet", &name));
+                            }
+                        } else {
+                            self.stack_offset += Type::from_type(ty.clone()).size();
+                        }
+                        if let Some(ref mut arg) = self.cur_env.sym_table.get_mut(&arg_name) {
                             arg.stack_offset = self.stack_offset;
                         } else {
                             eprintln!("{} can't attaching the stack.", arg_name);
@@ -116,7 +124,7 @@ impl FrontManager {
     fn walk(&mut self, mut n: Node) -> Type {
         match n {
             Node::IDENT(ident_name) => {
-                if let Some(var) = self.cur_env.table.get(&ident_name) {
+                if let Some(var) = self.cur_env.sym_table.get(&ident_name) {
                     var.ty.clone()
                 } else {
                     Type::UNKNOWN
@@ -159,7 +167,7 @@ impl FrontManager {
                     Node::IDENT(name) => name,
                     _ => "".to_string(),
                 };
-                if let Some(var) = self.cur_env.table.get(&ident_name) {
+                if let Some(var) = self.cur_env.sym_table.get(&ident_name) {
                     var.ty.clone()
                 } else {
                     elem_type
@@ -175,7 +183,9 @@ impl FrontManager {
                     total_size += elem_type.size();
                     fin_type = elem_type;
                 }
-                if let Some(ref mut array) = self.cur_env.table.get_mut(&format!("Array{}", num)) {
+                if let Some(ref mut array) =
+                    self.cur_env.sym_table.get_mut(&format!("Array{}", num))
+                {
                     self.stack_offset += total_size;
                     array.stack_offset = self.stack_offset;
                 }
@@ -187,7 +197,7 @@ impl FrontManager {
                 Type::UNKNOWN
             }
             Node::ASSIGN(ident_name, _bexpr) => {
-                if let Some(ref mut symbol) = self.cur_env.table.get_mut(&ident_name) {
+                if let Some(ref mut symbol) = self.cur_env.sym_table.get_mut(&ident_name) {
                     if !symbol.is_mutable {
                         Error::TYPE.found(&format!("'{}' is defined as immutable", &ident_name));
                     }
@@ -220,9 +230,17 @@ impl FrontManager {
                         let expr_type: Type = self.walk(expr);
                         self.check_type(Type::ARRAY(belem, ary_size, size), expr_type);
                     }
-                    _ => (),
+                    _ => {
+                        if let Token::IDENT(name) = type_name {
+                            if let Some(t) = self.get_type(&name) {
+                                self.stack_offset += t.size();
+                            } else {
+                                Error::TYPE.found(&format!("'{}' is not defined yet", &name));
+                            }
+                        }
+                    }
                 }
-                if let Some(ref mut symbol) = self.cur_env.table.get_mut(&ident_name) {
+                if let Some(ref mut symbol) = self.cur_env.sym_table.get_mut(&ident_name) {
                     symbol.stack_offset = self.stack_offset;
                 }
                 Type::UNKNOWN
@@ -285,6 +303,27 @@ impl FrontManager {
                 }
             }
             _ => (),
+        }
+    }
+    fn get_type(&self, name: &String) -> Option<Type> {
+        let mut env: Env = self.cur_env.clone();
+        loop {
+            if let None = env.prev {
+                if let Some(t) = env.type_table.get(name) {
+                    if let Some(ty) = t.alias.clone() {
+                        return Some(ty);
+                    }
+                    return None;
+                }
+                return None;
+            }
+            if let Some(t) = env.type_table.get(name) {
+                if let Some(ty) = t.alias.clone() {
+                    return Some(ty);
+                }
+                return None;
+            }
+            env = *env.prev.unwrap().clone();
         }
     }
 }

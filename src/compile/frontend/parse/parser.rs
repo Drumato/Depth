@@ -1,5 +1,5 @@
 use super::super::super::super::ce::types::Error;
-use super::super::frontmanager::frontmanager::{Env, Symbol};
+use super::super::frontmanager::frontmanager::{DefType, Env, Symbol};
 use super::super::sema::semantics::{IntType, Type};
 use super::super::token::token::Token;
 use super::node::{Func, Node};
@@ -30,11 +30,31 @@ impl Parser {
         }
     }
     fn toplevel(&mut self) {
-        let global: Env = Env::new();
-        while let Token::FUNC = self.cur_token() {
-            let mut func: Func = self.func();
-            func.env.prev = Some(Box::new(global.clone()));
-            self.funcs.push(func);
+        let mut global: Env = Env::new();
+        loop {
+            let t: &Token = self.cur_token();
+            match t {
+                Token::FUNC => {
+                    let mut func: Func = self.func();
+                    func.env.prev = Some(Box::new(global.clone()));
+                    self.funcs.push(func);
+                }
+                Token::TYPE => {
+                    self.next_token();
+                    let type_name: String = self.consume_ident();
+                    if !self.consume(&Token::ASSIGN) {
+                        Error::PARSE.found(&format!(
+                            "expected assign before declaring type but got {}",
+                            self.cur_token().string()
+                        ));
+                    }
+                    let token_ty: Token = self.consume_typename();
+                    global
+                        .type_table
+                        .insert(type_name, DefType::new(Some(Type::from_type(token_ty))));
+                }
+                _ => break,
+            }
         }
     }
     fn func(&mut self) -> Func {
@@ -141,10 +161,10 @@ impl Parser {
         }
         let expr: Node = self.expr();
 
-        if let Some(_symbol) = self.cur_env.table.get(&ident_name) {
+        if let Some(_symbol) = self.cur_env.sym_table.get(&ident_name) {
             Error::TYPE.found(&format!("already defined identifier '{}'", &ident_name));
         }
-        self.cur_env.table.insert(
+        self.cur_env.sym_table.insert(
             ident_name.clone(),
             Symbol::new(0, typename.clone(), mutable_flg),
         );
@@ -263,7 +283,7 @@ impl Parser {
         self.consume(&Token::COLON);
         let ty: Token = self.consume_typename();
         self.cur_env
-            .table
+            .sym_table
             .insert(arg_name.clone(), Symbol::new(0, ty.clone(), mutable));
         Node::DEFARG(arg_name, ty)
     }
@@ -301,7 +321,7 @@ impl Parser {
                         break;
                     }
                 }
-                self.cur_env.table.insert(
+                self.cur_env.sym_table.insert(
                     format!("Array{}", unsafe { LIT }),
                     Symbol::new(0, Token::EOF, false),
                 );
@@ -406,6 +426,10 @@ impl Parser {
                 self.next_token();
                 self.consume(&Token::GT);
                 Token::ARRAY(Box::new(elem_type), Box::new(ary_size))
+            }
+            Token::IDENT(_) => {
+                self.next_token();
+                t
             }
             _ => {
                 Error::PARSE.found(&format!("expected typename but got {}", t.string()));

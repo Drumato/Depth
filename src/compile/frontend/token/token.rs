@@ -26,6 +26,7 @@ pub enum Token {
     AMPERSAND,
 
     FUNC,
+    TYPE,
     IDENT(String),
     RETURN,
     IF,
@@ -74,6 +75,7 @@ impl Token {
             Token::RETURN => "RETURN".to_string(),
             Token::EOF => "EOF".to_string(),
             Token::FUNC => "FUNCTION".to_string(),
+            Token::TYPE => "TYPE".to_string(),
             Token::IDENT(name) => format!("IDENTIFIER<{}>", name),
             Token::IF => "IF".to_string(),
             Token::ELSE => "ELSE".to_string(),

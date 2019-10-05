@@ -13,7 +13,7 @@ impl FrontManager {
             for (idx, arg) in func.args.iter().enumerate() {
                 if let Node::DEFARG(name, _) = arg {
                     let mut stack_offset: usize = 0;
-                    if let Some(sym) = self.cur_env.table.get(name) {
+                    if let Some(sym) = self.cur_env.sym_table.get(name) {
                         stack_offset = sym.stack_offset;
                     }
                     self.add(Tac::PUSHARG(idx, stack_offset));
@@ -48,7 +48,7 @@ impl FrontManager {
             Node::LET(name, _, bexpr) => {
                 let expr_op: Operand = self.gen_expr(*bexpr.clone()).unwrap();
                 let mut stack_offset = 0;
-                if let Some(sym) = self.cur_env.table.get(&name) {
+                if let Some(sym) = self.cur_env.sym_table.get(&name) {
                     stack_offset = sym.stack_offset;
                 } else {
                     eprintln!("{} is not defined.", name);
@@ -58,7 +58,7 @@ impl FrontManager {
             Node::ASSIGN(name, bexpr) => {
                 let expr_op: Operand = self.gen_expr(*bexpr.clone()).unwrap();
                 let mut stack_offset = 0;
-                if let Some(sym) = self.cur_env.table.get(&name) {
+                if let Some(sym) = self.cur_env.sym_table.get(&name) {
                     stack_offset = sym.stack_offset;
                 } else {
                     eprintln!("{} is not defined.", name);
@@ -104,7 +104,7 @@ impl FrontManager {
             Node::CHARLIT(c) => Some(Operand::CHARLIT(c)),
             Node::ARRAYLIT(belems, num) => {
                 let mut stack_offset = 0;
-                if let Some(sym) = self.cur_env.table.get(&format!("Array{}", num)) {
+                if let Some(sym) = self.cur_env.sym_table.get(&format!("Array{}", num)) {
                     stack_offset = sym.stack_offset;
                 } else {
                     eprintln!("Array{} is not defined.", num);
@@ -137,7 +137,7 @@ impl FrontManager {
             }
             Node::IDENT(name) => {
                 let mut stack_offset = 0;
-                if let Some(sym) = self.cur_env.table.get(&name) {
+                if let Some(sym) = self.cur_env.sym_table.get(&name) {
                     stack_offset = sym.stack_offset;
                 } else {
                     eprintln!("{} is not defined.", name);

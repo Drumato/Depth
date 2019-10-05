@@ -29,7 +29,7 @@ impl FrontManager {
         eprintln!("{}", "--------symbol_table--------".green().bold());
         for f in self.functions.iter() {
             eprintln!("{}'s symbols:", f.name);
-            for (name, symbol) in f.env.table.iter() {
+            for (name, symbol) in f.env.sym_table.iter() {
                 eprintln!(
                     "{}:offset->{} type->{} mutable->{:?}",
                     name.bold().green(),
@@ -44,13 +44,15 @@ impl FrontManager {
 
 #[derive(Clone)]
 pub struct Env {
-    pub table: BTreeMap<String, Symbol>,
+    pub sym_table: BTreeMap<String, Symbol>,
+    pub type_table: BTreeMap<String, DefType>,
     pub prev: Option<Box<Env>>,
 }
 impl Env {
     pub fn new() -> Env {
         Env {
-            table: BTreeMap::new(),
+            sym_table: BTreeMap::new(),
+            type_table: BTreeMap::new(),
             prev: None,
         }
     }
@@ -69,6 +71,27 @@ impl Symbol {
             stack_offset: offset,
             ty: Type::from_type(ty),
             is_mutable: mutable,
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct DefType {
+    pub alias: Option<Type>,
+    pub size: usize,
+}
+
+impl DefType {
+    pub fn new(ty: Option<Type>) -> Self {
+        if let Some(t) = ty {
+            return Self {
+                alias: Some(t.clone()),
+                size: t.size(),
+            };
+        }
+        Self {
+            alias: None,
+            size: 0,
         }
     }
 }
