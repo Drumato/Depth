@@ -21,9 +21,6 @@ impl Type {
     pub fn string(&self) -> String {
         match self {
             Type::INTEGER(int_type) => match int_type.type_size {
-                1 => "i8".to_string(),
-                2 => "i16".to_string(),
-                4 => "i32".to_string(),
                 _ => "i64".to_string(),
             },
             Type::POINTER(ptr_to, _) => format!("POINTER<{}>", ptr_to.string()),
@@ -46,18 +43,6 @@ impl Type {
     }
     pub fn from_type(t: Token) -> Type {
         match t {
-            Token::I8 => Type::INTEGER(IntType {
-                val: None,
-                type_size: 1,
-            }),
-            Token::I16 => Type::INTEGER(IntType {
-                val: None,
-                type_size: 2,
-            }),
-            Token::I32 => Type::INTEGER(IntType {
-                val: None,
-                type_size: 4,
-            }),
             Token::I64 => Type::INTEGER(IntType {
                 val: None,
                 type_size: 8,

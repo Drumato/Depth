@@ -406,7 +406,7 @@ impl Parser {
     fn consume_typename(&mut self) -> Token {
         let t: Token = self.get_token();
         match t {
-            Token::I8 | Token::I16 | Token::I32 | Token::I64 | Token::CHAR => {
+            Token::I64 | Token::CHAR => {
                 self.next_token();
                 t
             }

@@ -1,4 +1,5 @@
 use super::super::ce::types::Error;
+use std::collections::HashMap;
 #[derive(Eq, PartialEq, Clone)]
 pub enum Token {
     INTEGER(i128),
@@ -86,7 +87,8 @@ impl Token {
 }
 pub fn lexing(mut input: String) -> Vec<Token> {
     let mut tokens: Vec<Token> = Vec::new();
-    while let Some((t, idx)) = tokenize(&input) {
+    let keywords: HashMap<&str, (Token, usize)> = build_keywords();
+    while let Some((t, idx)) = tokenize(&input, &keywords) {
         input.drain(..idx);
         if t.should_ignore() {
             continue;
@@ -100,12 +102,12 @@ pub fn lexing(mut input: String) -> Vec<Token> {
     tokens
 }
 
-fn tokenize(input: &String) -> Option<(Token, usize)> {
+fn tokenize(input: &String, keywords: &HashMap<&str, (Token, usize)>) -> Option<(Token, usize)> {
     if input.len() == 0 {
         return None;
     }
     match input.as_bytes()[0] as char {
-        c if c.is_alphabetic() || c == '_' || c == '.' => tokenize_keywords(input),
+        c if c.is_alphabetic() || c == '_' || c == '.' => tokenize_keywords(input, keywords),
         c if c == '0' => Some((Token::INTEGER(0), 1)),
         c if is_decimal(c) => {
             let length: usize = count_len(input, |c| c.is_ascii_digit());
@@ -134,46 +136,15 @@ fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
         }
     }
 }
-fn tokenize_keywords(input: &String) -> Option<(Token, usize)> {
+fn tokenize_keywords(
+    input: &String,
+    keywords: &HashMap<&str, (Token, usize)>,
+) -> Option<(Token, usize)> {
     let length: usize = count_len(input, |c| {
         c.is_digit(10) || c == &'_' || c.is_alphabetic() || c == &'.'
     });
-    let keywords: Vec<&str> = vec![
-        "movzx", "ret", "push", "pop", "cqo", "add", "sub", "idiv", "imul", "cmp", "setle",
-        "syscall", "call", "setl", "setge", "setg", "sete", "setne", "lea", "neg", "mov", "jmp",
-        "sal", "sar", "jz",
-    ];
-    let types: Vec<Token> = vec![
-        Token::MOVZX,
-        Token::RET,
-        Token::PUSH,
-        Token::POP,
-        Token::CQO,
-        Token::ADD,
-        Token::SUB,
-        Token::IDIV,
-        Token::IMUL,
-        Token::CMP,
-        Token::SETLE,
-        Token::SYSCALL,
-        Token::CALL,
-        Token::SETL,
-        Token::SETGE,
-        Token::SETG,
-        Token::SETE,
-        Token::SETNE,
-        Token::LEA,
-        Token::NEG,
-        Token::MOV,
-        Token::JMP,
-        Token::SAL,
-        Token::SAR,
-        Token::JZ,
-    ];
-    for (idx, k) in keywords.iter().enumerate() {
-        if input.len() >= k.to_string().len() && input[..k.to_string().len()] == k.to_string() {
-            return Some((types[idx].clone(), length));
-        }
+    if let Some(t) = keywords.get(&input[0..length]) {
+        return Some((t.0.clone(), t.1));
     }
     Some((
         Token::SYMBOL(input.chars().take(length).collect::<String>()),
@@ -185,4 +156,34 @@ fn is_decimal(ch: char) -> bool {
 }
 fn count_len(input: &String, f: fn(ch: &char) -> bool) -> usize {
     input.chars().take_while(f).collect::<String>().len()
+}
+
+fn build_keywords() -> HashMap<&'static str, (Token, usize)> {
+    let mut keywords: HashMap<&'static str, (Token, usize)> = HashMap::with_capacity(25);
+    keywords.insert("movzx", (Token::MOVZX, 5));
+    keywords.insert("ret", (Token::RET, 3));
+    keywords.insert("push", (Token::PUSH, 4));
+    keywords.insert("pop", (Token::POP, 3));
+    keywords.insert("cqo", (Token::CQO, 3));
+    keywords.insert("add", (Token::ADD, 3));
+    keywords.insert("sub", (Token::SUB, 3));
+    keywords.insert("idiv", (Token::IDIV, 4));
+    keywords.insert("imul", (Token::IMUL, 4));
+    keywords.insert("cmp", (Token::CMP, 3));
+    keywords.insert("setle", (Token::SETLE, 5));
+    keywords.insert("syscall", (Token::SYSCALL, 7));
+    keywords.insert("call", (Token::CALL, 4));
+    keywords.insert("setl", (Token::SETL, 4));
+    keywords.insert("setge", (Token::SETGE, 5));
+    keywords.insert("setg", (Token::SETG, 4));
+    keywords.insert("sete", (Token::SETE, 4));
+    keywords.insert("setne", (Token::SETNE, 5));
+    keywords.insert("lea", (Token::LEA, 3));
+    keywords.insert("neg", (Token::NEG, 3));
+    keywords.insert("mov", (Token::MOV, 3));
+    keywords.insert("jmp", (Token::JMP, 3));
+    keywords.insert("sal", (Token::SAL, 3));
+    keywords.insert("sar", (Token::SAR, 3));
+    keywords.insert("jz", (Token::JZ, 2));
+    keywords
 }

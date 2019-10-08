@@ -1,10 +1,12 @@
 use super::super::super::super::ce::types::Error;
 use super::super::token::token::Token;
+use std::collections::HashMap;
 
 type TokenLen = usize;
 pub fn lexing(mut input: String) -> Vec<Token> {
     let mut tokens: Vec<Token> = Vec::with_capacity(2048);
-    while let Some((t, idx)) = tokenize(&input) {
+    let keywords: HashMap<&str, (Token, usize)> = build_keywords();
+    while let Some((t, idx)) = tokenize(&input, &keywords) {
         input.drain(..idx);
         if t.should_ignore() {
             continue;
@@ -18,12 +20,12 @@ pub fn lexing(mut input: String) -> Vec<Token> {
     tokens
 }
 
-fn tokenize(input: &String) -> Option<(Token, TokenLen)> {
+fn tokenize(input: &String, keywords: &HashMap<&str, (Token, usize)>) -> Option<(Token, TokenLen)> {
     if input.len() == 0 {
         return None;
     }
     match input.as_bytes()[0] as char {
-        c if c.is_alphabetic() => tokenize_keywords(input),
+        c if c.is_alphabetic() => tokenize_keywords(input, keywords),
 
         c if c == '0' => Some((Token::INTEGER(0), 1)),
         c if is_decimal(c) => {
@@ -75,32 +77,13 @@ fn tokenize_symbols(input: &String) -> Option<(Token, TokenLen)> {
         }
     }
 }
-fn tokenize_keywords(input: &String) -> Option<(Token, TokenLen)> {
+fn tokenize_keywords(
+    input: &String,
+    keywords: &HashMap<&str, (Token, usize)>,
+) -> Option<(Token, TokenLen)> {
     let length: TokenLen = count_len(input, |c| c.is_digit(10) || c == &'_' || c.is_alphabetic());
-    let keywords: Vec<&str> = vec![
-        "return", "if", "else", "func", "let", "i8", "i16", "i32", "i64", "Pointer", "ch", "mut",
-        "Array", "type",
-    ];
-    let types: Vec<Token> = vec![
-        Token::RETURN,
-        Token::IF,
-        Token::ELSE,
-        Token::FUNC,
-        Token::LET,
-        Token::I8,
-        Token::I16,
-        Token::I32,
-        Token::I64,
-        Token::POINTER(Box::new(Token::EOF)),
-        Token::CHAR,
-        Token::MUT,
-        Token::ARRAY(Box::new(Token::EOF), Box::new(Token::EOF)),
-        Token::TYPE,
-    ];
-    for (idx, k) in keywords.iter().enumerate() {
-        if input.starts_with(k) {
-            return Some((types[idx].clone(), length));
-        }
+    if let Some(t) = keywords.get(&input[0..length]) {
+        return Some((t.0.clone(), t.1));
     }
     Some((
         Token::IDENT(input.chars().take(length).collect::<String>()),
@@ -122,4 +105,23 @@ fn tokenize_multisymbols(input: &String) -> Option<Token> {
         "!=" => Some(Token::NTEQ),
         _ => None,
     }
+}
+
+fn build_keywords() -> HashMap<&'static str, (Token, usize)> {
+    let mut keywords: HashMap<&str, (Token, usize)> = HashMap::with_capacity(11);
+    keywords.insert("return", (Token::RETURN, 6));
+    keywords.insert("if", (Token::IF, 2));
+    keywords.insert("else", (Token::ELSE, 4));
+    keywords.insert("func", (Token::FUNC, 4));
+    keywords.insert("let", (Token::LET, 3));
+    keywords.insert("i64", (Token::I64, 3));
+    keywords.insert("Pointer", (Token::POINTER(Box::new(Token::EOF)), 7));
+    keywords.insert("ch", (Token::CHAR, 2));
+    keywords.insert("mut", (Token::MUT, 3));
+    keywords.insert(
+        "Array",
+        (Token::ARRAY(Box::new(Token::EOF), Box::new(Token::EOF)), 5),
+    );
+    keywords.insert("type", (Token::TYPE, 4));
+    keywords
 }
