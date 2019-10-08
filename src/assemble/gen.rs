@@ -28,7 +28,7 @@ impl Generator {
                         continue;
                     }
                     self.jump_map
-                        .insert(name.to_string(), (self.codes.len(), self.codes.len()));
+                        .insert(name.to_string(), (0, self.codes.len()));
                 }
             }
         }
@@ -151,7 +151,8 @@ impl Generator {
                 self.codes.push(0xeb);
                 if let Some(Operand::SYMBOL(name)) = &info.lop {
                     if let Some(tup) = self.jump_map.get_mut(name) {
-                        tup.1 = self.codes.len() - tup.1;
+                        tup.0 = self.codes.len();
+                        tup.1 = !(self.codes.len() - tup.1) + 1;
                     } else {
                         self.jump_map
                             .insert(name.to_string(), (self.codes.len(), self.codes.len()));
@@ -163,7 +164,8 @@ impl Generator {
                 self.codes.push(0x74);
                 if let Some(Operand::SYMBOL(name)) = &info.lop {
                     if let Some(tup) = self.jump_map.get_mut(name) {
-                        tup.1 = self.codes.len() - tup.1;
+                        tup.0 = self.codes.len();
+                        tup.1 = !(self.codes.len() - tup.1) + 1;
                     } else {
                         self.jump_map
                             .insert(name.to_string(), (self.codes.len(), self.codes.len()));
