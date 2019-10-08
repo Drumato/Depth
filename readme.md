@@ -9,19 +9,21 @@ This is the main source code repository for Depth.
 
 # Details
 
-## Depth
+## compile package
 
-- **システムプログラミング言語**
-  - **厳密な型チェック**と､ **省メモリ**をコンセプトに開発中｡
+- とても強い静的型付け言語  
 - 開発言語→ **Rust**
-- 言語組み込みのライブラリ開発も視野に入れている｡  
-  - ネットワーク通信を実現するライブラリ
-  - ハッシュ化関数等
 
-## asm package
+## assemble package
 
 - **x86-64** assemblyをマシン語に変換するアセンブラ｡
-  - 後々他アーキテクチャにも対応予定
+  - 後々他アーキテクチャにも対応予定  
+- 再配置可能オブジェクトファイルを吐く  
+
+## link package  
+
+- オブジェクトファイルを実行形式に変換  
+- 現在スタティックリンクのみサポート
 
 
 ## Author's Profile
