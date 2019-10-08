@@ -15,6 +15,7 @@ pub enum Operand {
     SYMBOL(String),
     IMM(i128),
     ADDRESS(Box<Operand>, i128),
+    ELEMENT(Box<Operand>, Box<Operand>, i128, i128),
 }
 impl Operand {
     pub fn string(&self) -> String {
@@ -22,7 +23,12 @@ impl Operand {
             Operand::REG(name) => format!("reg<{}>", name),
             Operand::SYMBOL(name) => format!("symbol<{}>", name),
             Operand::IMM(value) => format!("imm<{}>", value),
-            Operand::ADDRESS(content, flag) => format!("address[{},{}]", content.string(), flag),
+            Operand::ADDRESS(content, offset) => {
+                format!("address -{}[{}]", offset, content.string())
+            }
+            Operand::ELEMENT(base, idx, size, _id) => {
+                format!("element[{} + {} * {}]", base.string(), idx.string(), size,)
+            }
         }
     }
     pub fn number(name: &str) -> u8 {
@@ -176,14 +182,43 @@ impl Parser {
                     if let Some(Operand::IMM(value)) = integer {
                         *offset = -value;
                     }
+                } else if let Some(Operand::ELEMENT(
+                    ref mut _base,
+                    ref mut _index,
+                    ref mut _scale,
+                    ref mut offset,
+                )) = address
+                {
+                    if let Some(Operand::IMM(value)) = integer {
+                        *offset = -value;
+                    }
                 }
                 address
             }
             Token::LBRACKET => {
                 self.next_token();
                 let content: Option<Operand> = self.get_operand();
-                self.next_token();
-                Some(Operand::ADDRESS(Box::new(content.unwrap()), 0))
+                let t: &Token = self.cur_token();
+                if let &Token::PLUS = t {
+                    self.next_token();
+                    let idx: Operand = self.get_operand().unwrap();
+                    self.next_token();
+                    let size: Operand = self.get_operand().unwrap();
+                    if let Operand::IMM(value) = size {
+                        self.next_token();
+                        return Some(Operand::ELEMENT(
+                            Box::new(content.unwrap()),
+                            Box::new(idx),
+                            value,
+                            0,
+                        ));
+                    } else {
+                        return None;
+                    }
+                } else {
+                    self.next_token();
+                    Some(Operand::ADDRESS(Box::new(content.unwrap()), 0))
+                }
             }
             _ => None,
         }

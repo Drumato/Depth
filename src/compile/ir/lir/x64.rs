@@ -1,5 +1,6 @@
 type REG = usize;
 type OFFSET = usize;
+type SIZE = usize;
 type SYMBOL = String;
 pub enum IR {
     PROLOGUE(OFFSET),
@@ -66,4 +67,6 @@ pub enum IR {
     CMPREG(REG),
     JZ(String),
     JMP(String),
+
+    GETELEMENT(REG, OFFSET, REG, SIZE),
 }

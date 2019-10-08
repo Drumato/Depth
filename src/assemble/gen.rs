@@ -169,6 +169,14 @@ impl Generator {
                             self.codes.push(0x8b); // mov r64, r/m64
                             self.codes.push(modrm);
                             self.codes.push(*offset as u8);
+                        } else if let Some(Operand::ELEMENT(base, idx, scale, offset)) = &info.rop {
+                            //44 e5 e8
+                            let modrm: u8 = self.set_modrm(&info.lop, &info.rop);
+                            self.codes.push(0x8b); // mov r64, r/m64
+                            self.codes.push(modrm);
+                            self.codes
+                                .push(self.set_sib_byte(base.deref(), idx.deref(), *scale));
+                            self.codes.push(*offset as u8);
                         } else {
                             let modrm: u8 = self.set_modrm(&info.lop, &info.rop); // with RM
                             self.codes.push(0x89); // mov reg, reg
@@ -388,8 +396,20 @@ impl Generator {
                 }
             }
             Some(Operand::ADDRESS(content, _)) => {
-                rexprefix = 0x40;
                 if let Operand::REG(name) = content.deref() {
+                    if name.starts_with("r") {
+                        rexprefix |= 0x08;
+                    }
+                    match name.as_str() {
+                        "r8" | "r9" | "r10" | "r11" | "r12" | "r13" | "r14" | "r15" => {
+                            rexprefix |= 0x01;
+                        }
+                        _ => (),
+                    }
+                }
+            }
+            Some(Operand::ELEMENT(base, ind, _scale, _off)) => {
+                if let Operand::REG(name) = base.deref() {
                     if name.starts_with("r") {
                         rexprefix |= 0x08;
                     }
@@ -405,12 +425,20 @@ impl Generator {
         }
         rexprefix
     }
+
+    fn set_sib_byte(&self, base: &Operand, idx: &Operand, _scale: i128) -> u8 {
+        let mut sib: u8 = 0xc0;
+        if let Operand::REG(name) = base {
+            sib |= Operand::number(name);
+        }
+        if let Operand::REG(name) = idx {
+            sib |= Operand::number(name) << 3;
+        }
+        sib
+    }
     fn set_modrm(&self, lop: &Option<Operand>, rop: &Option<Operand>) -> u8 {
         // mod(2 bits) | reg(3 bits) | r/m(3 bits)
         let mut modrm: u8 = 0xc0; // the mod filed of modr/m
-        if let Some(Operand::ADDRESS(_content, _offset)) = lop {
-            modrm = 0x40;
-        }
         match lop {
             Some(Operand::ADDRESS(content, _offset)) => {
                 modrm = 0x40;
@@ -432,6 +460,13 @@ impl Generator {
                         modrm = 0x40;
                         modrm |= Operand::number(name) << 3;
                         if let Operand::REG(name) = content.deref() {
+                            modrm |= Operand::number(name);
+                        }
+                    }
+                    Some(Operand::ELEMENT(_base, ind, _scale, _)) => {
+                        modrm = 0x40;
+                        modrm |= Operand::number(name) << 3;
+                        if let Operand::REG(name) = ind.deref() {
                             modrm |= Operand::number(name);
                         }
                     }

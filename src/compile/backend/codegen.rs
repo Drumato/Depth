@@ -47,14 +47,20 @@ impl Generator {
                         self.lirs.push(x64::IR::RETURNREG(*phys));
                     } else if let Operand::INTLIT(value) = op {
                         self.lirs.push(x64::IR::RETURNIMM(*value));
-                    } else if let Operand::ID(_name, phys, oind) = op {
+                    } else if let Operand::ID(_name, offset, oind) = op {
                         if let Some(bop) = oind {
-                            if let Operand::INTLIT(idx) = *bop.clone() {
+                            let ind_op: Operand = *bop.clone();
+                            if let Operand::INTLIT(idx) = &ind_op {
                                 self.lirs
-                                    .push(x64::IR::RETURNMEM(*phys - (idx as usize) * 8));
+                                    .push(x64::IR::RETURNMEM(*offset - (*idx as usize) * 8));
+                            } else if let Operand::ID(_n, off, _oind) = &ind_op {
+                                self.lirs.push(x64::IR::LOADMEM(9, *off));
+                                self.lirs.push(x64::IR::GETELEMENT(0, *offset, 9, 8));
+                                self.lirs.push(x64::IR::RETURNREG(0));
+                                // 8 will eliminate
                             }
                         } else {
-                            self.lirs.push(x64::IR::RETURNMEM(*phys));
+                            self.lirs.push(x64::IR::RETURNMEM(*offset));
                         }
                     } else if let Operand::CALL(name, _length) = op {
                         self.lirs.push(x64::IR::RETURNCALL(name.to_owned()));
@@ -71,9 +77,11 @@ impl Generator {
                                 } else if let Operand::INTLIT(v) = op {
                                     self.lirs
                                         .push(x64::IR::STOREIMM(*offset - (idx as usize) * 8, *v));
-                                } else if let Operand::ID(_name, p, _oind) = op {
-                                    self.lirs
-                                        .push(x64::IR::STOREMEM(*offset - (idx as usize) * 8, *p));
+                                } else if let Operand::ID(_name, off, _oind) = op {
+                                    self.lirs.push(x64::IR::STOREMEM(
+                                        *offset - (idx as usize) * 8,
+                                        *off,
+                                    ));
                                 } else if let Operand::CALL(name, _length) = op {
                                     self.lirs.push(x64::IR::STORECALL(
                                         *offset - (idx as usize) * 8,
@@ -979,6 +987,16 @@ impl Generator {
                 }
                 x64::IR::JZ(label) => {
                     out += &(format!("  jz {}\n", label).as_str());
+                }
+                x64::IR::GETELEMENT(dst, off, src, size) => {
+                    out += &(format!(
+                        "  mov {}, -{}[rbp + {} * {}]\n",
+                        gr(dst),
+                        off,
+                        gr(src),
+                        size
+                    )
+                    .as_str());
                 }
             }
         }

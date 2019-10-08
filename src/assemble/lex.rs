@@ -3,6 +3,8 @@ use std::collections::HashMap;
 #[derive(Eq, PartialEq, Clone)]
 pub enum Token {
     INTEGER(i128),
+    PLUS,
+    STAR,
     COLON,
     COMMA,
     MINUS,
@@ -76,6 +78,8 @@ impl Token {
             Token::INTEGER(num) => format!("INTEGER<{}>", num),
             Token::COLON => "COLON".to_string(),
             Token::COMMA => "COMMA".to_string(),
+            Token::PLUS => "PLUS".to_string(),
+            Token::STAR => "STAR".to_string(),
             Token::MINUS => "MINUS".to_string(),
             Token::LBRACKET => "LBRACKET".to_string(),
             Token::RBRACKET => "RBRACKET".to_string(),
@@ -122,6 +126,8 @@ fn tokenize(input: &String, keywords: &HashMap<&str, (Token, usize)>) -> Option<
 }
 fn tokenize_symbols(input: &String) -> Option<(Token, usize)> {
     match input.as_bytes()[0] as char {
+        '+' => Some((Token::PLUS, 1)),
+        '*' => Some((Token::STAR, 1)),
         ':' => Some((Token::COLON, 1)),
         '[' => Some((Token::LBRACKET, 1)),
         ']' => Some((Token::RBRACKET, 1)),
