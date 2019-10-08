@@ -252,22 +252,24 @@ fn dump_inst(
                 a::parse::Inst::BINARG(num)
                 | a::parse::Inst::UNARG(num)
                 | a::parse::Inst::NOARG(num) => num,
+                a::parse::Inst::LABEL(num, _) => num,
             };
-            let info: &a::parse::Info = info_map.get(num).unwrap();
-            let lop_string: String = match &info.lop {
-                Some(l) => l.string(),
-                None => "".to_string(),
-            };
-            let rop_string: String = match &info.rop {
-                Some(r) => r.string(),
-                None => "".to_string(),
-            };
-            eprintln!(
-                "  instname->'{}' lop->'{}' rop->'{}' ",
-                info.inst_name.bold().blue(),
-                lop_string.green(),
-                rop_string.green(),
-            );
+            if let Some(info) = info_map.get(num) {
+                let lop_string: String = match &info.lop {
+                    Some(l) => l.string(),
+                    None => "".to_string(),
+                };
+                let rop_string: String = match &info.rop {
+                    Some(r) => r.string(),
+                    None => "".to_string(),
+                };
+                eprintln!(
+                    "  instname->'{}' lop->'{}' rop->'{}' ",
+                    info.inst_name.bold().blue(),
+                    lop_string.green(),
+                    rop_string.green(),
+                );
+            }
         }
     }
 }

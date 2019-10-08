@@ -22,7 +22,7 @@ def make():
 
 
 def test_compile():
-    print(f"{Color.GREEN}++++++++++++++++test-compile++++++++++++++++{Color.CLEAR}")
+    print(f"{Color.GREEN}++++++++++++++++test-link++++++++++++++++{Color.CLEAR}")
     f = open("test/testc/expect.txt", "r")
     content = f.read()
     cases = {}
@@ -51,8 +51,6 @@ if __name__ == "__main__":
     test_compile()
     compile_time = time.time() - start
     start = time.time()
-    test_link()
-    link_time = time.time() - start
     print(
         f"test-only-compile time -> {Color.BLUE}{round(compile_time,2)}{Color.CLEAR}s"
     )

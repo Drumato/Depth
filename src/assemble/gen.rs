@@ -2,9 +2,13 @@ use super::super::object::elf::elf64::Rela;
 use super::parse::{Info, Inst, Operand};
 use std::collections::BTreeMap;
 use std::ops::Deref;
+type LabelName = String;
+type CodeIndex = usize;
+type Offset = usize;
 struct Generator {
     insts: Vec<Inst>,
     info_map: BTreeMap<usize, Info>,
+    jump_map: BTreeMap<LabelName, (CodeIndex, Offset)>,
     codes: Vec<u8>,
     rels_map: BTreeMap<String, Rela>,
     symbol_map: BTreeMap<String, Vec<u8>>,
@@ -17,6 +21,36 @@ impl Generator {
             match inst {
                 &Inst::BINARG(num) | &Inst::UNARG(num) | &Inst::NOARG(num) => {
                     self.gen_inst(&num);
+                }
+                Inst::LABEL(_, name) => {
+                    if let Some(tup) = self.jump_map.get_mut(name) {
+                        tup.1 = self.codes.len() - tup.1;
+                        continue;
+                    }
+                    self.jump_map
+                        .insert(name.to_string(), (self.codes.len(), self.codes.len()));
+                }
+            }
+        }
+        for inst in insts.iter() {
+            if let Inst::UNARG(num) = inst {
+                let info: &Info = self.info_map.get(&num).unwrap();
+                match info.inst_name.as_str() {
+                    "jmp" => {
+                        if let Some(Operand::SYMBOL(name)) = &info.lop {
+                            if let Some(tup) = self.jump_map.get(name) {
+                                self.codes[tup.0] = tup.1 as u8 - 1;
+                            }
+                        }
+                    }
+                    "jz" => {
+                        if let Some(Operand::SYMBOL(name)) = &info.lop {
+                            if let Some(tup) = self.jump_map.get(name) {
+                                self.codes[tup.0] = tup.1 as u8 - 1;
+                            }
+                        }
+                    }
+                    _ => (),
                 }
             }
         }
@@ -65,6 +99,10 @@ impl Generator {
                         self.codes.push(0x83);
                         self.codes.push(self.set_modrm(&info.rop, &info.lop) | 0x38); // ModR/M with MR
                         self.codes.push(value as u8)
+                    } else if let Some(Operand::ADDRESS(_content, offset)) = &info.rop {
+                        self.codes.push(0x3b);
+                        self.codes.push(self.set_modrm(&info.rop, &info.lop)); // ModR/M with MR
+                        self.codes.push(*offset as u8);
                     } else {
                         self.codes.push(0x3b);
                         self.codes.push(self.set_modrm(&info.rop, &info.lop)); // ModR/M with MR
@@ -110,36 +148,28 @@ impl Generator {
                 }
             }
             "jmp" => {
-                self.codes.push(0x48);
-                self.codes.push(0xc7);
-                self.codes.push(0xc0);
+                self.codes.push(0xeb);
                 if let Some(Operand::SYMBOL(name)) = &info.lop {
-                    if let Some(rela) = self.rels_map.get_mut(name) {
-                        rela.r_offset = self.offset + self.codes.len() as u64;
-                    }
-                    if let None = self.symbol_map.get(name) {
-                        self.symbol_map.insert(name.to_string(), Vec::new());
+                    if let Some(tup) = self.jump_map.get_mut(name) {
+                        tup.1 = self.codes.len() - tup.1;
+                    } else {
+                        self.jump_map
+                            .insert(name.to_string(), (self.codes.len(), self.codes.len()));
                     }
                 }
-                self.gen_immediate(0x00);
-                self.codes.push(0xff);
-                self.codes.push(0xe0);
+                self.codes.push(0x00);
             }
             "jz" => {
-                self.codes.push(0x48);
-                self.codes.push(0xc7);
-                self.codes.push(0xc0);
+                self.codes.push(0x74);
                 if let Some(Operand::SYMBOL(name)) = &info.lop {
-                    if let Some(rela) = self.rels_map.get_mut(name) {
-                        rela.r_offset = self.offset + self.codes.len() as u64;
-                    }
-                    if let None = self.symbol_map.get(name) {
-                        self.symbol_map.insert(name.to_string(), Vec::new());
+                    if let Some(tup) = self.jump_map.get_mut(name) {
+                        tup.1 = self.codes.len() - tup.1;
+                    } else {
+                        self.jump_map
+                            .insert(name.to_string(), (self.codes.len(), self.codes.len()));
                     }
                 }
-                self.gen_immediate(0x00);
-                self.codes.push(0xff);
-                self.codes.push(0xe0);
+                self.codes.push(0x00);
             }
             "lea" => {
                 self.codes.push(self.set_rexprefix(&info.lop, &info.rop));
@@ -491,6 +521,7 @@ pub fn generate(
         codes: Vec::new(),
         rels_map: rels_map,
         symbol_map: BTreeMap::new(),
+        jump_map: BTreeMap::new(),
         offset: 0,
     };
     for (symbol, insts) in inst_map.iter() {

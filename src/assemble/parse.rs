@@ -9,6 +9,7 @@ pub enum Inst {
     BINARG(usize),
     UNARG(usize),
     NOARG(usize),
+    LABEL(usize, String),
 }
 pub enum Operand {
     REG(String),
@@ -81,8 +82,10 @@ struct Parser {
 impl Parser {
     fn parse(&mut self) {
         loop {
-            let n: String = if let Token::SYMBOL(name) = self.cur_token() {
-                name.to_string()
+            let t: &Token = self.cur_token();
+            let n: String;
+            if let Token::SYMBOL(name) = t {
+                n = name.to_string();
             } else {
                 break;
             };
@@ -128,7 +131,9 @@ impl Parser {
                 let mut info: Info = Info::new(inst.string());
                 info.lop = self.get_operand();
                 if let Some(Operand::SYMBOL(name)) = &info.lop {
-                    self.rels.insert(name.to_string(), Rela::new());
+                    if !name.starts_with(".") {
+                        self.rels.insert(name.to_string(), Rela::new());
+                    }
                 }
                 self.info_map.insert(entry, info);
                 Some(())
@@ -152,6 +157,17 @@ impl Parser {
                 info.rop = self.get_operand();
                 self.info_map.insert(entry, info);
                 Some(())
+            }
+            Token::SYMBOL(name) => {
+                if name.starts_with(".") {
+                    let entry: usize = self.entry;
+                    self.insts.push(Inst::LABEL(entry, name.to_string()));
+                    self.next_token();
+                    self.next_token();
+                    Some(())
+                } else {
+                    None
+                }
             }
             _ => None,
         }
