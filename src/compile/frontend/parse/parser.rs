@@ -91,22 +91,16 @@ impl Parser {
         f
     }
     fn stmt(&mut self) -> Node {
-        if let Token::RETURN = self.cur_token() {
-            return self.parse_return();
+        let t: &Token = self.cur_token();
+        match t {
+            &Token::RETURN => self.parse_return(),
+            &Token::IF => self.parse_if(),
+            &Token::LBRACE => self.parse_block(),
+            &Token::LET => self.parse_let(),
+            &Token::IDENT(_) => self.parse_assign(),
+            &Token::CONDLOOP => self.parse_condloop(),
+            _ => self.expr(),
         }
-        if let Token::IF = self.cur_token() {
-            return self.parse_if();
-        }
-        if let Token::LBRACE = self.cur_token() {
-            return self.parse_block();
-        }
-        if let Token::LET = self.cur_token() {
-            return self.parse_let();
-        }
-        if let Token::IDENT(_) = self.cur_token() {
-            return self.parse_assign();
-        }
-        self.expr()
     }
     fn expr(&mut self) -> Node {
         self.equal()
@@ -135,6 +129,12 @@ impl Parser {
             return Node::IF(Box::new(cond), Box::new(stmt), None);
         }
         Node::IF(Box::new(cond), Box::new(stmt), Some(Box::new(self.stmt())))
+    }
+    fn parse_condloop(&mut self) -> Node {
+        self.next_token();
+        let cond: Node = self.expr();
+        let stmt: Node = self.stmt();
+        Node::CONDLOOP(Box::new(cond), Box::new(stmt))
     }
     fn parse_block(&mut self) -> Node {
         self.compound_stmt()

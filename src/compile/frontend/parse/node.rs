@@ -14,6 +14,7 @@ pub enum Node {
     IDENT(String),
     RETURN(Child),
     IF(Child, Child, Option<Child>), // condition, block,else
+    CONDLOOP(Child, Child),          // condition, block
     BLOCK(Vec<Child>),
     LET(String, Token, Child), // ident_name,type,expression
     ASSIGN(String, Child),
@@ -44,13 +45,16 @@ impl Node {
             Node::RETURN(expr) => format!("RETURN({})", expr.string()),
             Node::IF(cond, stmt, alter) => match alter {
                 Some(else_block) => format!(
-                    "IF({}) \n\t({}) ELSE \n\t({})",
+                    "IF({}) \n\t({})\nELSE \n\t({})",
                     cond.string(),
                     stmt.string(),
                     else_block.string(),
                 ),
                 None => format!("IF({}) \n\t({}) ", cond.string(), stmt.string()),
             },
+            Node::CONDLOOP(cond, stmt) => {
+                format!("CONDLOOP({}) \n\t({}) ", cond.string(), stmt.string())
+            }
             Node::BLOCK(bstmts) => {
                 let stmts: String = bstmts
                     .into_iter()

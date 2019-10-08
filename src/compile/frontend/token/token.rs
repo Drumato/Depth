@@ -21,6 +21,7 @@ pub enum Token {
     GTEQ,
     EQ,
     NTEQ,
+    SEMICOLON,
     COLON,
     COMMA,
     AMPERSAND,
@@ -31,6 +32,7 @@ pub enum Token {
     RETURN,
     IF,
     ELSE,
+    CONDLOOP,
     LET,
     MUT,
     I64,
@@ -66,6 +68,7 @@ impl Token {
             Token::GTEQ => "GREATERTHANEQUAL".to_string(),
             Token::EQ => "EQUAL".to_string(),
             Token::NTEQ => "NOTEQUAL".to_string(),
+            Token::SEMICOLON => "SEMICOLON".to_string(),
             Token::COLON => "COLON".to_string(),
             Token::COMMA => "COMMA".to_string(),
             Token::AMPERSAND => "AMPERSAND".to_string(),
@@ -76,6 +79,7 @@ impl Token {
             Token::IDENT(name) => format!("IDENTIFIER<{}>", name),
             Token::IF => "IF".to_string(),
             Token::ELSE => "ELSE".to_string(),
+            Token::CONDLOOP => "CONDLOOP".to_string(),
             Token::LET => "LET".to_string(),
             Token::MUT => "MUTABLE".to_string(),
             Token::I64 => "i64".to_string(),
@@ -111,6 +115,7 @@ impl Token {
         match token {
             Token::LET
             | Token::LBRACE
+            | Token::CONDLOOP
             | Token::RETURN
             | Token::IF
             | Token::IDENT(_)

@@ -408,7 +408,7 @@ impl Generator {
                     }
                 }
             }
-            Some(Operand::ELEMENT(base, ind, _scale, _off)) => {
+            Some(Operand::ELEMENT(base, _ind, _scale, _off)) => {
                 if let Operand::REG(name) = base.deref() {
                     if name.starts_with("r") {
                         rexprefix |= 0x08;

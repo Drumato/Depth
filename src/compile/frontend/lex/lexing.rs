@@ -66,6 +66,7 @@ fn tokenize_symbols(input: &String) -> Option<(Token, TokenLen)> {
         '<' => Some((Token::LT, 1)),
         '>' => Some((Token::GT, 1)),
         ':' => Some((Token::COLON, 1)),
+        ';' => Some((Token::SEMICOLON, 1)),
         ',' => Some((Token::COMMA, 1)),
         '=' => Some((Token::ASSIGN, 1)),
         ' ' => Some((Token::BLANK, count_len(input, |c| c == &' '))),
@@ -108,7 +109,7 @@ fn tokenize_multisymbols(input: &String) -> Option<Token> {
 }
 
 fn build_keywords() -> HashMap<&'static str, (Token, usize)> {
-    let mut keywords: HashMap<&str, (Token, usize)> = HashMap::with_capacity(11);
+    let mut keywords: HashMap<&str, (Token, usize)> = HashMap::with_capacity(12);
     keywords.insert("return", (Token::RETURN, 6));
     keywords.insert("if", (Token::IF, 2));
     keywords.insert("else", (Token::ELSE, 4));
@@ -123,5 +124,6 @@ fn build_keywords() -> HashMap<&'static str, (Token, usize)> {
         (Token::ARRAY(Box::new(Token::EOF), Box::new(Token::EOF)), 5),
     );
     keywords.insert("type", (Token::TYPE, 4));
+    keywords.insert("condloop", (Token::CONDLOOP, 8));
     keywords
 }

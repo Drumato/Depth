@@ -45,6 +45,15 @@ impl FrontManager {
                     self.add(Tac::LABEL(format!(".L{}", self.label - 1)));
                 }
             }
+            Node::CONDLOOP(bcond, block) => {
+                self.add(Tac::LABEL(format!(".L{}", self.label)));
+                self.label += 1;
+                let cond_op: Operand = self.gen_expr(*bcond.clone()).unwrap();
+                self.add(Tac::IFF(cond_op, format!(".L{}", self.label)));
+                self.gen_stmt(*block.clone());
+                self.add(Tac::GOTO(format!(".L{}", self.label - 1)));
+                self.add(Tac::LABEL(format!(".L{}", self.label)));
+            }
             Node::LET(name, _, bexpr) => {
                 let expr_op: Operand = self.gen_expr(*bexpr.clone()).unwrap();
                 let mut stack_offset = 0;
