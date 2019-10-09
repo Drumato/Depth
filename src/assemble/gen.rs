@@ -97,7 +97,7 @@ impl Generator {
                 if let Some(Operand::REG(_reg)) = &info.lop {
                     if let Some(Operand::IMM(value)) = info.rop {
                         self.codes.push(0x83);
-                        self.codes.push(self.set_modrm(&info.rop, &info.lop) | 0x38); // ModR/M with MR
+                        self.codes.push(self.set_modrm(&info.lop, &info.rop) | 0x38); // ModR/M with MR
                         self.codes.push(value as u8)
                     } else if let Some(Operand::ADDRESS(_content, offset)) = &info.rop {
                         self.codes.push(0x3b);

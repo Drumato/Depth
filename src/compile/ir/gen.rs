@@ -33,26 +33,31 @@ impl FrontManager {
             }
             Node::IF(bcond, block, oalter) => {
                 let cond_op: Operand = self.gen_expr(*bcond.clone()).unwrap();
-                self.add(Tac::IFF(cond_op, format!(".L{}", self.label)));
+                let label: usize = self.label;
+                self.add(Tac::IFF(cond_op, format!(".L{}", label)));
                 self.label += 1;
                 self.gen_stmt(*block.clone());
                 if let Some(balter) = oalter {
                     self.add(Tac::GOTO(format!(".L{}", self.label)));
                     self.add(Tac::LABEL(format!(".L{}", self.label - 1)));
+                    self.label += 1;
                     self.gen_stmt(*balter.clone());
-                    self.add(Tac::LABEL(format!(".L{}", self.label)));
-                } else {
                     self.add(Tac::LABEL(format!(".L{}", self.label - 1)));
+                } else {
+                    self.add(Tac::LABEL(format!(".L{}", label)));
                 }
             }
             Node::CONDLOOP(bcond, block) => {
-                self.add(Tac::LABEL(format!(".L{}", self.label)));
+                let loop_label: usize = self.label;
+                self.add(Tac::LABEL(format!(".L{}", loop_label)));
                 self.label += 1;
                 let cond_op: Operand = self.gen_expr(*bcond.clone()).unwrap();
-                self.add(Tac::IFF(cond_op, format!(".L{}", self.label)));
+                let break_label: usize = self.label;
+                self.add(Tac::IFF(cond_op, format!(".L{}", break_label)));
+                self.label += 1;
                 self.gen_stmt(*block.clone());
-                self.add(Tac::GOTO(format!(".L{}", self.label - 1)));
-                self.add(Tac::LABEL(format!(".L{}", self.label)));
+                self.add(Tac::GOTO(format!(".L{}", loop_label)));
+                self.add(Tac::LABEL(format!(".L{}", break_label)));
             }
             Node::LET(name, _, bexpr) => {
                 let expr_op: Operand = self.gen_expr(*bexpr.clone()).unwrap();
