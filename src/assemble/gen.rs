@@ -39,14 +39,18 @@ impl Generator {
                     "jmp" => {
                         if let Some(Operand::SYMBOL(name)) = &info.lop {
                             if let Some(tup) = self.jump_map.get(name) {
-                                self.codes[tup.0] = tup.1 as u8 - 1;
+                                for (idx, b) in (tup.1 as u32).to_le_bytes().iter().enumerate() {
+                                    self.codes[idx + tup.0] = *b;
+                                }
                             }
                         }
                     }
                     "jz" => {
                         if let Some(Operand::SYMBOL(name)) = &info.lop {
                             if let Some(tup) = self.jump_map.get(name) {
-                                self.codes[tup.0] = tup.1 as u8 - 1;
+                                for (idx, b) in (tup.1 as u32).to_le_bytes().iter().enumerate() {
+                                    self.codes[idx + tup.0] = *b;
+                                }
                             }
                         }
                     }
@@ -96,9 +100,9 @@ impl Generator {
                 self.codes.push(self.set_rexprefix(&info.lop, &info.rop));
                 if let Some(Operand::REG(_reg)) = &info.lop {
                     if let Some(Operand::IMM(value)) = info.rop {
-                        self.codes.push(0x83);
+                        self.codes.push(0x81);
                         self.codes.push(self.set_modrm(&info.lop, &info.rop) | 0x38); // ModR/M with MR
-                        self.codes.push(value as u8)
+                        self.gen_immediate(value);
                     } else if let Some(Operand::ADDRESS(_content, offset)) = &info.rop {
                         self.codes.push(0x3b);
                         self.codes.push(self.set_modrm(&info.rop, &info.lop)); // ModR/M with MR
@@ -148,7 +152,7 @@ impl Generator {
                 }
             }
             "jmp" => {
-                self.codes.push(0xeb);
+                self.codes.push(0xe9);
                 if let Some(Operand::SYMBOL(name)) = &info.lop {
                     if let Some(tup) = self.jump_map.get_mut(name) {
                         tup.0 = self.codes.len();
@@ -158,10 +162,11 @@ impl Generator {
                             .insert(name.to_string(), (self.codes.len(), self.codes.len()));
                     }
                 }
-                self.codes.push(0x00);
+                self.gen_immediate(0x00);
             }
             "jz" => {
-                self.codes.push(0x74);
+                self.codes.push(0x0f);
+                self.codes.push(0x84);
                 if let Some(Operand::SYMBOL(name)) = &info.lop {
                     if let Some(tup) = self.jump_map.get_mut(name) {
                         tup.0 = self.codes.len();
@@ -171,7 +176,7 @@ impl Generator {
                             .insert(name.to_string(), (self.codes.len(), self.codes.len()));
                     }
                 }
-                self.codes.push(0x00);
+                self.gen_immediate(0x00);
             }
             "lea" => {
                 self.codes.push(self.set_rexprefix(&info.lop, &info.rop));
