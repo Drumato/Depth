@@ -159,7 +159,7 @@ impl Generator {
                         tup.1 = !(self.codes.len() - tup.1) + 1;
                     } else {
                         self.jump_map
-                            .insert(name.to_string(), (self.codes.len(), self.codes.len()));
+                            .insert(name.to_string(), (self.codes.len(), self.codes.len() + 3));
                     }
                 }
                 self.gen_immediate(0x00);
@@ -173,7 +173,7 @@ impl Generator {
                         tup.1 = !(self.codes.len() - tup.1) + 1;
                     } else {
                         self.jump_map
-                            .insert(name.to_string(), (self.codes.len(), self.codes.len()));
+                            .insert(name.to_string(), (self.codes.len(), self.codes.len() + 3));
                     }
                 }
                 self.gen_immediate(0x00);
