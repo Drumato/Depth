@@ -131,6 +131,7 @@ fn build_keywords() -> HashMap<&'static str, (Token, usize)> {
     keywords.insert("Pointer", (Token::POINTER(Box::new(Token::EOF)), 7));
     keywords.insert("ch", (Token::CHAR, 2));
     keywords.insert("mut", (Token::MUT, 3));
+    keywords.insert("goto", (Token::GOTO, 4));
     keywords.insert(
         "Array",
         (Token::ARRAY(Box::new(Token::EOF), Box::new(Token::EOF)), 5),

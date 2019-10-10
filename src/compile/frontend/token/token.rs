@@ -35,6 +35,7 @@ pub enum Token {
     CONDLOOP,
     LET,
     MUT,
+    GOTO,
     I64,
     POINTER(Box<Token>),
     ARRAY(Box<Token>, Box<Token>),
@@ -109,6 +110,7 @@ impl Token {
             Token::EQ => "==".to_string(),
             Token::NTEQ => "!=".to_string(),
             Token::AMPERSAND => "&".to_string(),
+            Token::GOTO => "GOTO".to_string(),
             _ => "(inv)".to_string(),
         }
     }
@@ -117,8 +119,10 @@ impl Token {
             Token::LET
             | Token::LBRACE
             | Token::CONDLOOP
+            | Token::COLON
             | Token::RETURN
             | Token::IF
+            | Token::GOTO
             | Token::IDENT(_)
             | Token::LPAREN
             | Token::INTEGER(_) => Some(()),

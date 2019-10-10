@@ -21,6 +21,8 @@ pub enum Node {
     DEFARG(String, Token),
     INDEX(Child, Child),
     ARRAYLIT(Vec<Node>, usize),
+    LABEL(String),
+    GOTO(String),
     INVALID,
 }
 impl Node {
@@ -82,6 +84,8 @@ impl Node {
             Node::CHARLIT(char_val) => format!("CHARLIT<{}>", char_val),
             Node::IDENT(ident_name) => format!("IDENT<{}>", ident_name),
             Node::DEFARG(arg, ty) => format!("DEFARG<{},{}>", arg, ty.string()),
+            Node::LABEL(label) => format!("LABEL<{}>", label),
+            Node::GOTO(label) => format!("GOTO<{}>", label),
         }
     }
 }

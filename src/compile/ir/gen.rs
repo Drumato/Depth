@@ -84,6 +84,12 @@ impl FrontManager {
                     self.gen_stmt(*st.clone());
                 }
             }
+            Node::LABEL(label) => {
+                self.add(Tac::LABEL(format!(".L{}", label)));
+            }
+            Node::GOTO(label) => {
+                self.add(Tac::GOTO(format!(".L{}", label)));
+            }
             _ => (),
         }
     }

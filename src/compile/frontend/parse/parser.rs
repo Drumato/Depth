@@ -99,11 +99,26 @@ impl Parser {
             &Token::LET => self.parse_let(),
             &Token::IDENT(_) => self.parse_assign(),
             &Token::CONDLOOP => self.parse_condloop(),
+            &Token::COLON => self.parse_label(),
+            &Token::GOTO => self.parse_goto(),
             _ => self.expr(),
         }
     }
     fn expr(&mut self) -> Node {
         self.equal()
+    }
+    fn parse_label(&mut self) -> Node {
+        self.next_token();
+        let label: String = self.consume_ident();
+        Node::LABEL(label)
+    }
+    fn parse_goto(&mut self) -> Node {
+        self.next_token();
+        if !self.consume(&Token::COLON) {
+            Error::PARSE.found(&"labelname must be started colon".to_string());
+        }
+        let label: String = self.consume_ident();
+        Node::GOTO(label)
     }
     fn parse_return(&mut self) -> Node {
         if self.consume(&Token::RETURN) {
