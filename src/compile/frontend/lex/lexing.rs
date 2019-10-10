@@ -35,6 +35,18 @@ fn tokenize(input: &String, keywords: &HashMap<&str, (Token, usize)>) -> Option<
                 length,
             ))
         }
+        '/' => {
+            if input.as_bytes()[1] as char == '/' {
+                let length: TokenLen = input
+                    .chars()
+                    .take_while(|c| c != &'\n')
+                    .collect::<String>()
+                    .len()
+                    + 1;
+                return Some((Token::COMMENT, length));
+            }
+            tokenize_symbols(input)
+        }
         '\'' => {
             let char_val: char = input[1..].as_bytes()[0] as char;
             Some((Token::CHARLIT(char_val), 3))

@@ -43,6 +43,7 @@ pub enum Token {
     EOF,
     BLANK,
     LF,
+    COMMENT,
 }
 impl Token {
     pub fn string(&self) -> String {
@@ -131,7 +132,7 @@ impl Token {
     }
     pub fn should_ignore(&self) -> bool {
         match self {
-            Token::BLANK | Token::LF => true,
+            Token::BLANK | Token::LF | Token::COMMENT => true,
             _ => false,
         }
     }
