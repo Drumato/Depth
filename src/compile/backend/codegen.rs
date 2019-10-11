@@ -47,8 +47,15 @@ impl Generator {
                         self.lirs.push(x64::IR::RETURNREG(*phys));
                     } else if let Operand::INTLIT(value) = op {
                         self.lirs.push(x64::IR::RETURNIMM(*value));
-                    } else if let Operand::ID(_name, offset, _oind) = op {
-                        self.lirs.push(x64::IR::RETURNMEM(*offset));
+                    } else if let Operand::ID(_name, offset, oind) = op {
+                        if let Some(ind_op) = oind {
+                            if let Operand::INTLIT(value) = *ind_op.clone() {
+                                self.lirs
+                                    .push(x64::IR::RETURNMEM(*offset - value as usize * 8));
+                            }
+                        } else {
+                            self.lirs.push(x64::IR::RETURNMEM(*offset));
+                        }
                     } else if let Operand::CALL(name, _length) = op {
                         self.lirs.push(x64::IR::RETURNCALL(name.to_owned()));
                     }
@@ -722,38 +729,23 @@ impl Generator {
                     out += &(format!("  mov {}, rax\n", gr(dst)).as_str());
                 }
                 x64::IR::MODREG(dst, src) => {
-                    out += "  push rax\n";
-                    out += "  push rdx\n";
                     out += &(format!("  mov rax, {}\n", gr(dst)).as_str());
                     out += "  cqo\n";
                     out += &(format!("  idiv {}\n", gr(src)).as_str());
-                    out += "  mov r12, rdx\n";
-                    out += "  pop r13\n";
-                    out += "  pop r13\n";
-                    out += &(format!("  mov {}, r12\n", gr(dst)).as_str());
+                    out += &(format!("  mov {}, rdx\n", gr(dst)).as_str());
                 }
                 x64::IR::MODIMM(dst, value) => {
-                    out += "  push rax\n";
-                    out += "  push rdx\n";
                     out += &(format!("  mov rax, {}\n", gr(dst)).as_str());
                     out += "  cqo\n";
-                    out += &(format!("  mov r12, {}\n", value).as_str());
-                    out += "  idiv r12\n";
-                    out += "  mov r12, rdx\n";
-                    out += "  pop r13\n";
-                    out += "  pop r13\n";
-                    out += &(format!("  mov {}, r12\n", gr(dst)).as_str());
+                    out += &(format!("  mov rcx, {}\n", value).as_str());
+                    out += "  idiv rcx\n";
+                    out += &(format!("  mov {}, rdx\n", gr(dst)).as_str());
                 }
                 x64::IR::MODMEM(dst, offset) => {
-                    out += "  push rax\n";
-                    out += "  push rdx\n";
                     out += &(format!("  mov rax, {}\n", gr(dst)).as_str());
                     out += "  cqo\n";
                     out += &(format!("  idiv -{}[rbp]\n", offset).as_str());
-                    out += "  mov r12, rdx\n";
-                    out += "  pop r13\n";
-                    out += "  pop r13\n";
-                    out += &(format!("  mov {}, r12\n", gr(dst)).as_str());
+                    out += &(format!("  mov {}, rdx\n", gr(dst)).as_str());
                 }
                 x64::IR::LSHIFTREG(dst, src) => {
                     out += "  push rcx\n";
