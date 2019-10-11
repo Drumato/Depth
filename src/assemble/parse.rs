@@ -48,12 +48,6 @@ impl Operand {
             }
         }
     }
-    pub fn reg_number(&self) -> u8 {
-        match self {
-            Operand::REG(name) => Operand::number(name.as_str()),
-            _ => 100,
-        }
-    }
 }
 pub struct Info {
     pub inst_name: String,
