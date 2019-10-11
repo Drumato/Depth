@@ -704,22 +704,22 @@ impl Generator {
                     out += &(format!("  imul {}, -{}[rbp]\n", gr(dst), offset).as_str());
                 }
                 x64::IR::DIVREG(dst, src) => {
-                    out += &(format!("  mov rax, {}", gr(dst)).as_str());
+                    out += &(format!("  mov rax, {}\n", gr(dst)).as_str());
                     out += "  cqo\n";
-                    out += &(format!("  idiv {}", gr(src)).as_str());
-                    out += &(format!("  mov {}, rax", gr(dst)).as_str());
+                    out += &(format!("  idiv {}\n", gr(src)).as_str());
+                    out += &(format!("  mov {}, rax\n", gr(dst)).as_str());
                 }
                 x64::IR::DIVIMM(dst, value) => {
-                    out += &(format!("  mov rax, {}", gr(dst)).as_str());
+                    out += &(format!("  mov rax, {}\n", gr(dst)).as_str());
                     out += "  cqo\n";
-                    out += &(format!("  idiv {}", value).as_str());
-                    out += &(format!("  mov {}, rax", gr(dst)).as_str());
+                    out += &(format!("  idiv {}\n", value).as_str());
+                    out += &(format!("  mov {}, rax\n", gr(dst)).as_str());
                 }
                 x64::IR::DIVMEM(dst, offset) => {
-                    out += &(format!("  mov rax, {}", gr(dst)).as_str());
+                    out += &(format!("  mov rax, {}\n", gr(dst)).as_str());
                     out += "  cqo\n";
-                    out += &(format!("  idiv -{}[rbp]", offset).as_str());
-                    out += &(format!("  mov {}, rax", gr(dst)).as_str());
+                    out += &(format!("  idiv -{}[rbp]\n", offset).as_str());
+                    out += &(format!("  mov {}, rax\n", gr(dst)).as_str());
                 }
                 x64::IR::MODREG(dst, src) => {
                     out += "  push rax\n";
