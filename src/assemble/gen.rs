@@ -24,7 +24,7 @@ impl Generator {
                 }
                 Inst::LABEL(_, name) => {
                     if let Some(tup) = self.jump_map.get_mut(name) {
-                        tup.1 = self.codes.len() - tup.1;
+                        tup.1 = self.codes.len() - tup.1 - 1;
                         continue;
                     }
                     self.jump_map
@@ -156,7 +156,7 @@ impl Generator {
                 if let Some(Operand::SYMBOL(name)) = &info.lop {
                     if let Some(tup) = self.jump_map.get_mut(name) {
                         tup.0 = self.codes.len();
-                        tup.1 = !(self.codes.len() - tup.1) + 1;
+                        tup.1 = !(self.codes.len() + 4 - tup.1) + 1;
                     } else {
                         self.jump_map
                             .insert(name.to_string(), (self.codes.len(), self.codes.len() + 3));
@@ -170,7 +170,7 @@ impl Generator {
                 if let Some(Operand::SYMBOL(name)) = &info.lop {
                     if let Some(tup) = self.jump_map.get_mut(name) {
                         tup.0 = self.codes.len();
-                        tup.1 = !(self.codes.len() - tup.1) + 1;
+                        tup.1 = !(self.codes.len() + 4 - tup.1) + 1;
                     } else {
                         self.jump_map
                             .insert(name.to_string(), (self.codes.len(), self.codes.len() + 3));
@@ -235,10 +235,17 @@ impl Generator {
                 }
             }
             "movzx" => {
-                self.codes.push(self.set_rexprefix(&info.rop, &info.lop)); // must not change
+                if let Some(Operand::REG(reg)) = &info.rop {
+                    if reg == "al" {
+                        self.codes
+                            .push(self.set_rexprefix(&info.rop, &info.lop) | 0x48);
+                    } else {
+                        eprintln!("movzx without al not implemented yet");
+                    }
+                }
                 self.codes.push(0x0f);
                 self.codes.push(0xb6);
-                self.codes.push(self.set_modrm(&info.rop, &info.lop)); // must not change
+                self.codes.push(self.set_modrm(&info.rop, &info.lop));
             }
             "neg" => {
                 self.codes.push(self.set_rexprefix(&info.lop, &info.rop));
@@ -355,31 +362,8 @@ impl Generator {
         }
     }
     fn gen_immediate(&mut self, value: i128) {
-        match value {
-            n if n <= 255 => {
-                self.codes.push(value as u8);
-                self.codes.push(0x00);
-                self.codes.push(0x00);
-                self.codes.push(0x00);
-            }
-            n if n <= 65535 => {
-                self.codes.push((value >> 8) as u8);
-                self.codes.push(value as u8);
-                self.codes.push(0x00);
-                self.codes.push(0x00);
-            }
-            n if n <= 4294967295 => {
-                self.codes.push((value >> 16) as u8);
-                self.codes.push((value >> 8) as u8);
-                self.codes.push(value as u8);
-                self.codes.push(0x00);
-            }
-            _ => {
-                self.codes.push((value >> 24) as u8);
-                self.codes.push((value >> 16) as u8);
-                self.codes.push((value >> 8) as u8);
-                self.codes.push(value as u8);
-            }
+        for b in (value as u32).to_le_bytes().to_vec().iter() {
+            self.codes.push(*b);
         }
     }
     fn set_rexprefix(&self, lop: &Option<Operand>, rop: &Option<Operand>) -> u8 {
@@ -423,7 +407,7 @@ impl Generator {
                         rexprefix |= 0x08;
                     }
                     match rop {
-                        Some(Operand::REG(n2)) => {}
+                        Some(Operand::REG(_n2)) => {}
                         _ => (),
                     }
                 }
