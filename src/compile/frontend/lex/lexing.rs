@@ -137,6 +137,7 @@ fn build_keywords() -> HashMap<&'static str, (Token, usize)> {
         (Token::ARRAY(Box::new(Token::EOF), Box::new(Token::EOF)), 5),
     );
     keywords.insert("type", (Token::TYPE, 4));
+    keywords.insert("struct", (Token::STRUCT, 6));
     keywords.insert("condloop", (Token::CONDLOOP, 8));
     keywords
 }

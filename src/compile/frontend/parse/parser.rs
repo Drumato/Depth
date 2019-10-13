@@ -3,6 +3,7 @@ use super::super::frontmanager::frontmanager::{DefType, Env, Symbol};
 use super::super::sema::semantics::{IntType, Type};
 use super::super::token::token::Token;
 use super::node::{Func, Node};
+use std::collections::BTreeMap;
 struct Parser {
     tokens: Vec<Token>,
     funcs: Vec<Func>,
@@ -52,6 +53,34 @@ impl Parser {
                     global
                         .type_table
                         .insert(type_name, DefType::new(Some(Type::from_type(token_ty))));
+                }
+                Token::STRUCT => {
+                    self.next_token();
+                    let type_name: String = self.consume_ident();
+                    let mut member_map: BTreeMap<String, Symbol> = BTreeMap::new();
+                    if !self.consume(&Token::LBRACE) {
+                        Error::PARSE.found(&format!(
+                            "expected LBRACE before declaring struct-type but got {}",
+                            self.cur_token().string()
+                        ));
+                    }
+                    loop {
+                        if self.consume(&Token::RBRACE) {
+                            break;
+                        }
+                        let member_name: String = self.consume_ident();
+                        if !self.consume(&Token::COLON) {
+                            Error::PARSE.found(&format!(
+                                "expected COLON before declaring member-type but got {}",
+                                self.cur_token().string()
+                            ));
+                        }
+                        let member_ty: Token = self.consume_typename();
+                        member_map.insert(member_name, Symbol::new(0, member_ty, false));
+                    }
+                    global
+                        .type_table
+                        .insert(type_name, DefType::new_struct(member_map));
                 }
                 _ => break,
             }
@@ -280,14 +309,19 @@ impl Parser {
             self.next_token();
             return Node::UNARY(op, Box::new(self.unary()), None);
         }
-        let n: Node = self.term();
-        if !self.check(&Token::LBRACKET) {
-            return n;
+        let mut n: Node = self.term();
+        loop {
+            let t: &Token = self.cur_token();
+            if let &Token::LBRACKET = t {
+                self.next_token();
+                let expr: Node = self.expr();
+                self.consume(&Token::RBRACKET);
+                n = Node::INDEX(Box::new(n), Box::new(expr));
+            } else {
+                break;
+            }
         }
-        self.next_token();
-        let expr: Node = self.expr();
-        self.consume(&Token::RBRACKET);
-        Node::INDEX(Box::new(n), Box::new(expr))
+        n
     }
     fn defarg(&mut self) -> Node {
         let mut mutable: bool = false;

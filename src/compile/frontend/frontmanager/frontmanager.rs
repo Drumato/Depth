@@ -78,6 +78,7 @@ impl Symbol {
 #[derive(Clone)]
 pub struct DefType {
     pub alias: Option<Type>,
+    pub members: BTreeMap<String, Symbol>,
     pub size: usize,
 }
 
@@ -87,11 +88,20 @@ impl DefType {
             return Self {
                 alias: Some(t.clone()),
                 size: t.size(),
+                members: BTreeMap::new(),
             };
         }
         Self {
             alias: None,
             size: 0,
+            members: BTreeMap::new(),
+        }
+    }
+    pub fn new_struct(member_map: BTreeMap<String, Symbol>) -> Self {
+        Self {
+            alias: None,
+            size: 0,
+            members: member_map,
         }
     }
 }

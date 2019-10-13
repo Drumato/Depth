@@ -36,6 +36,7 @@ pub enum Token {
     LET,
     MUT,
     GOTO,
+    STRUCT,
     I64,
     POINTER(Box<Token>),
     ARRAY(Box<Token>, Box<Token>),
@@ -84,6 +85,7 @@ impl Token {
             Token::CONDLOOP => "CONDLOOP".to_string(),
             Token::LET => "LET".to_string(),
             Token::MUT => "MUTABLE".to_string(),
+            Token::STRUCT => "STRUCT".to_string(),
             Token::I64 => "i64".to_string(),
             Token::POINTER(ptr_to) => format!("POINTER<{}>", ptr_to.string()),
             Token::ARRAY(elem_type, ary_size) => {
