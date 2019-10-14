@@ -39,6 +39,12 @@ impl FrontManager {
                     expr_op,
                 ));
             }
+            Node::BLOCK(bstmts) => {
+                let stmts: Vec<Node> = *bstmts.clone();
+                for st in stmts.iter() {
+                    self.gen_stmt(st);
+                }
+            }
             Node::RETURN(bch) => {
                 let ch: Node = *bch.clone();
                 let ret_op: Operand = self.gen_expr(ch).unwrap();

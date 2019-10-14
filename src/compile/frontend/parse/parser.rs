@@ -69,6 +69,7 @@ impl Parser {
             &Token::RETURN => self.parse_return(),
             &Token::LET => self.parse_let(),
             &Token::IDENT(_) => self.parse_assign(),
+            &Token::LBRACE => self.parse_block(),
             _ => {
                 Error::PARSE.found(&format!("statement can't start with '{}'", t.string(),));
                 Node::INVALID
@@ -84,6 +85,10 @@ impl Parser {
             .sym_table
             .insert(arg_name.clone(), Symbol::new(0, Err(type_name), mutable));
         Node::DEFARG(arg_name)
+    }
+    fn parse_block(&mut self) -> Node {
+        let stmts: Vec<Node> = self.compound_stmt();
+        Node::BLOCK(Box::new(stmts))
     }
     fn parse_let(&mut self) -> Node {
         self.expect(&Token::LET);

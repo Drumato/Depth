@@ -22,6 +22,7 @@ pub enum Node {
     RETURN(Child),
     LET(Name, Child),
     ASSIGN(Name, Child),
+    BLOCK(Elements),
     DEFARG(Name),
     INVALID,
 }
@@ -40,9 +41,11 @@ impl Node {
             Self::RETURN(expr) => format!("RETURN({})", expr.string()),
             Self::LET(ident, expr) => format!("LET<{}>({})", ident, expr.string()),
             Self::ASSIGN(ident, expr) => format!("ASSIGN<{}>({})", ident, expr.string()),
+            Self::BLOCK(stmts) => format!("BLOCK<{} stmts>", stmts.len()),
             Self::CALL(ident, _args) => format!("CALL<{}>", ident),
             Self::ARRAYLIT(_elems, num) => format!("ARRAYLIT<{}>", num),
             Self::DEFARG(name) => format!("DEFARG<{}>", name),
+
             _ => "INVALID".to_string(),
         }
     }

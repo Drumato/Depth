@@ -84,9 +84,22 @@ impl FrontManager {
                 if let Type::ARRAY(elem_type, _) = array_type {
                     *elem_type.clone()
                 } else {
+                    Error::TYPE.found(&format!("can't indexing {} it's not array ", rec.string()));
+                    Type::UNKNOWN
+                }
+            }
+            Node::ADDRESS(ch, oty) => {
+                let inner_type: Type = self.walk(*ch.clone());
+                Type::POINTER(Box::new(inner_type))
+            }
+            Node::DEREFERENCE(ch, oty) => {
+                let inner_type: Type = self.walk(*ch.clone());
+                if let Type::POINTER(inner) = inner_type {
+                    *inner.clone()
+                } else {
                     Error::TYPE.found(&format!(
-                        "can't indexing {} without array type",
-                        rec.string()
+                        "can't dereference {} it's not pointer",
+                        inner_type.string()
                     ));
                     Type::UNKNOWN
                 }
