@@ -1,7 +1,0 @@
-func main(){
-  let x : i64 = 30
-  let y : i64 = 50
-  let a : Pointer<i64> = &x
-  let b : Pointer<i64> = &y
-  return *a + *b
-}

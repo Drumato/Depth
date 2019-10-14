@@ -1,7 +1,0 @@
-func main(){
-  return ade(20,40)
-}
-
-func ade(x:i64,y:i64){
-  return x+y
-}

@@ -1,3 +1,4 @@
+use super::super::super::super::ce::types::Error;
 use super::super::super::ir::tac::Tac;
 use super::super::parse::node::Func;
 use super::super::sema::semantics::Type;
@@ -30,13 +31,23 @@ impl FrontManager {
         for f in self.functions.iter() {
             eprintln!("{}'s symbols:", f.name);
             for (name, symbol) in f.env.sym_table.iter() {
-                eprintln!(
-                    "{}:offset->{} type->{} mutable->{:?}",
-                    name.bold().green(),
-                    symbol.stack_offset,
-                    symbol.ty.string().bold().blue(),
-                    symbol.is_mutable
-                );
+                if let Ok(ty) = &symbol.ty {
+                    eprintln!(
+                        "{}:offset->{} type->{} mutable->{:?}",
+                        name.bold().green(),
+                        symbol.stack_offset,
+                        ty.string().bold().blue(),
+                        symbol.is_mutable
+                    );
+                } else if let Err(type_t) = &symbol.ty {
+                    eprintln!(
+                        "{}:offset->{} type->{} mutable->{:?}",
+                        name.bold().green(),
+                        symbol.stack_offset,
+                        type_t.string().bold().blue(),
+                        symbol.is_mutable
+                    );
+                }
             }
         }
     }
@@ -45,7 +56,7 @@ impl FrontManager {
 #[derive(Clone)]
 pub struct Env {
     pub sym_table: BTreeMap<String, Symbol>,
-    pub type_table: BTreeMap<String, DefType>,
+    pub type_table: BTreeMap<String, Type>,
     pub prev: Option<Box<Env>>,
 }
 impl Env {
@@ -61,47 +72,36 @@ impl Env {
 #[derive(Clone)]
 pub struct Symbol {
     pub stack_offset: usize,
-    pub ty: Type,
+    pub ty: Result<Type, Token>,
     pub is_mutable: bool,
 }
 
 impl Symbol {
-    pub fn new(offset: usize, ty: Token, mutable: bool) -> Symbol {
-        Symbol {
+    pub fn new(offset: usize, res_ty: Result<Type, Token>, flg: bool) -> Self {
+        Self {
             stack_offset: offset,
-            ty: Type::from_type(ty),
-            is_mutable: mutable,
+            ty: res_ty,
+            is_mutable: flg,
         }
     }
-}
-
-#[derive(Clone)]
-pub struct DefType {
-    pub alias: Option<Type>,
-    pub members: BTreeMap<String, Symbol>,
-    pub size: usize,
-}
-
-impl DefType {
-    pub fn new(ty: Option<Type>) -> Self {
-        if let Some(t) = ty {
-            return Self {
-                alias: Some(t.clone()),
-                size: t.size(),
-                members: BTreeMap::new(),
-            };
-        }
-        Self {
-            alias: None,
-            size: 0,
-            members: BTreeMap::new(),
-        }
-    }
-    pub fn new_struct(member_map: BTreeMap<String, Symbol>) -> Self {
-        Self {
-            alias: None,
-            size: 0,
-            members: member_map,
+    pub fn size(&self) -> usize {
+        match &self.ty {
+            Ok(ty) => ty.size(),
+            Err(ty_t) => match &ty_t {
+                Token::I64 => 8,
+                Token::POINTER(_) => 8,
+                Token::ARRAY(type_t, array_size) => {
+                    if let Token::INTEGER(num) = *array_size.clone() {
+                        return Self::new(0, Err(*type_t.clone()), false).size() * num as usize;
+                    }
+                    Error::TYPE.found(&"can't known size at compile time".to_string());
+                    0
+                }
+                _ => {
+                    Error::TYPE.found(&"can't known size at compile time".to_string());
+                    0
+                }
+            },
         }
     }
 }

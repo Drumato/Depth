@@ -3,89 +3,47 @@ use super::super::sema::semantics::Type;
 use super::super::token::token::Token;
 extern crate colored;
 use colored::*;
+type Name = String;
 type Child = Box<Node>;
+type Elements = Box<Vec<Node>>;
 #[derive(Clone)]
 pub enum Node {
-    BINOP(Token, Child, Child, Option<Type>),
-    UNARY(Token, Child, Option<Type>),
-    NUMBER(Type),
-    CALL(String, Vec<Child>),
-    CHARLIT(char),
-    IDENT(String),
-    RETURN(Child),
-    IF(Child, Child, Option<Child>), // condition, block,else
-    CONDLOOP(Child, Child),          // condition, block
-    BLOCK(Vec<Child>),
-    LET(String, Token, Child), // ident_name,type,expression
-    ASSIGN(String, Child),
-    DEFARG(String, Token),
+    ADD(Child, Child, Option<Type>),
+    SUB(Child, Child, Option<Type>),
+    MUL(Child, Child, Option<Type>),
+    DIV(Child, Child, Option<Type>),
+    ADDRESS(Child, Option<Type>),
+    DEREFERENCE(Child, Option<Type>),
+    INTEGER(i128),
+    IDENT(Name),
     INDEX(Child, Child),
-    ARRAYLIT(Vec<Node>, usize),
-    LABEL(String),
-    GOTO(String),
+    ARRAYLIT(Elements, usize),
+    CALL(Name, Elements),
+    RETURN(Child),
+    LET(Name, Child),
+    ASSIGN(Name, Child),
+    DEFARG(Name),
     INVALID,
 }
 impl Node {
     pub fn string(&self) -> String {
         match self {
-            Node::BINOP(op, lhs, rhs, _) => {
-                format!("{}({}, {})", op.string(), lhs.string(), rhs.string())
-            }
-            Node::UNARY(op, inner, _) => format!("{}({})", op.string(), inner.string()),
-            Node::NUMBER(ty) => match ty {
-                Type::INTEGER(int_type) => format!("INT-Node<{}>", int_type.val.unwrap()),
-                _ => format!("UNKNOWN"),
-            },
-            Node::INDEX(array, expr) => format!("{}[{}]", array.string(), expr.string()),
-            Node::ARRAYLIT(elems, _) => {
-                let elems_string: String = elems
-                    .into_iter()
-                    .map(|b| b.string() + ",")
-                    .collect::<String>();
-                format!("ARRAY({})", elems_string)
-            }
-            Node::RETURN(expr) => format!("RETURN({})", expr.string()),
-            Node::IF(cond, stmt, alter) => match alter {
-                Some(else_block) => format!(
-                    "IF({}) \n\t({})\nELSE \n\t({})",
-                    cond.string(),
-                    stmt.string(),
-                    else_block.string(),
-                ),
-                None => format!("IF({}) \n\t({}) ", cond.string(), stmt.string()),
-            },
-            Node::CONDLOOP(cond, stmt) => {
-                format!("CONDLOOP({}) \n\t({}) ", cond.string(), stmt.string())
-            }
-            Node::BLOCK(bstmts) => {
-                let stmts: String = bstmts
-                    .into_iter()
-                    .map(|st| "\n\t".to_owned() + &st.string())
-                    .collect::<String>();
-                format!("BLOCK({})", stmts)
-            }
-            Node::CALL(ident, bargs) => {
-                let args: String = bargs
-                    .into_iter()
-                    .map(|a| a.string() + ",")
-                    .collect::<String>();
-                format!("CALL {}({})", ident, args)
-            }
-            Node::INVALID => "INVALID".to_string(),
-            Node::ASSIGN(ident_name, expr) => {
-                format!("ASSIGN {} \n\t({})", ident_name, expr.string())
-            }
-            Node::LET(ident_name, ty, expr) => format!(
-                "LET {} <- {} \n\t({})",
-                ident_name,
-                ty.string(),
-                expr.string()
-            ),
-            Node::CHARLIT(char_val) => format!("CHARLIT<{}>", char_val),
-            Node::IDENT(ident_name) => format!("IDENT<{}>", ident_name),
-            Node::DEFARG(arg, ty) => format!("DEFARG<{},{}>", arg, ty.string()),
-            Node::LABEL(label) => format!("LABEL<{}>", label),
-            Node::GOTO(label) => format!("GOTO<{}>", label),
+            Self::ADD(lch, rch, _) => format!("ADD<{},{}>", lch.string(), rch.string()),
+            Self::SUB(lch, rch, _) => format!("SUB<{},{}>", lch.string(), rch.string()),
+            Self::MUL(lch, rch, _) => format!("MUL<{},{}>", lch.string(), rch.string()),
+            Self::DIV(lch, rch, _) => format!("DIV<{},{}>", lch.string(), rch.string()),
+            Self::ADDRESS(ch, _) => format!("ADDRESS<{}>", ch.string()),
+            Self::DEREFERENCE(ch, _) => format!("DEREFERENCE<{}>", ch.string()),
+            Self::INTEGER(val) => format!("INTEGER<{}>", val),
+            Self::IDENT(name) => format!("IDENT<{}>", name),
+            Self::INDEX(rec, ind) => format!("INDEX<{},{}>", rec.string(), ind.string()),
+            Self::RETURN(expr) => format!("RETURN({})", expr.string()),
+            Self::LET(ident, expr) => format!("LET<{}>({})", ident, expr.string()),
+            Self::ASSIGN(ident, expr) => format!("ASSIGN<{}>({})", ident, expr.string()),
+            Self::CALL(ident, _args) => format!("CALL<{}>", ident),
+            Self::ARRAYLIT(_elems, num) => format!("ARRAYLIT<{}>", num),
+            Self::DEFARG(name) => format!("DEFARG<{}>", name),
+            _ => "INVALID".to_string(),
         }
     }
 }
@@ -100,10 +58,10 @@ pub struct Func {
 
 pub fn dump_ast(funcs: &Vec<Func>) {
     eprintln!("{}", "--------dumpast--------".blue().bold());
-    for fu in funcs.iter() {
-        eprintln!("{}'s stmts:", fu.name);
-        for n in fu.stmts.iter() {
-            eprintln!("{}", n.string().green().bold());
+    for f in funcs.iter() {
+        eprintln!("{}'s stmts:", f.name);
+        for st in f.stmts.iter() {
+            eprintln!("\t{}", st.string().green().bold());
         }
     }
 }
