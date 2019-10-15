@@ -1,9 +1,11 @@
 use super::super::frontmanager::frontmanager::Env;
+use std::collections::BTreeMap;
 extern crate colored;
 use colored::*;
 type Name = String;
 type Child = Box<Node>;
 type Expr = Box<Node>;
+type Struct = Box<Node>;
 type Ary = Box<Node>;
 type Idx = Box<Node>;
 type Condition = Box<Node>;
@@ -31,7 +33,9 @@ pub enum Node {
     INTEGER(i128),
     IDENT(Name),
     INDEX(Ary, Idx),
+    MEMBER(Struct, Name),
     ARRAYLIT(Elements, usize),
+    STRUCTLIT(Name, Box<BTreeMap<String, Node>>),
     CALL(Name, Elements),
     RETURN(Expr),
     LET(Name, Expr),
@@ -66,12 +70,16 @@ impl Node {
             Self::INTEGER(val) => format!("INTEGER<{}>", val),
             Self::IDENT(name) => format!("IDENT<{}>", name),
             Self::INDEX(rec, ind) => format!("INDEX<{},{}>", rec.string(), ind.string()),
+            Self::MEMBER(ident, member) => format!("MEMBER<{}.{}>", ident.string(), member),
             Self::RETURN(expr) => format!("RETURN({})", expr.string()),
             Self::LET(ident, expr) => format!("LET<{}>({})", ident, expr.string()),
             Self::ASSIGN(ident, expr) => format!("ASSIGN<{}>({})", ident, expr.string()),
             Self::BLOCK(stmts) => format!("BLOCK<{} stmts>", stmts.len()),
             Self::CALL(ident, _args) => format!("CALL<{}>", ident),
             Self::ARRAYLIT(_elems, num) => format!("ARRAYLIT<{}>", num),
+            Self::STRUCTLIT(name, members) => {
+                format!("STRUCTLIT<{},{} members>", name, members.len())
+            }
             Self::DEFARG(name) => format!("DEFARG<{}>", name),
             Self::CONDLOOP(cond, stmts) => {
                 format!("CONDLOOP<{},{}>", cond.string(), stmts.string())

@@ -13,10 +13,27 @@ impl Error {
     }
     fn string(&self) -> String {
         match self {
-            Error::PARSE => "ParseError".to_string(),
-            Error::TYPE => "TypeError".to_string(),
-            Error::ELF => "ELFError".to_string(),
-            Error::ASSEMBLE => "AssembleError".to_string(),
+            Self::PARSE => "ParseError".to_string(),
+            Self::TYPE => "TypeError".to_string(),
+            Self::ELF => "ELFError".to_string(),
+            Self::ASSEMBLE => "AssembleError".to_string(),
         }
     }
 }
+
+/*
+pub enum Information {
+    TYPE,
+}
+
+impl Information {
+    pub fn found(&self, message: &String) {
+        eprintln!("{}:{}", self.string().blue().bold(), message);
+    }
+    fn string(&self) -> String {
+        match self {
+            Self::TYPE => "TypeInfo".to_string(),
+        }
+    }
+}
+*/

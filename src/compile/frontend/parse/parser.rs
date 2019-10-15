@@ -3,6 +3,7 @@ use super::super::frontmanager::frontmanager::{Env, Symbol};
 use super::super::sema::semantics::Type;
 use super::super::token::token::Token;
 use super::node::{Func, Node};
+use std::collections::BTreeMap;
 struct Parser {
     tokens: Vec<Token>,
     funcs: Vec<Func>,
@@ -37,7 +38,27 @@ impl Parser {
                 &Token::FUNC => {
                     self.parse_func();
                 }
+                &Token::STRUCT => {
+                    self.parse_struct();
+                }
                 _ => break,
+            }
+        }
+    }
+    fn stmt(&mut self) -> Node {
+        let t: &Token = self.cur_token();
+        match t {
+            &Token::RETURN => self.parse_return(),
+            &Token::LET => self.parse_let(),
+            &Token::IDENT(_) => self.parse_assign(),
+            &Token::LBRACE => self.parse_block(),
+            &Token::CONDLOOP => self.parse_condloop(),
+            &Token::IF => self.parse_if(),
+            &Token::COLON => self.parse_label(),
+            &Token::GOTO => self.parse_goto(),
+            _ => {
+                Error::PARSE.found(&format!("statement can't start with '{}'", t.string(),));
+                Node::INVALID
             }
         }
     }
@@ -77,21 +98,28 @@ impl Parser {
             );
         }
     }
-    fn stmt(&mut self) -> Node {
-        let t: &Token = self.cur_token();
-        match t {
-            &Token::RETURN => self.parse_return(),
-            &Token::LET => self.parse_let(),
-            &Token::IDENT(_) => self.parse_assign(),
-            &Token::LBRACE => self.parse_block(),
-            &Token::CONDLOOP => self.parse_condloop(),
-            &Token::IF => self.parse_if(),
-            &Token::COLON => self.parse_label(),
-            &Token::GOTO => self.parse_goto(),
-            _ => {
-                Error::PARSE.found(&format!("statement can't start with '{}'", t.string(),));
-                Node::INVALID
+    fn parse_struct(&mut self) {
+        self.expect(&Token::STRUCT);
+        let type_name: String = self.consume_ident();
+        self.expect(&Token::LBRACE);
+        let mut members: BTreeMap<String, Symbol> = BTreeMap::new();
+        loop {
+            if self.consume(&Token::RBRACE) {
+                break;
             }
+            let member_name: String = self.consume_ident();
+            self.expect(&Token::COLON);
+            let member_type: Token = self.consume_typename();
+            members.insert(member_name, Symbol::new(0, Err(member_type), false));
+        }
+        let mut total_size: usize = 0;
+        for (_name, s) in members.iter() {
+            total_size += s.size();
+        }
+        if let Some(ref mut global) = self.cur_env.prev {
+            global
+                .type_table
+                .insert(type_name, Type::STRUCT(members, total_size));
         }
     }
     fn define_arg(&mut self) -> Node {
@@ -143,13 +171,14 @@ impl Parser {
         self.expect(&Token::COLON);
         let type_name: Token = self.consume_typename();
         self.expect(&Token::ASSIGN);
-        let expr: Node = self.expr();
+        let mut expr: Node = self.expr();
+        if let Node::STRUCTLIT(ref mut name, ref mut _members) = expr {
+            *name = ident_name.clone();
+        }
         if let Some(_) = self.cur_env.sym_table.insert(
             ident_name.clone(),
             Symbol::new(0, Err(type_name), mutable_flg),
-        ) {
-            Error::TYPE.found(&format!("already defined identifier '{}'", &ident_name));
-        }
+        ) {}
         Node::LET(ident_name, Box::new(expr))
     }
     fn parse_return(&mut self) -> Node {
@@ -289,7 +318,7 @@ impl Parser {
         let t: Token = self.get_token();
         match t {
             Token::LBRACKET => {
-                self.next_token();
+                self.expect(&Token::LBRACKET);
                 let ind_n: Node = self.expr();
                 self.expect(&Token::RBRACKET);
                 self.postfix(Node::INDEX(Box::new(n), Box::new(ind_n)))
@@ -333,21 +362,48 @@ impl Parser {
             }
             Token::IDENT(name) => {
                 self.next_token();
-                if !self.consume(&Token::LPAREN) {
-                    return Node::IDENT(name);
-                }
-                let mut args: Vec<Node> = Vec::new();
-                loop {
-                    if self.consume(&Token::RPAREN) {
-                        break;
+                let t: Token = self.get_token();
+                match t {
+                    Token::DOT => {
+                        self.expect(&Token::DOT);
+                        let member_name: String = self.consume_ident();
+                        Node::MEMBER(Box::new(Node::IDENT(name)), member_name)
                     }
-                    args.push(self.expr());
-                    if !self.consume(&Token::COMMA) {
-                        self.expect(&Token::RPAREN);
-                        break;
+                    Token::LPAREN => {
+                        self.expect(&Token::LPAREN);
+                        let mut args: Vec<Node> = Vec::new();
+                        loop {
+                            if self.consume(&Token::RPAREN) {
+                                break;
+                            }
+                            args.push(self.expr());
+                            if !self.consume(&Token::COMMA) {
+                                self.expect(&Token::RPAREN);
+                                break;
+                            }
+                        }
+                        Node::CALL(name, Box::new(args))
                     }
+                    Token::LBRACE => {
+                        self.expect(&Token::LBRACE);
+                        let mut members: BTreeMap<String, Node> = BTreeMap::new();
+                        loop {
+                            if self.consume(&Token::RBRACE) {
+                                break;
+                            }
+                            let member_name: String = self.consume_ident();
+                            self.expect(&Token::COLON);
+                            let member_expr: Node = self.expr();
+                            members.insert(member_name, member_expr);
+                            if !self.consume(&Token::COMMA) {
+                                self.expect(&Token::RBRACE);
+                                break;
+                            }
+                        }
+                        Node::STRUCTLIT(name, Box::new(members))
+                    }
+                    _ => Node::IDENT(name),
                 }
-                Node::CALL(name, Box::new(args))
             }
             _ => {
                 Error::PARSE.found(&format!("term can't start with '{}'", t.string()));

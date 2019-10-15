@@ -77,6 +77,7 @@ fn tokenize_symbols(input: &String) -> Option<(Token, TokenLen)> {
         ';' => Some((Token::SEMICOLON, 1)),
         ',' => Some((Token::COMMA, 1)),
         '=' => Some((Token::ASSIGN, 1)),
+        '.' => Some((Token::DOT, 1)),
         ' ' => Some((Token::BLANK, count_len(input, |c| c == &' '))),
         '\n' => Some((Token::LF, 1)),
         '\0' => Some((Token::EOF, 1)),
