@@ -1,23 +1,16 @@
 use super::super::super::super::ce::types::Error;
-use super::super::frontmanager::frontmanager::{DefType, Env, Symbol};
-use super::super::sema::semantics::{IntType, Type};
+use super::super::frontmanager::frontmanager::{Env, Symbol};
 use super::super::token::token::Token;
 use super::node::{Func, Node};
-use std::collections::BTreeMap;
 struct Parser {
     tokens: Vec<Token>,
     funcs: Vec<Func>,
     cur_env: Env,
+    cur: usize,
+    next: usize,
+    lit: usize,
 }
-static mut CUR: usize = 0;
-static mut NEXT: usize = 1;
-static mut LIT: usize = 0;
 pub fn parsing(tokens: Vec<Token>) -> Vec<Func> {
-    unsafe {
-        CUR = 0;
-        NEXT = 1;
-        LIT = 0;
-    }
     let mut parser: Parser = Parser::new(tokens);
     parser.toplevel();
     parser.funcs
@@ -28,113 +21,72 @@ impl Parser {
             tokens: tokens,
             funcs: Vec::with_capacity(100),
             cur_env: Env::new(),
+            cur: 0,
+            next: 1,
+            lit: 0,
         }
     }
     fn toplevel(&mut self) {
-        let mut global: Env = Env::new();
         loop {
             let t: &Token = self.cur_token();
             match t {
-                Token::FUNC => {
-                    let mut func: Func = self.func();
-                    func.env.prev = Some(Box::new(global.clone()));
-                    self.funcs.push(func);
-                }
-                Token::TYPE => {
-                    self.next_token();
-                    let type_name: String = self.consume_ident();
-                    if !self.consume(&Token::ASSIGN) {
-                        Error::PARSE.found(&format!(
-                            "expected assign before declaring type but got {}",
-                            self.cur_token().string()
-                        ));
-                    }
-                    let token_ty: Token = self.consume_typename();
-                    global
-                        .type_table
-                        .insert(type_name, DefType::new(Some(Type::from_type(token_ty))));
-                }
-                Token::STRUCT => {
-                    self.next_token();
-                    let type_name: String = self.consume_ident();
-                    let mut member_map: BTreeMap<String, Symbol> = BTreeMap::new();
-                    if !self.consume(&Token::LBRACE) {
-                        Error::PARSE.found(&format!(
-                            "expected LBRACE before declaring struct-type but got {}",
-                            self.cur_token().string()
-                        ));
-                    }
-                    loop {
-                        if self.consume(&Token::RBRACE) {
-                            break;
-                        }
-                        let member_name: String = self.consume_ident();
-                        if !self.consume(&Token::COLON) {
-                            Error::PARSE.found(&format!(
-                                "expected COLON before declaring member-type but got {}",
-                                self.cur_token().string()
-                            ));
-                        }
-                        let member_ty: Token = self.consume_typename();
-                        member_map.insert(member_name, Symbol::new(0, member_ty, false));
-                    }
-                    global
-                        .type_table
-                        .insert(type_name, DefType::new_struct(member_map));
+                &Token::FUNC => {
+                    self.func();
                 }
                 _ => break,
             }
         }
     }
-    fn func(&mut self) -> Func {
-        let mut f: Func = Func {
-            name: String::new(),
-            stmts: Vec::with_capacity(100),
-            args: Vec::with_capacity(6),
-            env: Env::new(),
-        };
-        self.cur_env = f.env.clone();
+    fn func(&mut self) {
+        self.cur_env = Env::new();
         self.next_token();
-        let ident_name: String = self.consume_ident();
-        f.name = ident_name.to_string();
-        self.consume(&Token::LPAREN);
+        let func_name: String = self.consume_ident();
+        self.expect(&Token::LPAREN);
+        let mut func_args: Vec<Node> = Vec::new();
         loop {
             if self.consume(&Token::RPAREN) {
                 break;
             }
-            f.args.push(self.defarg());
+            func_args.push(self.define_arg());
             if !self.consume(&Token::COMMA) {
-                self.consume(&Token::RPAREN);
+                self.expect(&Token::RPAREN);
                 break;
             }
         }
-        self.consume(&Token::LBRACE);
-        let mut t: Token = self.get_token();
-        while let Some(_) = Token::start_stmt(&t) {
-            let stmt: Node = self.stmt();
-            f.stmts.push(stmt);
-            self.consume(&Token::RBRACE);
-            t = self.get_token();
-        }
-        f.env = self.cur_env.clone();
-        f
+        let func_stmts: Vec<Node> = self.compound_stmt();
+        self.funcs.push(Func {
+            name: func_name,
+            args: func_args,
+            stmts: func_stmts,
+            env: self.cur_env.clone(),
+        });
     }
     fn stmt(&mut self) -> Node {
         let t: &Token = self.cur_token();
         match t {
             &Token::RETURN => self.parse_return(),
-            &Token::IF => self.parse_if(),
-            &Token::LBRACE => self.parse_block(),
             &Token::LET => self.parse_let(),
             &Token::IDENT(_) => self.parse_assign(),
+            &Token::LBRACE => self.parse_block(),
             &Token::CONDLOOP => self.parse_condloop(),
+            &Token::IF => self.parse_if(),
             &Token::COLON => self.parse_label(),
             &Token::GOTO => self.parse_goto(),
-            _ => self.expr(),
+            _ => {
+                Error::PARSE.found(&format!("statement can't start with '{}'", t.string(),));
+                Node::INVALID
+            }
         }
     }
-    fn expr(&mut self) -> Node {
-        self.equal()
+    fn define_arg(&mut self) -> Node {
+        let mutable: bool = self.consume(&Token::MUT);
+        let arg_name: String = self.consume_ident();
+        self.consume(&Token::COLON);
+        let type_name: Token = self.consume_typename();
+        self.cur_env
+            .sym_table
+            .insert(arg_name.clone(), Symbol::new(0, Err(type_name), mutable));
+        Node::DEFARG(arg_name)
     }
     fn parse_label(&mut self) -> Node {
         self.next_token();
@@ -149,24 +101,18 @@ impl Parser {
         let label: String = self.consume_ident();
         Node::GOTO(label)
     }
-    fn parse_return(&mut self) -> Node {
-        if self.consume(&Token::RETURN) {
-            return Node::RETURN(Box::new(self.expr()));
-        }
-        Error::PARSE.found(&format!(
-            "unexpected {} while parsing return-stmt",
-            self.cur_token().string()
-        ));
-        Node::INVALID
+    fn parse_condloop(&mut self) -> Node {
+        self.expect(&Token::CONDLOOP);
+        let cond: Node = self.expr();
+        let stmt: Node = self.stmt();
+        Node::CONDLOOP(Box::new(cond), Box::new(stmt))
     }
-    fn parse_assign(&mut self) -> Node {
-        let ident_name: String = self.consume_ident();
-        self.consume(&Token::ASSIGN);
-        let e: Node = self.expr();
-        Node::ASSIGN(ident_name, Box::new(e))
+    fn parse_block(&mut self) -> Node {
+        let stmts: Vec<Node> = self.compound_stmt();
+        Node::BLOCK(Box::new(stmts))
     }
     fn parse_if(&mut self) -> Node {
-        self.next_token();
+        self.expect(&Token::IF);
         let cond: Node = self.expr();
         let stmt: Node = self.stmt();
         if !self.consume(&Token::ELSE) {
@@ -174,105 +120,49 @@ impl Parser {
         }
         Node::IF(Box::new(cond), Box::new(stmt), Some(Box::new(self.stmt())))
     }
-    fn parse_condloop(&mut self) -> Node {
-        self.next_token();
-        let cond: Node = self.expr();
-        let stmt: Node = self.stmt();
-        Node::CONDLOOP(Box::new(cond), Box::new(stmt))
-    }
-    fn parse_block(&mut self) -> Node {
-        self.compound_stmt()
-    }
     fn parse_let(&mut self) -> Node {
-        self.next_token();
-        let mut mutable_flg: bool = false;
-        if self.consume(&Token::MUT) {
-            mutable_flg = true;
-        }
+        self.expect(&Token::LET);
+        let mutable_flg: bool = self.consume(&Token::MUT);
         let ident_name: String = self.consume_ident();
-        if !self.consume(&Token::COLON) {
-            Error::PARSE.found(&format!(
-                "expected colon before declaring type but got {}",
-                self.cur_token().string()
-            ));
-        }
-        let typename: Token = self.consume_typename();
-        if !self.consume(&Token::ASSIGN) {
-            Error::PARSE.found(&format!(
-                "expected assign after declaring type but got {}",
-                self.cur_token().string()
-            ));
-        }
+        self.expect(&Token::COLON);
+        let type_name: Token = self.consume_typename();
+        self.expect(&Token::ASSIGN);
         let expr: Node = self.expr();
-
-        if let Some(_symbol) = self.cur_env.sym_table.get(&ident_name) {
+        if let Some(_) = self.cur_env.sym_table.insert(
+            ident_name.clone(),
+            Symbol::new(0, Err(type_name), mutable_flg),
+        ) {
             Error::TYPE.found(&format!("already defined identifier '{}'", &ident_name));
         }
-        self.cur_env.sym_table.insert(
-            ident_name.clone(),
-            Symbol::new(0, typename.clone(), mutable_flg),
-        );
-        Node::LET(ident_name, typename, Box::new(expr))
+        Node::LET(ident_name, Box::new(expr))
     }
-    fn compound_stmt(&mut self) -> Node {
-        self.next_token();
-        let mut stmts: Vec<Box<Node>> = Vec::new();
-        let mut t: Token = self.get_token();
-        while let Some(_) = Token::start_stmt(&t) {
-            let stmt: Node = self.stmt();
-            stmts.push(Box::new(stmt));
-            if self.consume(&Token::RBRACE) {
-                return Node::BLOCK(stmts);
-            }
-            t = self.get_token();
-        }
-        Node::BLOCK(stmts)
+    fn parse_return(&mut self) -> Node {
+        self.expect(&Token::RETURN);
+        let expr: Node = self.expr();
+        Node::RETURN(Box::new(expr))
     }
-    fn muldiv(&mut self) -> Node {
-        let mut lhs: Node = self.unary();
+    fn parse_assign(&mut self) -> Node {
+        let ident_name: String = self.consume_ident();
+        self.expect(&Token::ASSIGN);
+        let expr: Node = self.expr();
+        Node::ASSIGN(ident_name, Box::new(expr))
+    }
+    fn expr(&mut self) -> Node {
+        self.equal()
+    }
+    fn equal(&mut self) -> Node {
+        let mut lhs: Node = self.relation();
         self.check_invalid(&lhs);
         loop {
-            if !self.check_vec(vec![Token::STAR, Token::SLASH, Token::PERCENT]) {
+            if !self.check_vec(vec![Token::EQ, Token::NTEQ]) {
                 break;
             }
             let op: Token = self.get_token();
             self.next_token();
-            lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.unary()), None);
-        }
-        lhs
-    }
-    fn adsub(&mut self) -> Node {
-        let mut lhs: Node = self.muldiv();
-        self.check_invalid(&lhs);
-        loop {
-            if !self.check_vec(vec![Token::PLUS, Token::MINUS]) {
-                break;
-            }
-            let op: Token = self.get_token();
-            self.next_token();
-            lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.muldiv()), None);
-        }
-        lhs
-    }
-    fn shift(&mut self) -> Node {
-        let mut lhs: Node = self.adsub();
-        self.check_invalid(&lhs);
-        loop {
-            if self.check(&Token::LSHIFT) {
-                let op: Token = self.get_token();
-                self.next_token();
-                lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.adsub()), None);
-            } else if self.check(&Token::GT) {
-                if self.peek(&Token::GT) {
-                    self.next_token();
-                    self.next_token();
-                    let op: Token = Token::RSHIFT;
-                    lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.adsub()), None);
-                } else {
-                    break;
-                }
-            } else {
-                break;
+            if let &Token::EQ = &op {
+                lhs = Node::EQ(Box::new(lhs), Box::new(self.relation()));
+            } else if let &Token::NTEQ = &op {
+                lhs = Node::NTEQ(Box::new(lhs), Box::new(self.relation()));
             }
         }
         lhs
@@ -286,79 +176,122 @@ impl Parser {
             }
             let op: Token = self.get_token();
             self.next_token();
-            lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.shift()), None);
+            if let &Token::LT = &op {
+                lhs = Node::LT(Box::new(lhs), Box::new(self.relation()));
+            } else if let &Token::GT = &op {
+                lhs = Node::GT(Box::new(lhs), Box::new(self.relation()));
+            } else if let &Token::LTEQ = &op {
+                lhs = Node::LTEQ(Box::new(lhs), Box::new(self.relation()));
+            } else if let &Token::GTEQ = &op {
+                lhs = Node::GTEQ(Box::new(lhs), Box::new(self.relation()));
+            }
         }
         lhs
     }
-    fn equal(&mut self) -> Node {
-        let mut lhs: Node = self.relation();
+    fn shift(&mut self) -> Node {
+        let mut lhs: Node = self.adsub();
         self.check_invalid(&lhs);
         loop {
-            if !self.check_vec(vec![Token::EQ, Token::NTEQ]) {
-                break;
-            }
-            let op: Token = self.get_token();
-            self.next_token();
-            lhs = Node::BINOP(op, Box::new(lhs), Box::new(self.relation()), None);
-        }
-        lhs
-    }
-    fn unary(&mut self) -> Node {
-        if self.check_vec(vec![Token::STAR, Token::AMPERSAND, Token::MINUS]) {
-            let op: Token = self.get_token();
-            self.next_token();
-            return Node::UNARY(op, Box::new(self.unary()), None);
-        }
-        let mut n: Node = self.term();
-        loop {
-            let t: &Token = self.cur_token();
-            if let &Token::LBRACKET = t {
+            if self.check(&Token::LSHIFT) {
                 self.next_token();
-                let expr: Node = self.expr();
-                self.consume(&Token::RBRACKET);
-                n = Node::INDEX(Box::new(n), Box::new(expr));
+                lhs = Node::LSHIFT(Box::new(lhs), Box::new(self.adsub()));
+            } else if self.check(&Token::GT) {
+                if self.peek(&Token::GT) {
+                    self.next_token();
+                    self.next_token();
+                    lhs = Node::RSHIFT(Box::new(lhs), Box::new(self.adsub()));
+                } else {
+                    break;
+                }
             } else {
                 break;
             }
         }
-        n
+        lhs
     }
-    fn defarg(&mut self) -> Node {
-        let mut mutable: bool = false;
-        if self.consume(&Token::MUT) {
-            mutable = true;
+    fn adsub(&mut self) -> Node {
+        let mut lhs: Node = self.muldiv();
+        self.check_invalid(&lhs);
+        loop {
+            if !self.check_vec(vec![Token::PLUS, Token::MINUS]) {
+                break;
+            }
+            let op: Token = self.get_token();
+            self.next_token();
+            if let Token::PLUS = op {
+                lhs = Node::ADD(Box::new(lhs), Box::new(self.muldiv()));
+            } else if let Token::MINUS = op {
+                lhs = Node::SUB(Box::new(lhs), Box::new(self.muldiv()));
+            }
         }
-        let arg_name: String = self.consume_ident();
-        self.consume(&Token::COLON);
-        let ty: Token = self.consume_typename();
-        self.cur_env
-            .sym_table
-            .insert(arg_name.clone(), Symbol::new(0, ty.clone(), mutable));
-        Node::DEFARG(arg_name, ty)
+        lhs
     }
-    fn term(&mut self) -> Node {
-        let t: &Token = self.cur_token();
+    fn muldiv(&mut self) -> Node {
+        let mut lhs: Node = self.unary();
+        self.check_invalid(&lhs);
+        loop {
+            if !self.check_vec(vec![Token::STAR, Token::SLASH, Token::PERCENT]) {
+                break;
+            }
+            let op: Token = self.get_token();
+            self.next_token();
+            if let Token::STAR = op {
+                lhs = Node::MUL(Box::new(lhs), Box::new(self.unary()));
+            } else if let Token::SLASH = op {
+                lhs = Node::DIV(Box::new(lhs), Box::new(self.unary()));
+            } else if let Token::PERCENT = op {
+                lhs = Node::MOD(Box::new(lhs), Box::new(self.unary()));
+            }
+        }
+        lhs
+    }
+    fn unary(&mut self) -> Node {
+        let t: Token = self.get_token();
         match t {
-            Token::LPAREN => {
+            Token::AMPERSAND => {
                 self.next_token();
-                let expr: Node = self.expr();
-                self.next_token();
-                expr
+                Node::ADDRESS(Box::new(self.unary()))
             }
-            Token::INTEGER(int) => {
+            Token::STAR => {
                 self.next_token();
-                Node::NUMBER(Type::INTEGER(IntType {
-                    val: Some(*int),
-                    type_size: 8,
-                }))
+                Node::DEREFERENCE(Box::new(self.unary()))
             }
-            Token::IDENT(_) => self.parse_ident(),
-            Token::CHARLIT(char_val) => {
+            Token::MINUS => {
                 self.next_token();
-                Node::CHARLIT(*char_val)
+                Node::MINUS(Box::new(self.unary()))
             }
+            _ => {
+                let n: Node = self.term();
+                if self.check_vec(vec![Token::LBRACKET]) {
+                    return self.postfix(n);
+                }
+                n
+            }
+        }
+    }
+    fn postfix(&mut self, n: Node) -> Node {
+        let t: Token = self.get_token();
+        match t {
             Token::LBRACKET => {
                 self.next_token();
+                let ind_n: Node = self.expr();
+                self.expect(&Token::RBRACKET);
+                self.postfix(Node::INDEX(Box::new(n), Box::new(ind_n)))
+            }
+            _ => n,
+        }
+    }
+    fn term(&mut self) -> Node {
+        let t: Token = self.get_token();
+        match t {
+            Token::LPAREN => {
+                self.expect(&Token::LPAREN);
+                let n: Node = self.expr();
+                self.expect(&Token::RPAREN);
+                n
+            }
+            Token::LBRACKET => {
+                self.expect(&Token::LBRACKET);
                 let mut elems: Vec<Node> = Vec::new();
                 loop {
                     if let &Token::RBRACKET = self.cur_token() {
@@ -371,47 +304,121 @@ impl Parser {
                     }
                 }
                 self.cur_env.sym_table.insert(
-                    format!("Array{}", unsafe { LIT }),
-                    Symbol::new(0, Token::EOF, false),
+                    format!("Array{}", self.lit),
+                    Symbol::new(0, Err(Token::EOF), false),
                 );
-                let num = unsafe { LIT };
-                unsafe {
-                    LIT += 1;
-                }
-                Node::ARRAYLIT(elems, num)
+                let num = self.lit;
+                self.lit += 1;
+                Node::ARRAYLIT(Box::new(elems), num)
             }
-            _ => {
-                Error::PARSE.found(&format!("unexpected {} while parsing term", t.string(),));
-                Node::INVALID
-            }
-        }
-    }
-    fn parse_ident(&mut self) -> Node {
-        let ident_name: String = self.consume_ident();
-        let tok: &Token = self.cur_token();
-        match tok {
-            &Token::LPAREN => {
+            Token::INTEGER(val) => {
                 self.next_token();
-                let mut args: Vec<Box<Node>> = Vec::new();
+                Node::INTEGER(val)
+            }
+            Token::IDENT(name) => {
+                self.next_token();
+                if !self.consume(&Token::LPAREN) {
+                    return Node::IDENT(name);
+                }
+                let mut args: Vec<Node> = Vec::new();
                 loop {
                     if self.consume(&Token::RPAREN) {
                         break;
                     }
-                    args.push(Box::new(self.expr()));
+                    args.push(self.expr());
                     if !self.consume(&Token::COMMA) {
-                        self.consume(&Token::RPAREN);
+                        self.expect(&Token::RPAREN);
                         break;
                     }
                 }
-                Node::CALL(ident_name.clone(), args)
+                Node::CALL(name, Box::new(args))
             }
-            _ => Node::IDENT(ident_name.to_string()),
+            _ => {
+                Error::PARSE.found(&format!("term can't start with '{}'", t.string()));
+                Node::INVALID
+            }
+        }
+    }
+    fn compound_stmt(&mut self) -> Vec<Node> {
+        let mut stmts: Vec<Node> = Vec::new();
+        self.expect(&Token::LBRACE);
+        loop {
+            if self.consume(&Token::RBRACE) {
+                break;
+            }
+            let st: Node = self.stmt();
+            stmts.push(st);
+        }
+        stmts
+    }
+    fn expect(&mut self, t: &Token) {
+        let cur: &Token = self.cur_token();
+        if t == cur {
+            self.next_token();
+            return;
+        }
+        Error::PARSE.found(&format!(
+            "expected {} but got '{}'",
+            t.string(),
+            cur.string()
+        ));
+    }
+    fn consume(&mut self, t: &Token) -> bool {
+        let cur: &Token = self.cur_token();
+        if t == cur {
+            self.next_token();
+            true
+        } else {
+            false
+        }
+    }
+    fn consume_typename(&mut self) -> Token {
+        let t: Token = self.get_token();
+        match t {
+            Token::I64 => {
+                self.next_token();
+                Token::I64
+            }
+            Token::IDENT(name) => {
+                self.next_token();
+                Token::IDENT(name.to_string())
+            }
+            Token::POINTER(_ptr_to) => {
+                self.next_token();
+                self.expect(&Token::LT);
+                let inner: Token = self.consume_typename();
+                self.expect(&Token::GT);
+                Token::POINTER(Box::new(inner))
+            }
+            Token::ARRAY(_type_name, _ary_size) => {
+                self.next_token();
+                self.expect(&Token::LT);
+                let elem_type: Token = self.consume_typename();
+                self.expect(&Token::COMMA);
+                let ary_size: Token = self.get_token();
+                self.next_token();
+                self.expect(&Token::GT);
+                Token::ARRAY(Box::new(elem_type), Box::new(ary_size))
+            }
+            _ => {
+                Error::PARSE.found(&format!("got {} it's not typename ", t.string()));
+                Token::EOF
+            }
+        }
+    }
+    fn consume_ident(&mut self) -> String {
+        let t: Token = self.get_token();
+        if let Token::IDENT(name) = t {
+            self.next_token();
+            name.to_string()
+        } else {
+            Error::PARSE.found(&format!("expected identifier but got '{}'", t.string()));
+            String::new()
         }
     }
     fn check_invalid(&mut self, n: &Node) {
         if let &Node::INVALID = n {
-            Error::PARSE.found(&format!("got INVALID Node",));
-            std::process::exit(1);
+            Error::PARSE.found(&"got INVALID Node".to_string());
         }
     }
     fn check_vec(&self, tks: Vec<Token>) -> bool {
@@ -421,6 +428,22 @@ impl Parser {
             }
         }
         false
+    }
+    fn get_token(&self) -> Token {
+        if self.cur >= self.tokens.len() {
+            return Token::EOF;
+        }
+        self.tokens[self.cur].clone()
+    }
+    fn cur_token(&self) -> &Token {
+        if self.cur >= self.tokens.len() {
+            return &Token::EOF;
+        }
+        &self.tokens[self.cur]
+    }
+    fn next_token(&mut self) {
+        self.cur += 1;
+        self.next += 1;
     }
     fn check(&self, t: &Token) -> bool {
         if self.cur_token() == t {
@@ -434,86 +457,10 @@ impl Parser {
         }
         false
     }
-    fn consume(&self, t: &Token) -> bool {
-        if self.cur_token() == t {
-            self.next_token();
-            return true;
-        }
-        false
-    }
-    fn consume_ident(&self) -> String {
-        if let Token::IDENT(name) = self.cur_token() {
-            self.next_token();
-            return name.to_string();
-        }
-        Error::PARSE.found(&format!(
-            "expected identifier but got {}",
-            self.cur_token().string()
-        ));
-        String::new()
-    }
-    fn consume_typename(&mut self) -> Token {
-        let t: Token = self.get_token();
-        match t {
-            Token::I64 | Token::CHAR => {
-                self.next_token();
-                t
-            }
-            Token::POINTER(_ptr_to) => {
-                self.next_token();
-                self.consume(&Token::LT);
-                let inner: Token = self.consume_typename();
-                self.consume(&Token::GT);
-                Token::POINTER(Box::new(inner))
-            }
-            Token::ARRAY(_, _) => {
-                self.next_token();
-                self.consume(&Token::LT);
-                let elem_type: Token = self.consume_typename();
-                self.consume(&Token::COMMA);
-                let ary_size: Token = self.get_token();
-                self.next_token();
-                self.consume(&Token::GT);
-                Token::ARRAY(Box::new(elem_type), Box::new(ary_size))
-            }
-            Token::IDENT(_) => {
-                self.next_token();
-                t
-            }
-            _ => {
-                Error::PARSE.found(&format!("expected typename but got {}", t.string()));
-                Token::EOF
-            }
-        }
-    }
-    fn cur_token(&self) -> &Token {
-        unsafe {
-            if CUR >= self.tokens.len() {
-                return &Token::EOF;
-            }
-            &self.tokens[CUR]
-        }
-    }
     fn peek_token(&self) -> &Token {
-        unsafe {
-            if NEXT >= self.tokens.len() {
-                return &Token::EOF;
-            }
-            &self.tokens[NEXT]
+        if self.next >= self.tokens.len() {
+            return &Token::EOF;
         }
-    }
-    fn get_token(&mut self) -> Token {
-        unsafe {
-            if CUR == self.tokens.len() {
-                return Token::EOF;
-            }
-            self.tokens[CUR].clone()
-        }
-    }
-    fn next_token(&self) {
-        unsafe {
-            CUR += 1;
-            NEXT += 1;
-        }
+        &self.tokens[self.next]
     }
 }

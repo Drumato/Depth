@@ -5,7 +5,6 @@ type Index = Option<Box<Operand>>;
 #[derive(PartialOrd, Ord, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Operand {
     INTLIT(i128),
-    CHARLIT(char),
     REG(Virtual, Physical, Index),
     ID(String, Offset, Index),
     CALL(String, usize),
@@ -13,7 +12,6 @@ pub enum Operand {
 impl Operand {
     pub fn string(&self) -> String {
         match self {
-            Self::CHARLIT(value) => format!("'{}'", value),
             Self::INTLIT(value) => format!("{}", value),
             Self::REG(virt, _phys, _oind) => format!("t{}", virt),
             Self::ID(name, _, _oind) => name.to_string(),
@@ -22,7 +20,6 @@ impl Operand {
     }
     fn dump_st(&self) -> String {
         match self {
-            Self::CHARLIT(value) => format!("'{}'", value),
             Self::INTLIT(value) => format!("{}", value),
             Self::REG(virt, _phys, oind) => match oind {
                 Some(index) => format!("t{}[{}]", virt, index.dump_st()),

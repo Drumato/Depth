@@ -1,9 +1,0 @@
-func main(){
-  let a : i64 = 30
-  let b : Pointer<i64> = &a
-  let c : Pointer<Pointer<i64>> = &b
-  let d : Pointer<Pointer<Pointer<i64>>> = &c
-  let e : Pointer<Pointer<Pointer<Pointer<i64>>>> = &d
-  let f : Pointer<Pointer<Pointer<Pointer<Pointer<i64>>>>> = &e
-  return *****f
-}

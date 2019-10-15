@@ -12,8 +12,8 @@ class Color:
 
 
 def make():
-    test_files = sorted(os.listdir("./test/testc/"))
-    f = open("test/testc/expect.txt", "w")
+    test_files = sorted(os.listdir("./test/"))
+    f = open("test/expect.txt", "w")
     for idx, test_file in enumerate(test_files):
         if test_file == "expect.txt":
             continue
@@ -23,7 +23,7 @@ def make():
 
 def test_compile():
     print(f"{Color.GREEN}++++++++++++++++test-link++++++++++++++++{Color.CLEAR}")
-    f = open("test/testc/expect.txt", "r")
+    f = open("test/expect.txt", "r")
     content = f.read()
     cases = {}
     cases = {
@@ -32,7 +32,7 @@ def test_compile():
         if len(line) > 0
     }
     for filename, expect in cases.items():
-        fn = f"test/testc/{filename}"
+        fn = f"test/{filename}"
         f = open(fn)
         p = subprocess.Popen(f"./target/debug/depth {fn}  ; ./a.out", shell=True)
         exit_status = p.wait()

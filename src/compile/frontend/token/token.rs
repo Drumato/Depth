@@ -14,7 +14,6 @@ pub enum Token {
     LBRACKET,
     RBRACKET,
     LSHIFT,
-    RSHIFT,
     LT,
     GT,
     LTEQ,
@@ -40,8 +39,6 @@ pub enum Token {
     I64,
     POINTER(Box<Token>),
     ARRAY(Box<Token>, Box<Token>),
-    CHAR,
-    CHARLIT(char),
     EOF,
     BLANK,
     LF,
@@ -64,7 +61,6 @@ impl Token {
             Token::LBRACKET => "LBRACKET".to_string(),
             Token::RBRACKET => "RBRACKET".to_string(),
             Token::LSHIFT => "LSHIFT".to_string(),
-            Token::RSHIFT => "RSHIFT".to_string(),
             Token::LT => "LESSTHAN".to_string(),
             Token::GT => "GREATERTHAN".to_string(),
             Token::LTEQ => "LESSTHANEQUAL".to_string(),
@@ -91,49 +87,7 @@ impl Token {
             Token::ARRAY(elem_type, ary_size) => {
                 format!("ARRAY<{},{}>", elem_type.string(), ary_size.string())
             }
-            Token::CHAR => "CHAR".to_string(),
-            Token::CHARLIT(char_val) => format!("CHARLIT<{}>", char_val),
             _ => "".to_string(),
-        }
-    }
-    pub fn string_ir(&self) -> String {
-        match self {
-            Token::PLUS => "+".to_string(),
-            Token::MINUS => "-".to_string(),
-            Token::STAR => "*".to_string(),
-            Token::SLASH => "/".to_string(),
-            Token::PERCENT => "%".to_string(),
-            Token::LSHIFT => "<<".to_string(),
-            Token::RSHIFT => ">>".to_string(),
-            Token::LT => "<".to_string(),
-            Token::GT => ">".to_string(),
-            Token::LTEQ => "<=".to_string(),
-            Token::GTEQ => ">=".to_string(),
-            Token::EQ => "==".to_string(),
-            Token::NTEQ => "!=".to_string(),
-            Token::AMPERSAND => "&".to_string(),
-            Token::GOTO => "GOTO".to_string(),
-            _ => "(inv)".to_string(),
-        }
-    }
-    pub fn start_stmt(token: &Token) -> Option<()> {
-        match token {
-            Token::LET
-            | Token::LBRACE
-            | Token::CONDLOOP
-            | Token::COLON
-            | Token::RETURN
-            | Token::IF
-            | Token::GOTO
-            | Token::IDENT(_)
-            | Token::LPAREN
-            | Token::INTEGER(_) => Some(()),
-            t => {
-                if t == &Token::EOF {
-                    return None;
-                }
-                None
-            }
         }
     }
     pub fn should_ignore(&self) -> bool {

@@ -1,4 +1,0 @@
-func main(){
-  let x : Array<i64,3> = [1,5,15]
-  return x[2]
-}
