@@ -82,22 +82,22 @@ impl FrontManager {
     }
     fn gen_expr(&mut self, n: Node) -> Option<Operand> {
         match n {
-            Node::ADD(blop, brop, _) => self.add_binop(blop, brop, "+"),
-            Node::SUB(blop, brop, _) => self.add_binop(blop, brop, "-"),
-            Node::MUL(blop, brop, _) => self.add_binop(blop, brop, "*"),
-            Node::DIV(blop, brop, _) => self.add_binop(blop, brop, "/"),
-            Node::MOD(blop, brop, _) => self.add_binop(blop, brop, "%"),
-            Node::LT(blop, brop, _) => self.add_binop(blop, brop, "<"),
-            Node::GT(blop, brop, _) => self.add_binop(blop, brop, ">"),
-            Node::LSHIFT(blop, brop, _) => self.add_binop(blop, brop, "<<"),
-            Node::RSHIFT(blop, brop, _) => self.add_binop(blop, brop, ">>"),
-            Node::LTEQ(blop, brop, _) => self.add_binop(blop, brop, "<="),
-            Node::GTEQ(blop, brop, _) => self.add_binop(blop, brop, ">="),
-            Node::EQ(blop, brop, _) => self.add_binop(blop, brop, "=="),
-            Node::NTEQ(blop, brop, _) => self.add_binop(blop, brop, "!="),
-            Node::ADDRESS(blop, _) => self.add_unary(blop, "&"),
-            Node::DEREFERENCE(blop, _) => self.add_unary(blop, "*"),
-            Node::MINUS(blop, _) => self.add_unary(blop, "-"),
+            Node::ADD(blop, brop) => self.add_binop(blop, brop, "+"),
+            Node::SUB(blop, brop) => self.add_binop(blop, brop, "-"),
+            Node::MUL(blop, brop) => self.add_binop(blop, brop, "*"),
+            Node::DIV(blop, brop) => self.add_binop(blop, brop, "/"),
+            Node::MOD(blop, brop) => self.add_binop(blop, brop, "%"),
+            Node::LT(blop, brop) => self.add_binop(blop, brop, "<"),
+            Node::GT(blop, brop) => self.add_binop(blop, brop, ">"),
+            Node::LSHIFT(blop, brop) => self.add_binop(blop, brop, "<<"),
+            Node::RSHIFT(blop, brop) => self.add_binop(blop, brop, ">>"),
+            Node::LTEQ(blop, brop) => self.add_binop(blop, brop, "<="),
+            Node::GTEQ(blop, brop) => self.add_binop(blop, brop, ">="),
+            Node::EQ(blop, brop) => self.add_binop(blop, brop, "=="),
+            Node::NTEQ(blop, brop) => self.add_binop(blop, brop, "!="),
+            Node::ADDRESS(blop) => self.add_unary(blop, "&"),
+            Node::DEREFERENCE(blop) => self.add_unary(blop, "*"),
+            Node::MINUS(blop) => self.add_unary(blop, "-"),
             Node::CALL(name, bargs) => {
                 let args: Vec<Node> = *bargs.clone();
                 let len: usize = args.len();

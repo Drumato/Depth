@@ -32,6 +32,24 @@ impl Type {
             }
         }
     }
+    pub fn from_token(type_t: Token) -> Self {
+        match type_t {
+            Token::I64 => Type::INTEGER,
+            Token::POINTER(inner) => {
+                let inner_type: Type = Self::from_token(*inner.clone());
+                Self::POINTER(Box::new(inner_type))
+            }
+            Token::ARRAY(elem, size) => {
+                let elem_type: Type = Self::from_token(*elem.clone());
+                if let Token::INTEGER(ary_size) = *size.clone() {
+                    return Self::ARRAY(Box::new(elem_type), ary_size as usize);
+                }
+                Error::TYPE.found(&"array size is known at compile time.".to_string());
+                Self::UNKNOWN
+            }
+            _ => Type::UNKNOWN,
+        }
+    }
 }
 
 impl FrontManager {
@@ -47,6 +65,10 @@ impl FrontManager {
             for arg in f.args {
                 if let Node::DEFARG(name) = arg {
                     if let Some(ref mut s) = self.cur_env.sym_table.get_mut(&name) {
+                        let res_ty = s.ty.clone();
+                        if let Err(type_t) = res_ty {
+                            s.ty = Ok(Type::from_token(type_t));
+                        }
                         self.stack_offset += s.size();
                         s.stack_offset = self.stack_offset;
                     } else {
@@ -88,11 +110,11 @@ impl FrontManager {
                     Type::UNKNOWN
                 }
             }
-            Node::ADDRESS(ch, oty) => {
+            Node::ADDRESS(ch) => {
                 let inner_type: Type = self.walk(*ch.clone());
                 Type::POINTER(Box::new(inner_type))
             }
-            Node::DEREFERENCE(ch, oty) => {
+            Node::DEREFERENCE(ch) => {
                 let inner_type: Type = self.walk(*ch.clone());
                 if let Type::POINTER(inner) = inner_type {
                     *inner.clone()
@@ -108,8 +130,10 @@ impl FrontManager {
                 if let Some(s) = self.get_symbol(&name) {
                     if let Ok(ty) = s.ty {
                         ty
+                    } else if let Err(type_t) = s.ty {
+                        eprintln!("not implemented aaa");
+                        Type::UNKNOWN
                     } else {
-                        eprintln!("not implemented type-checking identifier");
                         Type::UNKNOWN
                     }
                 } else {
@@ -143,6 +167,57 @@ impl FrontManager {
                     array.ty = Ok(Type::ARRAY(Box::new(elem_type.clone()), length));
                 }
                 Type::ARRAY(Box::new(elem_type), length)
+            }
+            Node::ADD(lch, rch)
+            | Node::SUB(lch, rch)
+            | Node::MUL(lch, rch)
+            | Node::DIV(lch, rch)
+            | Node::MOD(lch, rch)
+            | Node::EQ(lch, rch)
+            | Node::NTEQ(lch, rch)
+            | Node::LT(lch, rch)
+            | Node::GT(lch, rch)
+            | Node::LTEQ(lch, rch)
+            | Node::GTEQ(lch, rch)
+            | Node::LSHIFT(lch, rch)
+            | Node::RSHIFT(lch, rch) => {
+                let lch_type: Type = self.walk(*lch.clone());
+                let rch_type: Type = self.walk(*rch.clone());
+                if lch_type != lch_type {
+                    Error::TYPE.found(&format!(
+                        "type difference between {} - {} ",
+                        lch_type.string(),
+                        rch_type.string()
+                    ));
+                    return Type::UNKNOWN;
+                }
+                lch_type
+            }
+            Node::ADDRESS(lch) => {
+                let lch_type: Type = self.walk(*lch.clone());
+                Type::POINTER(Box::new(lch_type))
+            }
+            Node::DEREFERENCE(lch) => {
+                let lch_type: Type = self.walk(*lch.clone());
+                if let Type::POINTER(inner) = &lch_type {
+                    return *inner.clone();
+                }
+                Error::TYPE.found(&format!(
+                    "can't dereferecne {} it's not pointer ",
+                    lch_type.string(),
+                ));
+                Type::UNKNOWN
+            }
+            Node::MINUS(lch) => {
+                let lch_type: Type = self.walk(*lch.clone());
+                if let Type::INTEGER = &lch_type {
+                    return Type::INTEGER;
+                }
+                Error::TYPE.found(&format!(
+                    "can't negative {} it's not integer ",
+                    lch_type.string(),
+                ));
+                Type::UNKNOWN
             }
 
             _ => Type::UNKNOWN,

@@ -147,9 +147,9 @@ impl Parser {
             let op: Token = self.get_token();
             self.next_token();
             if let &Token::EQ = &op {
-                lhs = Node::EQ(Box::new(lhs), Box::new(self.relation()), None);
+                lhs = Node::EQ(Box::new(lhs), Box::new(self.relation()));
             } else if let &Token::NTEQ = &op {
-                lhs = Node::NTEQ(Box::new(lhs), Box::new(self.relation()), None);
+                lhs = Node::NTEQ(Box::new(lhs), Box::new(self.relation()));
             }
         }
         lhs
@@ -164,13 +164,13 @@ impl Parser {
             let op: Token = self.get_token();
             self.next_token();
             if let &Token::LT = &op {
-                lhs = Node::LT(Box::new(lhs), Box::new(self.relation()), None);
+                lhs = Node::LT(Box::new(lhs), Box::new(self.relation()));
             } else if let &Token::GT = &op {
-                lhs = Node::GT(Box::new(lhs), Box::new(self.relation()), None);
+                lhs = Node::GT(Box::new(lhs), Box::new(self.relation()));
             } else if let &Token::LTEQ = &op {
-                lhs = Node::LTEQ(Box::new(lhs), Box::new(self.relation()), None);
+                lhs = Node::LTEQ(Box::new(lhs), Box::new(self.relation()));
             } else if let &Token::GTEQ = &op {
-                lhs = Node::GTEQ(Box::new(lhs), Box::new(self.relation()), None);
+                lhs = Node::GTEQ(Box::new(lhs), Box::new(self.relation()));
             }
         }
         lhs
@@ -181,12 +181,12 @@ impl Parser {
         loop {
             if self.check(&Token::LSHIFT) {
                 self.next_token();
-                lhs = Node::LSHIFT(Box::new(lhs), Box::new(self.adsub()), None);
+                lhs = Node::LSHIFT(Box::new(lhs), Box::new(self.adsub()));
             } else if self.check(&Token::GT) {
                 if self.peek(&Token::GT) {
                     self.next_token();
                     self.next_token();
-                    lhs = Node::RSHIFT(Box::new(lhs), Box::new(self.adsub()), None);
+                    lhs = Node::RSHIFT(Box::new(lhs), Box::new(self.adsub()));
                 } else {
                     break;
                 }
@@ -206,9 +206,9 @@ impl Parser {
             let op: Token = self.get_token();
             self.next_token();
             if let Token::PLUS = op {
-                lhs = Node::ADD(Box::new(lhs), Box::new(self.muldiv()), None);
+                lhs = Node::ADD(Box::new(lhs), Box::new(self.muldiv()));
             } else if let Token::MINUS = op {
-                lhs = Node::SUB(Box::new(lhs), Box::new(self.muldiv()), None);
+                lhs = Node::SUB(Box::new(lhs), Box::new(self.muldiv()));
             }
         }
         lhs
@@ -223,11 +223,11 @@ impl Parser {
             let op: Token = self.get_token();
             self.next_token();
             if let Token::STAR = op {
-                lhs = Node::MUL(Box::new(lhs), Box::new(self.unary()), None);
+                lhs = Node::MUL(Box::new(lhs), Box::new(self.unary()));
             } else if let Token::SLASH = op {
-                lhs = Node::DIV(Box::new(lhs), Box::new(self.unary()), None);
+                lhs = Node::DIV(Box::new(lhs), Box::new(self.unary()));
             } else if let Token::PERCENT = op {
-                lhs = Node::MOD(Box::new(lhs), Box::new(self.unary()), None);
+                lhs = Node::MOD(Box::new(lhs), Box::new(self.unary()));
             }
         }
         lhs
@@ -237,15 +237,15 @@ impl Parser {
         match t {
             Token::AMPERSAND => {
                 self.next_token();
-                Node::ADDRESS(Box::new(self.unary()), None)
+                Node::ADDRESS(Box::new(self.unary()))
             }
             Token::STAR => {
                 self.next_token();
-                Node::DEREFERENCE(Box::new(self.unary()), None)
+                Node::DEREFERENCE(Box::new(self.unary()))
             }
             Token::MINUS => {
                 self.next_token();
-                Node::MINUS(Box::new(self.unary()), None)
+                Node::MINUS(Box::new(self.unary()))
             }
             _ => {
                 let n: Node = self.term();
