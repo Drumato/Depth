@@ -1,7 +1,9 @@
 use super::super::super::ce::types::Error;
 use super::super::frontend::frontmanager::frontmanager::FrontManager;
 use super::super::frontend::parse::node::Node;
+use super::super::frontend::sema::semantics::Type;
 use super::tac::{Operand, Tac};
+use std::collections::BTreeMap;
 
 impl FrontManager {
     pub fn gen_tacs(&mut self) {
@@ -34,10 +36,13 @@ impl FrontManager {
                 } else {
                     Error::TYPE.found(&format!("{} is not defined", &name));
                 }
-                self.add(Tac::LET(
-                    Operand::ID(name.to_string(), stack_offset, None),
-                    expr_op,
-                ));
+                if let Node::STRUCTLIT(_, _) = *bexpr.clone() {
+                } else {
+                    self.add(Tac::LET(
+                        Operand::ID(name.to_string(), stack_offset, None, None),
+                        expr_op,
+                    ));
+                }
             }
             Node::IF(bcond, block, alter) => {
                 let cond_op: Operand = self.gen_expr(*bcond.clone()).unwrap();
@@ -113,12 +118,36 @@ impl FrontManager {
                 }
                 Some(Operand::CALL(name, len))
             }
+            Node::STRUCTLIT(st_name, member_map) => {
+                let virt = self.virt;
+                let mut member_symbols = BTreeMap::new();
+                if let Some(sym) = self.cur_env.sym_table.get(&st_name) {
+                    if let Ok(s_ty) = &sym.ty {
+                        if let Type::STRUCT(map, _) = s_ty {
+                            member_symbols = map.clone();
+                        }
+                    }
+                } else {
+                    Error::TYPE.found(&format!("{} is not defined", &st_name));
+                }
+                for (member_name, member_expr) in member_map.iter() {
+                    let member_op: Operand = self.gen_expr(member_expr.clone()).unwrap();
+                    if let Some(member_s) = member_symbols.get(member_name) {
+                        self.add(Tac::LET(
+                            Operand::ID(st_name.to_string(), 0, None, Some(member_s.stack_offset)),
+                            member_op,
+                        ));
+                    }
+                }
+                self.virt += 1;
+                Some(Operand::REG(virt, 0, None, None))
+            }
             Node::ARRAYLIT(belems, num) => {
                 let mut stack_offset = 0;
                 if let Some(sym) = self.cur_env.sym_table.get(&format!("Array{}", num)) {
                     stack_offset = sym.stack_offset;
                 } else {
-                    eprintln!("Array{} is not defined.", num);
+                    Error::TYPE.found(&format!("Array{} is not defined", num));
                 }
                 for (idx, elem) in belems.iter().enumerate() {
                     let elem_op: Operand = self.gen_expr(elem.clone()).unwrap();
@@ -127,21 +156,56 @@ impl FrontManager {
                             format!("Array{}", num),
                             stack_offset,
                             Some(Box::new(Operand::INTLIT(idx as i128))),
+                            None,
                         ),
                         elem_op,
                     ));
                 }
-                Some(Operand::ID(format!("Array{}", num), stack_offset, None))
+                Some(Operand::ID(
+                    format!("Array{}", num),
+                    stack_offset,
+                    None,
+                    None,
+                ))
             }
             Node::INDEX(bbase, bindex) => {
                 let base_op: Operand = self.gen_expr(*bbase.clone()).unwrap();
                 let index_op: Operand = self.gen_expr(*bindex.clone()).unwrap();
                 match base_op {
-                    Operand::ID(name, stack_offset, _) => {
-                        Some(Operand::ID(name, stack_offset, Some(Box::new(index_op))))
+                    Operand::ID(name, stack_offset, _, _) => Some(Operand::ID(
+                        name,
+                        stack_offset,
+                        Some(Box::new(index_op)),
+                        None,
+                    )),
+                    Operand::REG(_virt, _phys, _, _) => {
+                        Some(Operand::REG(self.virt, 0, Some(Box::new(index_op)), None))
                     }
-                    Operand::REG(_virt, _phys, _) => {
-                        Some(Operand::REG(self.virt, 0, Some(Box::new(index_op))))
+                    _ => None,
+                }
+            }
+            Node::MEMBER(st, member) => {
+                let struct_op: Operand = self.gen_expr(*st.clone()).unwrap();
+                match struct_op {
+                    Operand::ID(name, stack_offset, _, _) => {
+                        if let Some(s) = self.get_symbol(&name) {
+                            if let Ok(st_ty) = s.ty {
+                                if let Type::STRUCT(map, _) = st_ty {
+                                    if let Some(member_s) = map.get(&member) {
+                                        return Some(Operand::ID(
+                                            name,
+                                            stack_offset,
+                                            None,
+                                            Some(member_s.stack_offset),
+                                        ));
+                                    }
+                                }
+                            }
+                        }
+                        None
+                    }
+                    Operand::REG(_virt, _phys, _, _) => {
+                        Some(Operand::REG(self.virt, 0, None, Some(0)))
                     }
                     _ => None,
                 }
@@ -153,7 +217,7 @@ impl FrontManager {
                 } else {
                     Error::TYPE.found(&format!("{} is not defined", &name));
                 }
-                Some(Operand::ID(name, stack_offset, None))
+                Some(Operand::ID(name, stack_offset, None, None))
             }
             Node::INTEGER(val) => Some(Operand::INTLIT(val)),
 
@@ -167,24 +231,24 @@ impl FrontManager {
         let lop: Operand = self.gen_expr(*blop.clone()).unwrap();
         let virt = self.virt;
         self.add(Tac::UNEX(
-            Operand::REG(virt, 0, None),
+            Operand::REG(virt, 0, None, None),
             String::from(op),
             lop,
         ));
         self.virt += 1;
-        Some(Operand::REG(virt, 0, None))
+        Some(Operand::REG(virt, 0, None, None))
     }
     fn add_binop(&mut self, blop: Box<Node>, brop: Box<Node>, op: &str) -> Option<Operand> {
         let lop: Operand = self.gen_expr(*blop.clone()).unwrap();
         let rop: Operand = self.gen_expr(*brop.clone()).unwrap();
         let virt = self.virt;
         self.add(Tac::EX(
-            Operand::REG(virt, 0, None),
+            Operand::REG(virt, 0, None, None),
             String::from(op),
             lop,
             rop,
         ));
         self.virt += 1;
-        Some(Operand::REG(virt, 0, None))
+        Some(Operand::REG(virt, 0, None, None))
     }
 }

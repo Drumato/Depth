@@ -1,0 +1,9 @@
+struct A{
+  foo : i64
+  bar : i64
+}
+func main(){
+  let x : i64 = 30
+  let a : A = A{ foo : x, bar : 50}
+  return a.foo
+}

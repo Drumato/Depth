@@ -69,7 +69,7 @@ impl Env {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct Symbol {
     pub stack_offset: usize,
     pub ty: Result<Type, Token>,

@@ -18,7 +18,7 @@ impl Optimizer {
                 num = n.unwrap();
             }
             match var {
-                Operand::REG(ref mut _virt, ref mut phys, ref mut _oind) => {
+                Operand::REG(ref mut _virt, ref mut phys, ref mut _oind, ref mut _omember) => {
                     if num < AVAILABLE_X64 {
                         *phys = num;
                         reg_map.insert(var.string(), num);
@@ -46,7 +46,7 @@ impl Optimizer {
             for i in remove_list.iter() {
                 let mut return_reg: usize = 0;
                 if *i < active_list.len() {
-                    if let Operand::REG(_, phys, _oind) = &active_list[*i].0 {
+                    if let Operand::REG(_, phys, _oind, _omember) = &active_list[*i].0 {
                         return_reg = *phys;
                     }
                     active_list.remove(*i);
@@ -63,53 +63,113 @@ impl Optimizer {
             match t {
                 Tac::EX(lv, _, lop, rop) => {
                     let op2 = lop.clone();
-                    if let Operand::REG(ref mut _virt, ref mut phys, ref mut _oind) = lop {
+                    if let Operand::REG(
+                        ref mut _virt,
+                        ref mut phys,
+                        ref mut _oind,
+                        ref mut _omember,
+                    ) = lop
+                    {
                         *phys = *reg_map.get(&op2.string()).unwrap();
                     }
                     let op2 = rop.clone();
-                    if let Operand::REG(ref mut _virt, ref mut phys, ref mut _oind) = rop {
+                    if let Operand::REG(
+                        ref mut _virt,
+                        ref mut phys,
+                        ref mut _oind,
+                        ref mut _omember,
+                    ) = rop
+                    {
                         *phys = *reg_map.get(&op2.string()).unwrap();
                     }
                     let op2 = lv.clone();
-                    if let Operand::REG(ref mut _virt, ref mut phys, ref mut _oind) = lv {
+                    if let Operand::REG(
+                        ref mut _virt,
+                        ref mut phys,
+                        ref mut _oind,
+                        ref mut _omember,
+                    ) = lv
+                    {
                         *phys = *reg_map.get(&op2.string()).unwrap();
                     }
                 }
                 Tac::UNEX(lv, _, op) => {
                     let op2 = op.clone();
-                    if let Operand::REG(ref mut _virt, ref mut phys, ref mut _oind) = op {
+                    if let Operand::REG(
+                        ref mut _virt,
+                        ref mut phys,
+                        ref mut _oind,
+                        ref mut _omember,
+                    ) = op
+                    {
                         *phys = *reg_map.get(&op2.string()).unwrap();
                     }
                     let op2 = lv.clone();
-                    if let Operand::REG(ref mut _virt, ref mut phys, ref mut _oind) = lv {
+                    if let Operand::REG(
+                        ref mut _virt,
+                        ref mut phys,
+                        ref mut _oind,
+                        ref mut _omember,
+                    ) = lv
+                    {
                         *phys = *reg_map.get(&op2.string()).unwrap();
                     }
                 }
                 Tac::RET(op) => {
                     let op2 = op.clone();
-                    if let Operand::REG(ref mut _virt, ref mut phys, ref mut _oind) = op {
+                    if let Operand::REG(
+                        ref mut _virt,
+                        ref mut phys,
+                        ref mut _oind,
+                        ref mut _omember,
+                    ) = op
+                    {
                         *phys = *reg_map.get(&op2.string()).unwrap();
                     }
                 }
                 Tac::PARAM(_, op) => {
                     let op2 = op.clone();
-                    if let Operand::REG(ref mut _virt, ref mut phys, ref mut _oind) = op {
+                    if let Operand::REG(
+                        ref mut _virt,
+                        ref mut phys,
+                        ref mut _oind,
+                        ref mut _omember,
+                    ) = op
+                    {
                         *phys = *reg_map.get(&op2.string()).unwrap();
                     }
                 }
                 Tac::LET(lv, op) => {
                     let op2 = op.clone();
-                    if let Operand::REG(ref mut _virt, ref mut phys, ref mut _oind) = op {
+                    if let Operand::REG(
+                        ref mut _virt,
+                        ref mut phys,
+                        ref mut _oind,
+                        ref mut _omember,
+                    ) = op
+                    {
                         *phys = *reg_map.get(&op2.string()).unwrap();
                     }
                     let op2 = lv.clone();
-                    if let Operand::REG(ref mut _virt, ref mut phys, ref mut _oind) = lv {
+                    if let Operand::REG(
+                        ref mut _virt,
+                        ref mut phys,
+                        ref mut _oind,
+                        ref mut _omember,
+                    ) = lv
+                    {
                         *phys = *reg_map.get(&op2.string()).unwrap();
                     }
                 }
                 Tac::IFF(op, _label) => {
                     let op2 = op.clone();
-                    if let Operand::REG(ref mut _virt, ref mut phys, ref mut _oind) = op {
+                    if let Operand::REG(
+                        ref mut _virt,
+                        ref mut phys,
+                        ref mut _oind,
+                        ref mut _omember,
+                    ) = op
+                    {
                         *phys = *reg_map.get(&op2.string()).unwrap();
                     }
                 }

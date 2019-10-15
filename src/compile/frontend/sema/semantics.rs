@@ -2,7 +2,9 @@ use super::super::super::super::ce::types::Error;
 use super::super::frontmanager::frontmanager::{Env, FrontManager, Symbol};
 use super::super::parse::node::{Func, Node};
 use super::super::token::token::Token;
+use std::collections::BTreeMap;
 type ArySize = usize;
+type TotalSize = usize;
 type PointerTo = Box<Type>;
 type Elem = Box<Type>;
 type Alias = Box<Type>;
@@ -13,6 +15,7 @@ pub enum Type {
     ARRAY(Elem, ArySize),
     UNKNOWN, //DEFTYPE(name,size)
     ALIAS(Alias),
+    STRUCT(BTreeMap<String, Symbol>, TotalSize),
 }
 
 impl Type {
@@ -22,16 +25,18 @@ impl Type {
             Self::POINTER(inner) => format!("POINTER<{}>", inner.string()),
             Self::ARRAY(elem, len) => format!("ARRAY<{},{}>", elem.string(), len),
             Self::ALIAS(alt) => format!("ALIAS<{}>", alt.string()),
+            Self::STRUCT(_members, size) => format!("STRUCT<{}>", size),
             Self::UNKNOWN => "UNKNOWN".to_string(),
         }
     }
     pub fn size(&self) -> usize {
         match self {
-            Type::INTEGER => 8,
-            Type::POINTER(_innter) => 8,
-            Type::ARRAY(elem, len) => elem.size() * len,
-            Type::ALIAS(alt) => alt.size(),
-            Type::UNKNOWN => {
+            Self::INTEGER => 8,
+            Self::POINTER(_innter) => 8,
+            Self::ARRAY(elem, len) => elem.size() * len,
+            Self::ALIAS(alt) => alt.size(),
+            Self::STRUCT(_, size) => *size,
+            Self::UNKNOWN => {
                 Error::TYPE.found(&"can't known size at compile time".to_string());
                 0
             }
@@ -93,9 +98,20 @@ impl FrontManager {
             Node::LET(ident_name, bexpr) => {
                 let expr_type: Type = self.walk(*bexpr.clone());
                 if let Some(ref mut s) = self.cur_env.sym_table.get_mut(&ident_name) {
-                    s.ty = Ok(expr_type.clone());
                     if let Type::ARRAY(_, _) = expr_type {
+                        s.ty = Ok(expr_type.clone());
+                    } else if let Type::STRUCT(ref mut member_map, ref mut _totalsize) =
+                        expr_type.clone()
+                    {
+                        s.ty = Ok(expr_type.clone());
+                        self.stack_offset += s.size();
+                        let mut totalsize: usize = 0;
+                        for (_member_name, member_s) in member_map.iter_mut() {
+                            member_s.stack_offset = self.stack_offset - totalsize;
+                            totalsize += member_s.size();
+                        }
                     } else {
+                        s.ty = Ok(expr_type.clone());
                         self.stack_offset += s.size();
                     }
                     s.stack_offset = self.stack_offset;
@@ -123,6 +139,17 @@ impl FrontManager {
                     Error::TYPE.found(&format!("can't indexing {} it's not array ", rec.string()));
                     Type::UNKNOWN
                 }
+            }
+            Node::MEMBER(ident, member) => {
+                let struct_type: Type = self.walk(*ident.clone());
+                if let Type::STRUCT(map, _) = struct_type {
+                    if let Some(member_s) = map.get(&member) {
+                        if let Ok(member_type) = &member_s.ty {
+                            return member_type.clone();
+                        }
+                    }
+                }
+                Type::UNKNOWN
             }
             Node::ADDRESS(lch) => {
                 let lch_type: Type = self.walk(*lch.clone());
@@ -216,6 +243,19 @@ impl FrontManager {
                 ));
                 Type::UNKNOWN
             }
+            Node::STRUCTLIT(_type_name, members) => {
+                let mut total_size: usize = self.stack_offset;
+                let mut map: BTreeMap<String, Symbol> = BTreeMap::new();
+                for (member_name, member_expr) in members.iter() {
+                    let member_type: Type = self.walk(member_expr.clone());
+                    total_size += member_type.size();
+                    map.insert(
+                        member_name.to_string(),
+                        Symbol::new(total_size, Ok(member_type), false),
+                    );
+                }
+                Type::STRUCT(map, total_size)
+            }
 
             _ => Type::UNKNOWN,
         }
@@ -235,4 +275,21 @@ impl FrontManager {
             env = *env.prev.unwrap().clone();
         }
     }
+    /*
+    pub fn get_type(&self, name: &String) -> Option<Type> {
+        let mut env: Env = self.cur_env.clone();
+        loop {
+            if let None = env.prev {
+                if let Some(t) = env.type_table.get(name) {
+                    return Some(t.clone());
+                }
+                return None;
+            }
+            if let Some(t) = env.type_table.get(name) {
+                return Some(t.clone());
+            }
+            env = *env.prev.unwrap().clone();
+        }
+    }
+    */
 }

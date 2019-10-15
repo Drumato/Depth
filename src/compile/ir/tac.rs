@@ -2,32 +2,39 @@ type Virtual = usize;
 type Physical = usize;
 type Offset = usize;
 type Index = Option<Box<Operand>>;
+type Member = Option<Offset>;
 #[derive(PartialOrd, Ord, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Operand {
     INTLIT(i128),
-    REG(Virtual, Physical, Index),
-    ID(String, Offset, Index),
+    REG(Virtual, Physical, Index, Member),
+    ID(String, Offset, Index, Member),
     CALL(String, usize),
 }
 impl Operand {
     pub fn string(&self) -> String {
         match self {
             Self::INTLIT(value) => format!("{}", value),
-            Self::REG(virt, _phys, _oind) => format!("t{}", virt),
-            Self::ID(name, _, _oind) => name.to_string(),
+            Self::REG(virt, _phys, _oind, _omember) => format!("t{}", virt),
+            Self::ID(name, _, _oind, _omember) => name.to_string(),
             Self::CALL(func, argc) => format!("call {}, {}", func, argc),
         }
     }
     fn dump_st(&self) -> String {
         match self {
             Self::INTLIT(value) => format!("{}", value),
-            Self::REG(virt, _phys, oind) => match oind {
+            Self::REG(virt, _phys, oind, omember) => match oind {
                 Some(index) => format!("t{}[{}]", virt, index.dump_st()),
-                None => format!("t{}", virt),
+                None => match omember {
+                    Some(member) => format!("t{}.{}", virt, member),
+                    None => format!("t{}", virt),
+                },
             },
-            Self::ID(name, _, oind) => match oind {
+            Self::ID(name, _, oind, omember) => match oind {
                 Some(index) => format!("{}[{}]", name, index.dump_st()),
-                None => name.to_string(),
+                None => match omember {
+                    Some(member) => format!("{}.{}", name, member),
+                    None => name.to_string(),
+                },
             },
             Self::CALL(func, argc) => format!("call {}, {}", func, argc),
         }

@@ -23,6 +23,7 @@ pub enum Token {
     SEMICOLON,
     COLON,
     COMMA,
+    DOT,
     AMPERSAND,
 
     FUNC,
@@ -70,6 +71,7 @@ impl Token {
             Token::SEMICOLON => "SEMICOLON".to_string(),
             Token::COLON => "COLON".to_string(),
             Token::COMMA => "COMMA".to_string(),
+            Token::DOT => "DOT".to_string(),
             Token::AMPERSAND => "AMPERSAND".to_string(),
             Token::RETURN => "RETURN".to_string(),
             Token::EOF => "EOF".to_string(),
