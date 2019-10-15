@@ -77,6 +77,12 @@ impl FrontManager {
                 let ret_op: Operand = self.gen_expr(ch).unwrap();
                 self.add(Tac::RET(ret_op));
             }
+            Node::LABEL(label) => {
+                self.add(Tac::LABEL(format!(".L{}", label)));
+            }
+            Node::GOTO(label) => {
+                self.add(Tac::GOTO(format!(".L{}", label)));
+            }
             _ => (),
         }
     }
@@ -150,6 +156,7 @@ impl FrontManager {
                 Some(Operand::ID(name, stack_offset, None))
             }
             Node::INTEGER(val) => Some(Operand::INTLIT(val)),
+
             _ => None,
         }
     }

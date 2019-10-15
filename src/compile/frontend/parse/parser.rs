@@ -70,6 +70,8 @@ impl Parser {
             &Token::LBRACE => self.parse_block(),
             &Token::CONDLOOP => self.parse_condloop(),
             &Token::IF => self.parse_if(),
+            &Token::COLON => self.parse_label(),
+            &Token::GOTO => self.parse_goto(),
             _ => {
                 Error::PARSE.found(&format!("statement can't start with '{}'", t.string(),));
                 Node::INVALID
@@ -85,6 +87,19 @@ impl Parser {
             .sym_table
             .insert(arg_name.clone(), Symbol::new(0, Err(type_name), mutable));
         Node::DEFARG(arg_name)
+    }
+    fn parse_label(&mut self) -> Node {
+        self.next_token();
+        let label: String = self.consume_ident();
+        Node::LABEL(label)
+    }
+    fn parse_goto(&mut self) -> Node {
+        self.next_token();
+        if !self.consume(&Token::COLON) {
+            Error::PARSE.found(&"labelname must be started colon".to_string());
+        }
+        let label: String = self.consume_ident();
+        Node::GOTO(label)
     }
     fn parse_condloop(&mut self) -> Node {
         self.expect(&Token::CONDLOOP);

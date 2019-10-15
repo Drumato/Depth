@@ -40,6 +40,8 @@ pub enum Node {
     IF(Condition, Blk, Alter),
     BLOCK(Elements),
     DEFARG(Name),
+    LABEL(Name),
+    GOTO(Name),
     INVALID,
 }
 impl Node {
@@ -84,6 +86,8 @@ impl Node {
                 None => format!("IF<{},{}>", cond.string(), stmts.string()),
             },
 
+            Self::LABEL(label) => format!("LABEL<{}>", label),
+            Self::GOTO(label) => format!("GOTO<{}>", label),
             _ => "INVALID".to_string(),
         }
     }
