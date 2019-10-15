@@ -3,13 +3,16 @@ use super::super::frontmanager::frontmanager::{Env, FrontManager, Symbol};
 use super::super::parse::node::{Func, Node};
 use super::super::token::token::Token;
 type ArySize = usize;
+type PointerTo = Box<Type>;
+type Elem = Box<Type>;
+type Alias = Box<Type>;
 #[derive(Clone, Eq, PartialEq)]
 pub enum Type {
     INTEGER, // future INTEGER(,bitsize)
-    POINTER(Box<Type>),
-    ARRAY(Box<Type>, ArySize),
+    POINTER(PointerTo),
+    ARRAY(Elem, ArySize),
     UNKNOWN, //DEFTYPE(name,size)
-             // ALIAS(Box<Type>)
+    ALIAS(Alias),
 }
 
 impl Type {
@@ -18,6 +21,7 @@ impl Type {
             Self::INTEGER => "INT-TYPE".to_string(),
             Self::POINTER(inner) => format!("POINTER<{}>", inner.string()),
             Self::ARRAY(elem, len) => format!("ARRAY<{},{}>", elem.string(), len),
+            Self::ALIAS(alt) => format!("ALIAS<{}>", alt.string()),
             Self::UNKNOWN => "UNKNOWN".to_string(),
         }
     }
@@ -26,6 +30,7 @@ impl Type {
             Type::INTEGER => 8,
             Type::POINTER(_innter) => 8,
             Type::ARRAY(elem, len) => elem.size() * len,
+            Type::ALIAS(alt) => alt.size(),
             Type::UNKNOWN => {
                 Error::TYPE.found(&"can't known size at compile time".to_string());
                 0

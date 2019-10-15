@@ -1,0 +1,7 @@
+type Number = i64
+type PointerToNumber = Pointer<Number>
+func main(){
+  let x : Number = 30
+  let y : PointerToNumber = &x
+  return *y 
+}

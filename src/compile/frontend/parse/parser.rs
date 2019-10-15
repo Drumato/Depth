@@ -1,5 +1,6 @@
 use super::super::super::super::ce::types::Error;
 use super::super::frontmanager::frontmanager::{Env, Symbol};
+use super::super::sema::semantics::Type;
 use super::super::token::token::Token;
 use super::node::{Func, Node};
 struct Parser {
@@ -30,14 +31,17 @@ impl Parser {
         loop {
             let t: &Token = self.cur_token();
             match t {
+                &Token::TYPE => {
+                    self.parse_alias();
+                }
                 &Token::FUNC => {
-                    self.func();
+                    self.parse_func();
                 }
                 _ => break,
             }
         }
     }
-    fn func(&mut self) {
+    fn parse_func(&mut self) {
         self.cur_env = Env::new();
         self.next_token();
         let func_name: String = self.consume_ident();
@@ -60,6 +64,18 @@ impl Parser {
             stmts: func_stmts,
             env: self.cur_env.clone(),
         });
+    }
+    fn parse_alias(&mut self) {
+        self.expect(&Token::TYPE);
+        let alias_name: String = self.consume_ident();
+        self.expect(&Token::ASSIGN);
+        let type_name: Token = self.consume_typename();
+        if let Some(ref mut global) = self.cur_env.prev {
+            global.type_table.insert(
+                alias_name,
+                Type::ALIAS(Box::new(Type::from_token(type_name))),
+            );
+        }
     }
     fn stmt(&mut self) -> Node {
         let t: &Token = self.cur_token();
