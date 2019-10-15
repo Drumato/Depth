@@ -14,7 +14,6 @@ pub enum Token {
     LBRACKET,
     RBRACKET,
     LSHIFT,
-    RSHIFT,
     LT,
     GT,
     LTEQ,
@@ -40,8 +39,6 @@ pub enum Token {
     I64,
     POINTER(Box<Token>),
     ARRAY(Box<Token>, Box<Token>),
-    CHAR,
-    CHARLIT(char),
     EOF,
     BLANK,
     LF,
@@ -64,7 +61,6 @@ impl Token {
             Token::LBRACKET => "LBRACKET".to_string(),
             Token::RBRACKET => "RBRACKET".to_string(),
             Token::LSHIFT => "LSHIFT".to_string(),
-            Token::RSHIFT => "RSHIFT".to_string(),
             Token::LT => "LESSTHAN".to_string(),
             Token::GT => "GREATERTHAN".to_string(),
             Token::LTEQ => "LESSTHANEQUAL".to_string(),
@@ -91,8 +87,6 @@ impl Token {
             Token::ARRAY(elem_type, ary_size) => {
                 format!("ARRAY<{},{}>", elem_type.string(), ary_size.string())
             }
-            Token::CHAR => "CHAR".to_string(),
-            Token::CHARLIT(char_val) => format!("CHARLIT<{}>", char_val),
             _ => "".to_string(),
         }
     }

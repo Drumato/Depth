@@ -1,9 +1,7 @@
 use super::super::super::super::ce::types::Error;
 use super::super::frontmanager::frontmanager::{Env, Symbol};
-use super::super::sema::semantics::Type;
 use super::super::token::token::Token;
 use super::node::{Func, Node};
-use std::collections::BTreeMap;
 struct Parser {
     tokens: Vec<Token>,
     funcs: Vec<Func>,
@@ -368,8 +366,7 @@ impl Parser {
             }
             Token::IDENT(name) => {
                 self.next_token();
-                eprintln!("not implemented deftype");
-                Token::EOF
+                Token::IDENT(name.to_string())
             }
             Token::POINTER(_ptr_to) => {
                 self.next_token();

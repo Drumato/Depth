@@ -1,6 +1,4 @@
 use super::super::frontmanager::frontmanager::Env;
-use super::super::sema::semantics::Type;
-use super::super::token::token::Token;
 extern crate colored;
 use colored::*;
 type Name = String;

@@ -95,14 +95,23 @@ impl FrontManager {
                     }
                     s.stack_offset = self.stack_offset;
                 }
-                Type::UNKNOWN
+                expr_type
             }
             Node::RETURN(bexpr) => {
                 let expr_type: Type = self.walk(*bexpr.clone());
-                Type::UNKNOWN
+                expr_type
             }
             Node::INDEX(rec, ind) => {
                 let array_type: Type = self.walk(*rec.clone());
+                let index_type: Type = self.walk(*ind.clone());
+                if let Type::INTEGER = &index_type {
+                } else {
+                    Error::TYPE.found(&format!(
+                        "must be integer-type in index but got {}",
+                        index_type.string()
+                    ));
+                }
+
                 if let Type::ARRAY(elem_type, _) = array_type {
                     *elem_type.clone()
                 } else {
@@ -110,29 +119,27 @@ impl FrontManager {
                     Type::UNKNOWN
                 }
             }
-            Node::ADDRESS(ch) => {
-                let inner_type: Type = self.walk(*ch.clone());
-                Type::POINTER(Box::new(inner_type))
+            Node::ADDRESS(lch) => {
+                let lch_type: Type = self.walk(*lch.clone());
+                Type::POINTER(Box::new(lch_type))
             }
-            Node::DEREFERENCE(ch) => {
-                let inner_type: Type = self.walk(*ch.clone());
-                if let Type::POINTER(inner) = inner_type {
-                    *inner.clone()
-                } else {
-                    Error::TYPE.found(&format!(
-                        "can't dereference {} it's not pointer",
-                        inner_type.string()
-                    ));
-                    Type::UNKNOWN
+            Node::DEREFERENCE(lch) => {
+                let lch_type: Type = self.walk(*lch.clone());
+                if let Type::POINTER(inner) = &lch_type {
+                    return *inner.clone();
                 }
+                Error::TYPE.found(&format!(
+                    "can't dereferecne {} it's not pointer ",
+                    lch_type.string(),
+                ));
+                Type::UNKNOWN
             }
             Node::IDENT(name) => {
                 if let Some(s) = self.get_symbol(&name) {
                     if let Ok(ty) = s.ty {
                         ty
                     } else if let Err(type_t) = s.ty {
-                        eprintln!("not implemented aaa");
-                        Type::UNKNOWN
+                        Type::from_token(type_t)
                     } else {
                         Type::UNKNOWN
                     }
@@ -192,21 +199,6 @@ impl FrontManager {
                     return Type::UNKNOWN;
                 }
                 lch_type
-            }
-            Node::ADDRESS(lch) => {
-                let lch_type: Type = self.walk(*lch.clone());
-                Type::POINTER(Box::new(lch_type))
-            }
-            Node::DEREFERENCE(lch) => {
-                let lch_type: Type = self.walk(*lch.clone());
-                if let Type::POINTER(inner) = &lch_type {
-                    return *inner.clone();
-                }
-                Error::TYPE.found(&format!(
-                    "can't dereferecne {} it's not pointer ",
-                    lch_type.string(),
-                ));
-                Type::UNKNOWN
             }
             Node::MINUS(lch) => {
                 let lch_type: Type = self.walk(*lch.clone());

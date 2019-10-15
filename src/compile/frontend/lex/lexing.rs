@@ -47,10 +47,6 @@ fn tokenize(input: &String, keywords: &HashMap<&str, (Token, usize)>) -> Option<
             }
             tokenize_symbols(input)
         }
-        '\'' => {
-            let char_val: char = input[1..].as_bytes()[0] as char;
-            Some((Token::CHARLIT(char_val), 3))
-        }
         ' ' => Some((Token::BLANK, count_len(input, |c| c == &' '))),
         _ => tokenize_symbols(input),
     }
@@ -129,7 +125,6 @@ fn build_keywords() -> HashMap<&'static str, (Token, usize)> {
     keywords.insert("let", (Token::LET, 3));
     keywords.insert("i64", (Token::I64, 3));
     keywords.insert("Pointer", (Token::POINTER(Box::new(Token::EOF)), 7));
-    keywords.insert("ch", (Token::CHAR, 2));
     keywords.insert("mut", (Token::MUT, 3));
     keywords.insert("goto", (Token::GOTO, 4));
     keywords.insert(
