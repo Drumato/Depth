@@ -39,8 +39,35 @@ impl FrontManager {
                     expr_op,
                 ));
             }
-            Node::BLOCK(bstmts) => {
-                let stmts: Vec<Node> = *bstmts.clone();
+            Node::IF(bcond, block, alter) => {
+                let cond_op: Operand = self.gen_expr(*bcond.clone()).unwrap();
+                let label: usize = self.label;
+                self.add(Tac::IFF(cond_op, format!(".L{}", label)));
+                self.label += 1;
+                self.gen_stmt(block);
+                if let Some(alt) = alter {
+                    self.add(Tac::GOTO(format!(".L{}", self.label)));
+                    self.add(Tac::LABEL(format!(".L{}", self.label - 1)));
+                    self.label += 1;
+                    self.gen_stmt(alt);
+                    self.add(Tac::LABEL(format!(".L{}", self.label - 1)));
+                } else {
+                    self.add(Tac::LABEL(format!(".L{}", label)));
+                }
+            }
+            Node::CONDLOOP(bcond, block) => {
+                let loop_label: usize = self.label;
+                self.add(Tac::LABEL(format!(".L{}", loop_label)));
+                self.label += 1;
+                let cond_op: Operand = self.gen_expr(*bcond.clone()).unwrap();
+                let break_label: usize = self.label;
+                self.add(Tac::IFF(cond_op, format!(".L{}", break_label)));
+                self.label += 1;
+                self.gen_stmt(block);
+                self.add(Tac::GOTO(format!(".L{}", loop_label)));
+                self.add(Tac::LABEL(format!(".L{}", break_label)));
+            }
+            Node::BLOCK(stmts) => {
                 for st in stmts.iter() {
                     self.gen_stmt(st);
                 }
@@ -55,81 +82,22 @@ impl FrontManager {
     }
     fn gen_expr(&mut self, n: Node) -> Option<Operand> {
         match n {
-            Node::ADD(blop, brop, _) => {
-                let lop: Operand = self.gen_expr(*blop.clone()).unwrap();
-                let rop: Operand = self.gen_expr(*brop.clone()).unwrap();
-                let virt = self.virt;
-                self.add(Tac::EX(
-                    Operand::REG(virt, 0, None),
-                    String::from("+"),
-                    lop,
-                    rop,
-                ));
-                self.virt += 1;
-                Some(Operand::REG(virt, 0, None))
-            }
-            Node::SUB(blop, brop, _) => {
-                let lop: Operand = self.gen_expr(*blop.clone()).unwrap();
-                let rop: Operand = self.gen_expr(*brop.clone()).unwrap();
-                let virt = self.virt;
-                self.add(Tac::EX(
-                    Operand::REG(virt, 0, None),
-                    String::from("-"),
-                    lop,
-                    rop,
-                ));
-                self.virt += 1;
-                Some(Operand::REG(virt, 0, None))
-            }
-            Node::MUL(blop, brop, _) => {
-                let lop: Operand = self.gen_expr(*blop.clone()).unwrap();
-                let rop: Operand = self.gen_expr(*brop.clone()).unwrap();
-                let virt = self.virt;
-                self.add(Tac::EX(
-                    Operand::REG(virt, 0, None),
-                    String::from("*"),
-                    lop,
-                    rop,
-                ));
-                self.virt += 1;
-                Some(Operand::REG(virt, 0, None))
-            }
-            Node::DIV(blop, brop, _) => {
-                let lop: Operand = self.gen_expr(*blop.clone()).unwrap();
-                let rop: Operand = self.gen_expr(*brop.clone()).unwrap();
-                let virt = self.virt;
-                self.add(Tac::EX(
-                    Operand::REG(virt, 0, None),
-                    String::from("/"),
-                    lop,
-                    rop,
-                ));
-                self.virt += 1;
-                Some(Operand::REG(virt, 0, None))
-            }
-            Node::ADDRESS(blop, _) => {
-                let lop: Operand = self.gen_expr(*blop.clone()).unwrap();
-                let virt = self.virt;
-                self.add(Tac::UNEX(
-                    Operand::REG(virt, 0, None),
-                    String::from("&"),
-                    lop,
-                ));
-                self.virt += 1;
-                Some(Operand::REG(virt, 0, None))
-            }
-
-            Node::DEREFERENCE(blop, _) => {
-                let lop: Operand = self.gen_expr(*blop.clone()).unwrap();
-                let virt = self.virt;
-                self.add(Tac::UNEX(
-                    Operand::REG(virt, 0, None),
-                    String::from("*"),
-                    lop,
-                ));
-                self.virt += 1;
-                Some(Operand::REG(virt, 0, None))
-            }
+            Node::ADD(blop, brop, _) => self.add_binop(blop, brop, "+"),
+            Node::SUB(blop, brop, _) => self.add_binop(blop, brop, "-"),
+            Node::MUL(blop, brop, _) => self.add_binop(blop, brop, "*"),
+            Node::DIV(blop, brop, _) => self.add_binop(blop, brop, "/"),
+            Node::MOD(blop, brop, _) => self.add_binop(blop, brop, "%"),
+            Node::LT(blop, brop, _) => self.add_binop(blop, brop, "<"),
+            Node::GT(blop, brop, _) => self.add_binop(blop, brop, ">"),
+            Node::LSHIFT(blop, brop, _) => self.add_binop(blop, brop, "<<"),
+            Node::RSHIFT(blop, brop, _) => self.add_binop(blop, brop, ">>"),
+            Node::LTEQ(blop, brop, _) => self.add_binop(blop, brop, "<="),
+            Node::GTEQ(blop, brop, _) => self.add_binop(blop, brop, ">="),
+            Node::EQ(blop, brop, _) => self.add_binop(blop, brop, "=="),
+            Node::NTEQ(blop, brop, _) => self.add_binop(blop, brop, "!="),
+            Node::ADDRESS(blop, _) => self.add_unary(blop, "&"),
+            Node::DEREFERENCE(blop, _) => self.add_unary(blop, "*"),
+            Node::MINUS(blop, _) => self.add_unary(blop, "-"),
             Node::CALL(name, bargs) => {
                 let args: Vec<Node> = *bargs.clone();
                 let len: usize = args.len();
@@ -187,5 +155,29 @@ impl FrontManager {
     }
     fn add(&mut self, tac: Tac) {
         self.tacs.push(tac);
+    }
+    fn add_unary(&mut self, blop: Box<Node>, op: &str) -> Option<Operand> {
+        let lop: Operand = self.gen_expr(*blop.clone()).unwrap();
+        let virt = self.virt;
+        self.add(Tac::UNEX(
+            Operand::REG(virt, 0, None),
+            String::from(op),
+            lop,
+        ));
+        self.virt += 1;
+        Some(Operand::REG(virt, 0, None))
+    }
+    fn add_binop(&mut self, blop: Box<Node>, brop: Box<Node>, op: &str) -> Option<Operand> {
+        let lop: Operand = self.gen_expr(*blop.clone()).unwrap();
+        let rop: Operand = self.gen_expr(*brop.clone()).unwrap();
+        let virt = self.virt;
+        self.add(Tac::EX(
+            Operand::REG(virt, 0, None),
+            String::from(op),
+            lop,
+            rop,
+        ));
+        self.virt += 1;
+        Some(Operand::REG(virt, 0, None))
     }
 }

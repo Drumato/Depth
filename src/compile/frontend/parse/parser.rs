@@ -70,6 +70,8 @@ impl Parser {
             &Token::LET => self.parse_let(),
             &Token::IDENT(_) => self.parse_assign(),
             &Token::LBRACE => self.parse_block(),
+            &Token::CONDLOOP => self.parse_condloop(),
+            &Token::IF => self.parse_if(),
             _ => {
                 Error::PARSE.found(&format!("statement can't start with '{}'", t.string(),));
                 Node::INVALID
@@ -86,9 +88,24 @@ impl Parser {
             .insert(arg_name.clone(), Symbol::new(0, Err(type_name), mutable));
         Node::DEFARG(arg_name)
     }
+    fn parse_condloop(&mut self) -> Node {
+        self.expect(&Token::CONDLOOP);
+        let cond: Node = self.expr();
+        let stmt: Node = self.stmt();
+        Node::CONDLOOP(Box::new(cond), Box::new(stmt))
+    }
     fn parse_block(&mut self) -> Node {
         let stmts: Vec<Node> = self.compound_stmt();
         Node::BLOCK(Box::new(stmts))
+    }
+    fn parse_if(&mut self) -> Node {
+        self.expect(&Token::IF);
+        let cond: Node = self.expr();
+        let stmt: Node = self.stmt();
+        if !self.consume(&Token::ELSE) {
+            return Node::IF(Box::new(cond), Box::new(stmt), None);
+        }
+        Node::IF(Box::new(cond), Box::new(stmt), Some(Box::new(self.stmt())))
     }
     fn parse_let(&mut self) -> Node {
         self.expect(&Token::LET);
@@ -121,16 +138,63 @@ impl Parser {
         self.equal()
     }
     fn equal(&mut self) -> Node {
-        eprintln!("not implemented equal()");
-        self.relation()
+        let mut lhs: Node = self.relation();
+        self.check_invalid(&lhs);
+        loop {
+            if !self.check_vec(vec![Token::EQ, Token::NTEQ]) {
+                break;
+            }
+            let op: Token = self.get_token();
+            self.next_token();
+            if let &Token::EQ = &op {
+                lhs = Node::EQ(Box::new(lhs), Box::new(self.relation()), None);
+            } else if let &Token::NTEQ = &op {
+                lhs = Node::NTEQ(Box::new(lhs), Box::new(self.relation()), None);
+            }
+        }
+        lhs
     }
     fn relation(&mut self) -> Node {
-        eprintln!("not implemented relation()");
-        self.shift()
+        let mut lhs: Node = self.shift();
+        self.check_invalid(&lhs);
+        loop {
+            if !self.check_vec(vec![Token::LT, Token::GT, Token::LTEQ, Token::GTEQ]) {
+                break;
+            }
+            let op: Token = self.get_token();
+            self.next_token();
+            if let &Token::LT = &op {
+                lhs = Node::LT(Box::new(lhs), Box::new(self.relation()), None);
+            } else if let &Token::GT = &op {
+                lhs = Node::GT(Box::new(lhs), Box::new(self.relation()), None);
+            } else if let &Token::LTEQ = &op {
+                lhs = Node::LTEQ(Box::new(lhs), Box::new(self.relation()), None);
+            } else if let &Token::GTEQ = &op {
+                lhs = Node::GTEQ(Box::new(lhs), Box::new(self.relation()), None);
+            }
+        }
+        lhs
     }
     fn shift(&mut self) -> Node {
-        eprintln!("not implemented shift()");
-        self.adsub()
+        let mut lhs: Node = self.adsub();
+        self.check_invalid(&lhs);
+        loop {
+            if self.check(&Token::LSHIFT) {
+                self.next_token();
+                lhs = Node::LSHIFT(Box::new(lhs), Box::new(self.adsub()), None);
+            } else if self.check(&Token::GT) {
+                if self.peek(&Token::GT) {
+                    self.next_token();
+                    self.next_token();
+                    lhs = Node::RSHIFT(Box::new(lhs), Box::new(self.adsub()), None);
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+        lhs
     }
     fn adsub(&mut self) -> Node {
         let mut lhs: Node = self.muldiv();
@@ -153,7 +217,7 @@ impl Parser {
         let mut lhs: Node = self.unary();
         self.check_invalid(&lhs);
         loop {
-            if !self.check_vec(vec![Token::STAR, Token::SLASH]) {
+            if !self.check_vec(vec![Token::STAR, Token::SLASH, Token::PERCENT]) {
                 break;
             }
             let op: Token = self.get_token();
@@ -162,6 +226,8 @@ impl Parser {
                 lhs = Node::MUL(Box::new(lhs), Box::new(self.unary()), None);
             } else if let Token::SLASH = op {
                 lhs = Node::DIV(Box::new(lhs), Box::new(self.unary()), None);
+            } else if let Token::PERCENT = op {
+                lhs = Node::MOD(Box::new(lhs), Box::new(self.unary()), None);
             }
         }
         lhs
@@ -176,6 +242,10 @@ impl Parser {
             Token::STAR => {
                 self.next_token();
                 Node::DEREFERENCE(Box::new(self.unary()), None)
+            }
+            Token::MINUS => {
+                self.next_token();
+                Node::MINUS(Box::new(self.unary()), None)
             }
             _ => {
                 let n: Node = self.term();
@@ -201,8 +271,14 @@ impl Parser {
     fn term(&mut self) -> Node {
         let t: Token = self.get_token();
         match t {
+            Token::LPAREN => {
+                self.expect(&Token::LPAREN);
+                let n: Node = self.expr();
+                self.expect(&Token::RPAREN);
+                n
+            }
             Token::LBRACKET => {
-                self.next_token();
+                self.expect(&Token::LBRACKET);
                 let mut elems: Vec<Node> = Vec::new();
                 loop {
                     if let &Token::RBRACKET = self.cur_token() {
@@ -356,5 +432,23 @@ impl Parser {
     fn next_token(&mut self) {
         self.cur += 1;
         self.next += 1;
+    }
+    fn check(&self, t: &Token) -> bool {
+        if self.cur_token() == t {
+            return true;
+        }
+        false
+    }
+    fn peek(&self, t: &Token) -> bool {
+        if self.peek_token() == t {
+            return true;
+        }
+        false
+    }
+    fn peek_token(&self) -> &Token {
+        if self.next >= self.tokens.len() {
+            return &Token::EOF;
+        }
+        &self.tokens[self.next]
     }
 }
