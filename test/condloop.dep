@@ -1,0 +1,9 @@
+func main(){
+  let mut x : i64 = 10
+  let mut y : i64 = 0
+  condloop x != 0 {
+    y = y + x
+    x = x - 1
+  }
+  return y
+}

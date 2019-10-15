@@ -1,0 +1,5 @@
+func main(){
+  let a : i64 = 10
+  let x : Pointer<i64> = &a
+  return *x
+}

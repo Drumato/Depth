@@ -1,0 +1,55 @@
+func main(){
+  let mut x : i64 = 0
+  let mut y : i64 = 0
+  let mut sx : i64 = 0
+  let mut sy : i64 = 0
+  let mut zx : i64 = 0
+  let mut zy : i64 = 0
+  let mut cx : i64 = 0
+  let mut cy : i64 = 0
+  let mut xx : i64 = 0
+  let mut yy : i64 = 0
+  let mut n : i64 = 0
+  let mut sn : i64 = 0
+  let mut h : i64 = 0
+  let dn : i64 = 4
+  let max : i64 = 447
+  condloop y < 384 {
+    x = 0
+    condloop x < 512 {
+      sn = 0
+      sx = 0
+      condloop sx < dn {
+        cx = (x * 4 + sx) * 56 + 4673536
+        sy = 0
+        condloop sy < dn {
+          cy = (y * 4 + sy) * 56 + 124928
+          zx = 0
+          zy = 0
+          n = 0
+          condloop n < max{
+            xx = (zx * zx) >> 24
+            yy = (zy * zy) >> 24
+            if xx + yy > 67108864 {
+              goto :fin
+            }
+            zy = (zx * zy) >> 23
+            zx = xx -  yy + cx
+            zy = zy - cy
+            n = n + 1
+          }
+        :fin
+          sn = sn + n
+          sy = sy + 1
+        }
+        sx = sx + 1
+      }
+      //n = sn / (dn * dn)
+      n = sn >> 4
+      h = h + n
+      x = x + 1
+    }
+    y = y + 1
+  }
+  return 0
+}

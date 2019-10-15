@@ -1,0 +1,7 @@
+func main(){
+  return adb()
+}
+
+func adb(){
+  return 30
+}
