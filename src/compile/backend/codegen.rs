@@ -137,8 +137,20 @@ impl Generator {
                         self.lirs.push(x64::IR::ARGREG(*reg, *p));
                     } else if let Operand::INTLIT(v) = op {
                         self.lirs.push(x64::IR::ARGIMM(*reg, *v));
-                    } else if let Operand::ID(_name, offset, _oind, _omember) = op {
-                        self.lirs.push(x64::IR::ARGMEM(*reg, *offset));
+                    } else if let Operand::ID(_name, offset, oind, omember) = op {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::ARGMEM(*reg, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::ARGMEM(*reg, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::ARGMEM(*reg, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = op {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::ARGREG(*reg, 0));
