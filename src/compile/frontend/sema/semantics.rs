@@ -118,6 +118,19 @@ impl FrontManager {
                 }
                 expr_type
             }
+            Node::ASSIGN(ident, bexpr) => {
+                let expr_type: Type = self.walk(*bexpr.clone());
+                if let Some(s) = self.get_symbol(&ident) {
+                    if !s.is_mutable {
+                        Error::TYPE.found(&format!(
+                            "can't assign {} into '{}' it's not mutable",
+                            expr_type.string(),
+                            ident
+                        ));
+                    }
+                }
+                expr_type
+            }
             Node::RETURN(bexpr) => {
                 let expr_type: Type = self.walk(*bexpr.clone());
                 expr_type
