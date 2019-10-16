@@ -36,12 +36,15 @@ impl FrontManager {
                 } else {
                     Error::TYPE.found(&format!("{} is not defined", &name));
                 }
-                if let Node::STRUCTLIT(_, _) = *bexpr.clone() {
-                } else {
-                    self.add(Tac::LET(
-                        Operand::ID(name.to_string(), stack_offset, None, None),
-                        expr_op,
-                    ));
+                match *bexpr.clone() {
+                    Node::STRUCTLIT(_, _) => (),
+                    Node::ARRAYLIT(_, _) => (),
+                    _ => {
+                        self.add(Tac::LET(
+                            Operand::ID(name.to_string(), stack_offset, None, None),
+                            expr_op,
+                        ));
+                    }
                 }
             }
             Node::IF(bcond, block, alter) => {
