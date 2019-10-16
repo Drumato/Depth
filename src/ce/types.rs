@@ -21,12 +21,11 @@ impl Error {
     }
 }
 
-/*
-pub enum Information {
+pub enum Info {
     TYPE,
 }
 
-impl Information {
+impl Info {
     pub fn found(&self, message: &String) {
         eprintln!("{}:{}", self.string().blue().bold(), message);
     }
@@ -36,4 +35,3 @@ impl Information {
         }
     }
 }
-*/

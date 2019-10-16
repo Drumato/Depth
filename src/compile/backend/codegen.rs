@@ -1,3 +1,4 @@
+use super::super::super::ce::types::Info;
 use super::super::ir::lir::x64;
 use super::super::ir::tac::{Operand, Tac};
 static X64_REGS: [&str; 9] = [
@@ -52,6 +53,9 @@ impl Generator {
                             if let Operand::INTLIT(value) = *ind_op.clone() {
                                 self.lirs
                                     .push(x64::IR::RETURNMEM(*offset - value as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
                             }
                         } else {
                             if let Some(member_offset) = omember {
@@ -86,6 +90,9 @@ impl Generator {
                                         name.to_owned(),
                                     ));
                                 }
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
                             }
                         } else if let Some(member_offset) = omember {
                             if let Operand::REG(_virt, p, _oind, _omember) = op {
@@ -202,8 +209,20 @@ impl Generator {
                         self.lirs.push(x64::IR::ADDREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::ADDIMM(*p, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::ADDMEM(*p, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::ADDMEM(*p, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::ADDMEM(*p, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::ADDMEM(*p, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::ADDREG(*p, 0));
@@ -214,8 +233,20 @@ impl Generator {
                         self.lirs.push(x64::IR::SUBREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::SUBIMM(*p, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::SUBMEM(*p, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::SUBMEM(*p, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::SUBMEM(*p, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::SUBMEM(*p, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::SUBREG(*p, 0));
@@ -226,8 +257,20 @@ impl Generator {
                         self.lirs.push(x64::IR::MULREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::MULIMM(*p, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::MULMEM(*p, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::MULMEM(*p, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::MULMEM(*p, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::MULMEM(*p, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::MULREG(*p, 0));
@@ -238,8 +281,20 @@ impl Generator {
                         self.lirs.push(x64::IR::DIVREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::DIVIMM(*p, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::DIVMEM(*p, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::DIVMEM(*p, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::DIVMEM(*p, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::DIVMEM(*p, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::DIVREG(*p, 0));
@@ -250,8 +305,20 @@ impl Generator {
                         self.lirs.push(x64::IR::MODREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::MODIMM(*p, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::MODMEM(*p, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::MODMEM(*p, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::MODMEM(*p, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::MODMEM(*p, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::MODREG(*p, 0));
@@ -262,8 +329,20 @@ impl Generator {
                         self.lirs.push(x64::IR::LSHIFTREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::LSHIFTIMM(*p, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::LSHIFTMEM(*p, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::LSHIFTMEM(*p, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::LSHIFTMEM(*p, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::LSHIFTMEM(*p, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::LSHIFTREG(*p, 0));
@@ -274,8 +353,20 @@ impl Generator {
                         self.lirs.push(x64::IR::RSHIFTREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::RSHIFTIMM(*p, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::RSHIFTMEM(*p, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::RSHIFTMEM(*p, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::RSHIFTMEM(*p, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::RSHIFTMEM(*p, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::RSHIFTREG(*p, 0));
@@ -286,8 +377,20 @@ impl Generator {
                         self.lirs.push(x64::IR::LTREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::LTIMM(*p, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::LTMEM(*p, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::LTMEM(*p, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::LTMEM(*p, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::LTMEM(*p, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::LTREG(*p, 0));
@@ -298,8 +401,20 @@ impl Generator {
                         self.lirs.push(x64::IR::LTEQREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::LTEQIMM(*p, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::LTEQMEM(*p, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::LTEQMEM(*p, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::LTEQMEM(*p, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::LTEQMEM(*p, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::LTEQREG(*p, 0));
@@ -310,8 +425,20 @@ impl Generator {
                         self.lirs.push(x64::IR::GTREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::GTIMM(*p, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::GTMEM(*p, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::GTMEM(*p, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::GTMEM(*p, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::GTMEM(*p, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::GTREG(*p, 0));
@@ -322,8 +449,20 @@ impl Generator {
                         self.lirs.push(x64::IR::GTEQREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::GTEQIMM(*p, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::GTEQMEM(*p, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::GTEQMEM(*p, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::GTEQMEM(*p, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::GTEQMEM(*p, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::GTEQREG(*p, 0));
@@ -334,8 +473,20 @@ impl Generator {
                         self.lirs.push(x64::IR::EQREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::EQIMM(*p, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::EQMEM(*p, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::EQMEM(*p, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::EQMEM(*p, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::EQMEM(*p, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::EQREG(*p, 0));
@@ -346,8 +497,20 @@ impl Generator {
                         self.lirs.push(x64::IR::NTEQREG(*p, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::NTEQIMM(*p, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::NTEQMEM(*p, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::NTEQMEM(*p, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::NTEQMEM(*p, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::NTEQMEM(*p, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::NTEQREG(*p, 0));
@@ -364,8 +527,20 @@ impl Generator {
                         self.lirs.push(x64::IR::ADDREG(*phys, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::ADDIMM(*phys, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::ADDMEM(*phys, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::ADDMEM(*phys, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::ADDMEM(*phys, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::ADDMEM(*phys, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::ADDREG(*phys, 0));
@@ -376,8 +551,20 @@ impl Generator {
                         self.lirs.push(x64::IR::SUBREG(*phys, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::SUBIMM(*phys, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::SUBMEM(*phys, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::SUBMEM(*phys, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::SUBMEM(*phys, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::SUBMEM(*phys, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::SUBREG(*phys, 0));
@@ -388,8 +575,20 @@ impl Generator {
                         self.lirs.push(x64::IR::MULREG(*phys, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::MULIMM(*phys, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::MULMEM(*phys, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::MULMEM(*phys, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::MULMEM(*phys, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::MULMEM(*phys, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::MULREG(*phys, 0));
@@ -400,8 +599,20 @@ impl Generator {
                         self.lirs.push(x64::IR::DIVREG(*phys, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::DIVIMM(*phys, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::DIVMEM(*phys, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::DIVMEM(*phys, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::DIVMEM(*phys, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::DIVMEM(*phys, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::DIVREG(*phys, 0));
@@ -412,8 +623,20 @@ impl Generator {
                         self.lirs.push(x64::IR::MODREG(*phys, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::MODIMM(*phys, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::MODMEM(*phys, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::MODMEM(*phys, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::MODMEM(*phys, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::MODMEM(*phys, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::MODREG(*phys, 0));
@@ -424,8 +647,20 @@ impl Generator {
                         self.lirs.push(x64::IR::LSHIFTREG(*phys, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::LSHIFTIMM(*phys, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::LSHIFTMEM(*phys, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::LSHIFTMEM(*phys, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::LSHIFTMEM(*phys, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::LSHIFTMEM(*phys, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::LSHIFTREG(*phys, 0));
@@ -436,8 +671,20 @@ impl Generator {
                         self.lirs.push(x64::IR::RSHIFTREG(*phys, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::RSHIFTIMM(*phys, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::RSHIFTMEM(*phys, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::RSHIFTMEM(*phys, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::RSHIFTMEM(*phys, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::RSHIFTMEM(*phys, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::RSHIFTREG(*phys, 0));
@@ -448,8 +695,20 @@ impl Generator {
                         self.lirs.push(x64::IR::LTREG(*phys, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::LTIMM(*phys, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::LTMEM(*phys, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::LTMEM(*phys, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::LTMEM(*phys, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::LTMEM(*phys, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::LTREG(*phys, 0));
@@ -460,8 +719,20 @@ impl Generator {
                         self.lirs.push(x64::IR::LTEQREG(*phys, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::LTEQIMM(*phys, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::LTEQMEM(*phys, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::LTEQMEM(*phys, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::LTEQMEM(*phys, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::LTEQMEM(*phys, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::LTEQREG(*phys, 0));
@@ -472,8 +743,20 @@ impl Generator {
                         self.lirs.push(x64::IR::GTREG(*phys, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::GTIMM(*phys, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::GTMEM(*phys, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::GTMEM(*phys, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::GTMEM(*phys, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::GTMEM(*phys, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::GTREG(*phys, 0));
@@ -484,8 +767,20 @@ impl Generator {
                         self.lirs.push(x64::IR::GTEQREG(*phys, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::GTEQIMM(*phys, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::GTEQMEM(*phys, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::GTEQMEM(*phys, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::GTEQMEM(*phys, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::GTEQMEM(*phys, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::GTREG(*phys, 0));
@@ -496,8 +791,20 @@ impl Generator {
                         self.lirs.push(x64::IR::EQREG(*phys, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::EQIMM(*phys, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::EQMEM(*phys, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::EQMEM(*phys, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::EQMEM(*phys, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::EQMEM(*phys, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::STOREREG(*offset, 0));
@@ -508,8 +815,20 @@ impl Generator {
                         self.lirs.push(x64::IR::NTEQREG(*phys, *p2));
                     } else if let Operand::INTLIT(value) = rop {
                         self.lirs.push(x64::IR::NTEQIMM(*phys, *value));
-                    } else if let Operand::ID(_name, p2, _oind, _omember) = rop {
-                        self.lirs.push(x64::IR::NTEQMEM(*phys, *p2));
+                    } else if let Operand::ID(_name, offset, oind, omember) = rop {
+                        if let Some(ind) = oind {
+                            if let Operand::INTLIT(idx) = *ind.clone() {
+                                self.lirs
+                                    .push(x64::IR::NTEQMEM(*phys, *offset - idx as usize * 8));
+                            } else {
+                                Info::TYPE
+                                    .found(&"index without int-lit not implemented".to_string());
+                            }
+                        } else if let Some(member_offset) = omember {
+                            self.lirs.push(x64::IR::NTEQMEM(*phys, *member_offset));
+                        } else {
+                            self.lirs.push(x64::IR::NTEQMEM(*phys, *offset));
+                        }
                     } else if let Operand::CALL(name, _length) = rop {
                         self.lirs.push(x64::IR::CALL(name.to_owned()));
                         self.lirs.push(x64::IR::STOREREG(*offset, 0));
