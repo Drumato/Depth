@@ -174,6 +174,9 @@ impl Parser {
         let mut expr: Node = self.expr();
         if let Node::STRUCTLIT(ref mut name, ref mut _members) = expr {
             *name = ident_name.clone();
+        } else if let Node::ARRAYLIT(ref mut _belems, ref mut name) = expr {
+            self.cur_env.sym_table.remove(name);
+            *name = ident_name.clone();
         }
         if let Some(_) = self.cur_env.sym_table.insert(
             ident_name.clone(),
@@ -354,7 +357,7 @@ impl Parser {
                 );
                 let num = self.lit;
                 self.lit += 1;
-                Node::ARRAYLIT(Box::new(elems), num)
+                Node::ARRAYLIT(Box::new(elems), format!("Array{}", num))
             }
             Token::INTEGER(val) => {
                 self.next_token();

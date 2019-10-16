@@ -142,18 +142,18 @@ impl FrontManager {
                 self.virt += 1;
                 Some(Operand::REG(virt, 0, None, None))
             }
-            Node::ARRAYLIT(belems, num) => {
+            Node::ARRAYLIT(belems, name) => {
                 let mut stack_offset = 0;
-                if let Some(sym) = self.cur_env.sym_table.get(&format!("Array{}", num)) {
+                if let Some(sym) = self.cur_env.sym_table.get(&name) {
                     stack_offset = sym.stack_offset;
                 } else {
-                    Error::TYPE.found(&format!("Array{} is not defined", num));
+                    Error::TYPE.found(&format!("{} is not defined", name));
                 }
                 for (idx, elem) in belems.iter().enumerate() {
                     let elem_op: Operand = self.gen_expr(elem.clone()).unwrap();
                     self.add(Tac::LET(
                         Operand::ID(
-                            format!("Array{}", num),
+                            name.to_string(),
                             stack_offset,
                             Some(Box::new(Operand::INTLIT(idx as i128))),
                             None,
@@ -161,12 +161,7 @@ impl FrontManager {
                         elem_op,
                     ));
                 }
-                Some(Operand::ID(
-                    format!("Array{}", num),
-                    stack_offset,
-                    None,
-                    None,
-                ))
+                Some(Operand::ID(name, stack_offset, None, None))
             }
             Node::INDEX(bbase, bindex) => {
                 let base_op: Operand = self.gen_expr(*bbase.clone()).unwrap();

@@ -34,7 +34,7 @@ pub enum Node {
     IDENT(Name),
     INDEX(Ary, Idx),
     MEMBER(Struct, Name),
-    ARRAYLIT(Elements, usize),
+    ARRAYLIT(Elements, Name),
     STRUCTLIT(Name, Box<BTreeMap<String, Node>>),
     CALL(Name, Elements),
     RETURN(Expr),
@@ -76,7 +76,7 @@ impl Node {
             Self::ASSIGN(ident, expr) => format!("ASSIGN<{}>({})", ident, expr.string()),
             Self::BLOCK(stmts) => format!("BLOCK<{} stmts>", stmts.len()),
             Self::CALL(ident, _args) => format!("CALL<{}>", ident),
-            Self::ARRAYLIT(_elems, num) => format!("ARRAYLIT<{}>", num),
+            Self::ARRAYLIT(elems, _name) => format!("ARRAYLIT<{} elems>", elems.len()),
             Self::STRUCTLIT(name, members) => {
                 format!("STRUCTLIT<{},{} members>", name, members.len())
             }

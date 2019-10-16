@@ -180,7 +180,7 @@ impl FrontManager {
                 }
             }
             Node::INTEGER(_val) => Type::INTEGER,
-            Node::ARRAYLIT(elems, num) => {
+            Node::ARRAYLIT(elems, name) => {
                 let mut elem_type: Type = Type::UNKNOWN;
                 let length: usize = elems.len();
                 for elem in elems.iter() {
@@ -198,9 +198,7 @@ impl FrontManager {
                         elem_type = cur_type;
                     }
                 }
-                if let Some(ref mut array) =
-                    self.cur_env.sym_table.get_mut(&format!("Array{}", num))
-                {
+                if let Some(ref mut array) = self.cur_env.sym_table.get_mut(&name) {
                     self.stack_offset += elem_type.size() * length;
                     array.stack_offset = self.stack_offset;
                     array.ty = Ok(Type::ARRAY(Box::new(elem_type.clone()), length));
