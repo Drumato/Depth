@@ -210,7 +210,6 @@ Cargo.lock
 GRTAGS
 GTAGS
 GPATH
-*.txt
 *.s
 a.out
 core
