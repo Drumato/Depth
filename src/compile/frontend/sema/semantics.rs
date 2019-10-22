@@ -82,7 +82,7 @@ impl FrontManager {
                         self.stack_offset += s.size();
                         s.stack_offset = self.stack_offset;
                     } else {
-                        Error::TYPE.found(&format!("{} is not defined", name));
+                        Error::UNDEFINED.found(&format!("{} is not defined", name));
                     }
                 }
             }

@@ -114,6 +114,11 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
     if matches.is_present("dump-cfg") {
         optimizer.dump_cfg();
     }
+    if matches.is_present("Opt1") {
+        optimizer.reaching_definition();
+        optimizer.available_expression();
+    }
+    optimizer.build_cfg_for_liveness();
     optimizer.liveness();
     if matches.is_present("dump-liveness") {
         optimizer.dump_liveness();
