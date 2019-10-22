@@ -1,14 +1,14 @@
-simple_add.dep 9
-simple_pointer.dep 10
+add.dep 9
+pointer.dep 10
 double_pointer.dep 80
 without_argument.dep 30
 with_argument.dep 60
 mutable.dep 40
-simple_array.dep 15
+array.dep 15
 condloop.dep 55
-simple_sub.dep 3
+sub.dep 3
 paren_expr.dep 2
-simple_mul.dep 30
+mul.dep 30
 minus.dep 4
 mod.dep 2
 lshift.dep 16
@@ -22,4 +22,4 @@ ifelse.dep 30
 multi_pointer.dep 30
 six_pointer.dep 30
 type_alias.dep 30
-simple_struct.dep 30
+struct.dep 30
