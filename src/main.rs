@@ -115,6 +115,7 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
         optimizer.dump_cfg();
     }
     if matches.is_present("Opt1") {
+        optimizer.build_cfg_for_reaching();
         optimizer.reaching_definition();
         optimizer.available_expression();
     }

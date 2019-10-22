@@ -67,6 +67,80 @@ impl Optimizer {
             }
         }
     }
+    pub fn build_cfg_for_reaching(&mut self) {
+        self.cfg.used = vec![HashSet::new(); self.tacs.len()]; // gen()
+        self.cfg.def = vec![HashSet::new(); self.tacs.len()]; // kill()
+        let mut var_map: HashMap<Operand, HashSet<Operand>> = HashMap::new();
+        let tacs = self.tacs.clone();
+        for (n, t) in tacs.iter().enumerate() {
+            match t {
+                Tac::EX(lv, _, _lop, _rop) => {
+                    if let Some(set) = var_map.get_mut(lv) {
+                        set.insert(Operand::INTLIT(n as i128));
+                    } else {
+                        let mut tmp_set: HashSet<Operand> = HashSet::new();
+                        tmp_set.insert(Operand::INTLIT(n as i128));
+                        var_map.insert(lv.clone(), tmp_set);
+                    }
+                }
+                Tac::UNEX(lv, _, _op) => {
+                    if let Some(set) = var_map.get_mut(lv) {
+                        set.insert(Operand::INTLIT(n as i128));
+                    } else {
+                        let mut tmp_set: HashSet<Operand> = HashSet::new();
+                        tmp_set.insert(Operand::INTLIT(n as i128));
+                        var_map.insert(lv.clone(), tmp_set);
+                    }
+                }
+                Tac::LET(lv, _op) => {
+                    if let Some(set) = var_map.get_mut(lv) {
+                        set.insert(Operand::INTLIT(n as i128));
+                    } else {
+                        let mut tmp_set: HashSet<Operand> = HashSet::new();
+                        tmp_set.insert(Operand::INTLIT(n as i128));
+                        var_map.insert(lv.clone(), tmp_set);
+                    }
+                }
+                _ => {}
+            }
+        }
+        for (n, t) in tacs.iter().enumerate() {
+            match t {
+                Tac::EX(lv, _, _lop, _rop) => {
+                    self.cfg.used[n].insert(Operand::INTLIT(n as i128));
+                    if let Some(set) = var_map.get(lv) {
+                        let mut tmp_set: HashSet<Operand> = HashSet::new();
+                        tmp_set.insert(Operand::INTLIT(n as i128));
+                        self.cfg.def[n] = set - &tmp_set;
+                    }
+                }
+                Tac::UNEX(lv, _, _op) => {
+                    self.cfg.used[n].insert(Operand::INTLIT(n as i128));
+                    if let Some(set) = var_map.get(lv) {
+                        let mut tmp_set: HashSet<Operand> = HashSet::new();
+                        tmp_set.insert(Operand::INTLIT(n as i128));
+                        self.cfg.def[n] = set - &tmp_set;
+                    }
+                }
+                Tac::PUSHARG(_, _) => {}
+                Tac::PARAM(_, _op) => {}
+                Tac::LET(lv, _op) => {
+                    self.cfg.used[n].insert(Operand::INTLIT(n as i128));
+                    if let Some(set) = var_map.get(lv) {
+                        let mut tmp_set: HashSet<Operand> = HashSet::new();
+                        tmp_set.insert(Operand::INTLIT(n as i128));
+                        self.cfg.def[n] = set - &tmp_set;
+                    }
+                }
+                Tac::RET(_op) => {}
+                Tac::GOTO(_label) => {}
+                Tac::IFF(_op, _label) => {}
+                Tac::FUNCNAME(_) => {}
+                Tac::PROLOGUE(_) => {}
+                Tac::LABEL(_) => {}
+            }
+        }
+    }
     pub fn build_cfg_for_liveness(&mut self) {
         self.cfg.used = vec![HashSet::new(); self.tacs.len()];
         self.cfg.def = vec![HashSet::new(); self.tacs.len()];
