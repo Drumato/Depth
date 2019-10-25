@@ -399,7 +399,6 @@ impl Parser {
                                 break;
                             }
                             let member_name: String = self.consume_ident();
-                            eprintln!("{}", self.cur_token().string());
                             self.expect(&Token::COLON);
                             let member_expr: Node = self.expr();
                             members.insert(member_name, member_expr);

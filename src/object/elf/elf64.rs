@@ -127,6 +127,9 @@ pub struct Ehdr {
     pub e_shstrndx: Elf64Half,
 }
 impl Ehdr {
+    pub fn new_unsafe(binary: Vec<u8>) -> Self {
+        unsafe { std::ptr::read(binary.as_ptr() as *const Ehdr) }
+    }
     pub fn to_vec(&self) -> Vec<u8> {
         let mut bb: Vec<u8> = Vec::new();
         for b in self.e_ident.to_be_bytes().to_vec() {
@@ -205,6 +208,7 @@ pub static SHF_ALLOC: Elf64Xword = 1 << 1;
 pub static SHF_EXECINSTR: Elf64Xword = 1 << 2;
 pub static SHF_INFO_LINK: Elf64Xword = 1 << 6;
 
+#[derive(Clone)]
 #[repr(C)]
 pub struct Shdr {
     pub sh_name: Elf64Word,
@@ -220,6 +224,9 @@ pub struct Shdr {
 }
 
 impl Shdr {
+    pub fn new_unsafe(binary: Vec<u8>) -> Self {
+        unsafe { std::ptr::read(binary.as_ptr() as *const Shdr) }
+    }
     pub fn to_vec(&self) -> Vec<u8> {
         let mut bb: Vec<u8> = Vec::new();
         for b in self.sh_name.to_le_bytes().to_vec() {
