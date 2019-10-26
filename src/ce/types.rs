@@ -3,6 +3,7 @@ use colored::*;
 pub enum Error {
     PARSE,
     TYPE,
+    UNDEFINED,
     ELF,
     ASSEMBLE,
 }
@@ -15,6 +16,7 @@ impl Error {
         match self {
             Self::PARSE => "ParseError".to_string(),
             Self::TYPE => "TypeError".to_string(),
+            Self::UNDEFINED => "UndefinedError".to_string(),
             Self::ELF => "ELFError".to_string(),
             Self::ASSEMBLE => "AssembleError".to_string(),
         }

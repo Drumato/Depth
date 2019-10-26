@@ -22,7 +22,7 @@ def make():
 
 
 def test_compile():
-    print(f"{Color.GREEN}++++++++++++++++test-link++++++++++++++++{Color.CLEAR}")
+    print(f"{Color.GREEN}++++++++++++++++test-votalile++++++++++++++++{Color.CLEAR}")
     f = open("test/expect.txt", "r")
     content = f.read()
     cases = {}
@@ -46,12 +46,39 @@ def test_compile():
     print(f"{Color.GREEN}All Test Passed.{Color.CLEAR}")
 
 
+def test_optimize1():
+    print(f"{Color.GREEN}++++++++++++++++test-optimize1++++++++++++++++{Color.CLEAR}")
+    f = open("test/expect.txt", "r")
+    content = f.read()
+    cases = {}
+    cases = {
+        line.split()[0]: int(line.split()[1])
+        for line in content.split("\n")
+        if len(line) > 0
+    }
+    for filename, expect in cases.items():
+        fn = f"test/{filename}"
+        f = open(fn)
+        p = subprocess.Popen(f"./target/debug/depth {fn} --Opt1 ; ./a.out", shell=True)
+        exit_status = p.wait()
+        if exit_status != expect:
+            print(
+                f"[{filename}]{f.read()} => {Color.RED}{expect} expected but got {exit_status}{Color.CLEAR}"
+            )
+            sys.exit(1)
+        else:
+            print(f"[{filename}] => {Color.BLUE}{expect}{Color.CLEAR}")
+    print(f"{Color.GREEN}All Test Passed.{Color.CLEAR}")
+
+
 if __name__ == "__main__":
     start = time.time()
     test_compile()
     compile_time = time.time() - start
     start = time.time()
-    print(
-        f"test-only-compile time -> {Color.BLUE}{round(compile_time,2)}{Color.CLEAR}s"
-    )
+    print(f"test-volatile time -> {Color.BLUE}{round(compile_time,2)}{Color.CLEAR}s")
+    test_optimize1()
+    compile_time = time.time() - start
+    start = time.time()
+    print(f"test-optimize1 time -> {Color.BLUE}{round(compile_time,2)}{Color.CLEAR}s")
     # make()

@@ -147,7 +147,9 @@ impl Parser {
     }
     fn parse_condloop(&mut self) -> Node {
         self.expect(&Token::CONDLOOP);
+        self.expect(&Token::LPAREN);
         let cond: Node = self.expr();
+        self.expect(&Token::RPAREN);
         let stmt: Node = self.stmt();
         Node::CONDLOOP(Box::new(cond), Box::new(stmt))
     }
@@ -157,7 +159,9 @@ impl Parser {
     }
     fn parse_if(&mut self) -> Node {
         self.expect(&Token::IF);
+        self.expect(&Token::LPAREN);
         let cond: Node = self.expr();
+        self.expect(&Token::RPAREN);
         let stmt: Node = self.stmt();
         if !self.consume(&Token::ELSE) {
             return Node::IF(Box::new(cond), Box::new(stmt), None);

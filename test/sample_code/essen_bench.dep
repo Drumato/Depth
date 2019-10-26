@@ -14,23 +14,23 @@ func main(){
   let mut h : i64 = 0
   let dn : i64 = 4
   let max : i64 = 447
-  condloop y < 384 {
+  condloop (y < 384){
     x = 0
-    condloop x < 512 {
+    condloop (x < 512) {
       sn = 0
       sx = 0
-      condloop sx < dn {
+      condloop (sx < dn) {
         cx = (x * 4 + sx) * 56 + 4673536
         sy = 0
-        condloop sy < dn {
+        condloop (sy < dn) {
           cy = (y * 4 + sy) * 56 + 124928
           zx = 0
           zy = 0
           n = 0
-          condloop n < max{
+          condloop (n < max) {
             xx = (zx * zx) >> 24
             yy = (zy * zy) >> 24
-            if xx + yy > 67108864 {
+            if (xx + yy > 67108864) {
               goto :fin
             }
             zy = (zx * zy) >> 23

@@ -2,9 +2,11 @@ use super::ir::tac::{Operand, Tac};
 use std::collections::{BTreeMap, HashSet};
 use std::fs::File;
 use std::io::Write;
+pub mod available;
 pub mod codegen;
 pub mod data_flow;
 pub mod liveness;
+pub mod reaching;
 pub mod regalloc;
 
 pub struct Optimizer {

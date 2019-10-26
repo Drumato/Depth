@@ -34,7 +34,7 @@ impl FrontManager {
                 if let Some(sym) = self.get_symbol(name) {
                     stack_offset = sym.stack_offset;
                 } else {
-                    Error::TYPE.found(&format!("{} is not defined", &name));
+                    Error::UNDEFINED.found(&format!("{} is not defined", &name));
                 }
                 match *bexpr.clone() {
                     Node::STRUCTLIT(_, _) => (),
@@ -131,7 +131,7 @@ impl FrontManager {
                         }
                     }
                 } else {
-                    Error::TYPE.found(&format!("{} is not defined", &st_name));
+                    Error::UNDEFINED.found(&format!("{} is not defined", &st_name));
                 }
                 for (member_name, member_expr) in member_map.iter() {
                     let member_op: Operand = self.gen_expr(member_expr.clone()).unwrap();
@@ -150,7 +150,7 @@ impl FrontManager {
                 if let Some(sym) = self.cur_env.sym_table.get(&name) {
                     stack_offset = sym.stack_offset;
                 } else {
-                    Error::TYPE.found(&format!("{} is not defined", name));
+                    Error::UNDEFINED.found(&format!("{} is not defined", name));
                 }
                 for (idx, elem) in belems.iter().enumerate() {
                     let elem_op: Operand = self.gen_expr(elem.clone()).unwrap();
@@ -213,7 +213,7 @@ impl FrontManager {
                 if let Some(sym) = self.cur_env.sym_table.get(&name) {
                     stack_offset = sym.stack_offset;
                 } else {
-                    Error::TYPE.found(&format!("{} is not defined", &name));
+                    Error::UNDEFINED.found(&format!("{} is not defined", &name));
                 }
                 Some(Operand::ID(name, stack_offset, None, None))
             }

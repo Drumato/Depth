@@ -31,7 +31,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let assembler_codes: Vec<String> = file_names
         .iter()
-        .map(|name| compile(name.to_string(), &matches))
+        .map(|name| {
+            compile(name.to_string(), &matches)
+                + "_start:\n  call main\n  mov rdi, rax\n  mov rax, 60\n  syscall\n"
+        })
         .collect::<Vec<String>>();
     if matches.is_present("stop-c") {
         for (idx, assembler_code) in assembler_codes.iter().enumerate() {
@@ -42,10 +45,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         std::process::exit(0);
     }
-    let elf_files: Vec<elf::elf64::ELF> = assembler_codes
-        .iter()
-        .map(|code| assemble(code.to_string(), &matches))
-        .collect::<Vec<elf::elf64::ELF>>();
+    let elf_files: Vec<elf::elf64::ELF> = if !file_names[0].contains(".o") {
+        assembler_codes
+            .iter()
+            .map(|code| assemble(code.to_string(), &matches))
+            .collect::<Vec<elf::elf64::ELF>>()
+    } else {
+        file_names
+            .iter()
+            .map(|f| elf::elf64::ELF::read_elf(f))
+            .collect::<Vec<elf::elf64::ELF>>()
+    };
     let mut elf_names: Vec<String> = Vec::new();
     if matches.is_present("stop-a") {
         for idx in 0..elf_files.len() {
@@ -101,6 +111,9 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
     if matches.is_present("dump-symbol") {
         front_manager.dump_symbol();
     }
+    if matches.is_present("Opt1") {
+        front_manager.constant_folding();
+    }
     front_manager.gen_tacs();
     let tacs: Vec<Tac> = front_manager.tacs;
     if matches.is_present("dump-tac") {
@@ -114,6 +127,12 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
     if matches.is_present("dump-cfg") {
         optimizer.dump_cfg();
     }
+    if matches.is_present("Opt1") {
+        optimizer.build_cfg_for_reaching();
+        optimizer.reaching_definition();
+        optimizer.available_expression();
+    }
+    optimizer.build_cfg_for_liveness();
     optimizer.liveness();
     if matches.is_present("dump-liveness") {
         optimizer.dump_liveness();
@@ -126,9 +145,6 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
     assembler_code
 }
 fn assemble(mut assembler_code: String, matches: &clap::ArgMatches) -> elf::elf64::ELF {
-    if !matches.is_present("stop-a") {
-        assembler_code += "_start:\n  call main\n  mov rdi, rax\n  mov rax, 60\n  syscall\n";
-    }
     let tokens: Vec<a::lex::Token> = a::lex::lexing(assembler_code);
     let (instructions, info_map, relas) = a::parse::parsing(tokens);
     if matches.is_present("dump-inst") {
@@ -224,6 +240,9 @@ fn parse_phase(
 }
 
 fn read_file(s: &str) -> String {
+    if s.to_string().contains(".o") {
+        return s.to_string();
+    }
     use std::fs;
     use std::path::Path;
     let filepath: &Path = Path::new(s);
