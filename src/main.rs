@@ -144,7 +144,7 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
     }
     assembler_code
 }
-fn assemble(mut assembler_code: String, matches: &clap::ArgMatches) -> elf::elf64::ELF {
+fn assemble(assembler_code: String, matches: &clap::ArgMatches) -> elf::elf64::ELF {
     let tokens: Vec<a::lex::Token> = a::lex::lexing(assembler_code);
     let (instructions, info_map, relas) = a::parse::parsing(tokens);
     if matches.is_present("dump-inst") {
