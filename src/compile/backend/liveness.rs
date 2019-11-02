@@ -1,14 +1,14 @@
 use super::super::ir::tac::Operand;
 use super::Optimizer;
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 impl Optimizer {
     pub fn liveness(&mut self) {
-        let mut live_in: Vec<HashSet<Operand>> = vec![HashSet::new(); self.tacs.len()];
-        let mut live_out: Vec<HashSet<Operand>> = vec![HashSet::new(); self.tacs.len()];
+        let mut live_in: Vec<BTreeSet<Operand>> = vec![BTreeSet::new(); self.tacs.len()];
+        let mut live_out: Vec<BTreeSet<Operand>> = vec![BTreeSet::new(); self.tacs.len()];
         'outer: loop {
-            let mut in_sets: Vec<HashSet<Operand>> = Vec::new();
-            let mut out_sets: Vec<HashSet<Operand>> = Vec::new();
+            let mut in_sets: Vec<BTreeSet<Operand>> = Vec::new();
+            let mut out_sets: Vec<BTreeSet<Operand>> = Vec::new();
             for (idx, _t) in self.tacs.iter().rev().enumerate() {
                 in_sets.push(live_in[idx].clone());
                 out_sets.push(live_out[idx].clone());

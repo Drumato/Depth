@@ -1,5 +1,5 @@
 use super::ir::tac::{Operand, Tac};
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
 use std::io::Write;
 pub mod available;
@@ -48,18 +48,18 @@ impl Optimizer {
 }
 
 pub struct ControlFlowGraph {
-    succ: Vec<HashSet<usize>>,
-    pred: Vec<HashSet<usize>>,
-    used: Vec<HashSet<Operand>>,
-    def: Vec<HashSet<Operand>>,
+    succ: Vec<BTreeSet<usize>>,
+    pred: Vec<BTreeSet<usize>>,
+    used: Vec<BTreeSet<Operand>>,
+    def: Vec<BTreeSet<Operand>>,
 }
 impl ControlFlowGraph {
     fn new(len: usize) -> Self {
         Self {
-            succ: vec![HashSet::new(); len],
-            pred: vec![HashSet::new(); len],
-            used: vec![HashSet::new(); len],
-            def: vec![HashSet::new(); len],
+            succ: vec![BTreeSet::new(); len],
+            pred: vec![BTreeSet::new(); len],
+            used: vec![BTreeSet::new(); len],
+            def: vec![BTreeSet::new(); len],
         }
     }
 }

@@ -116,12 +116,6 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
     }
     front_manager.gen_tacs();
     let tacs: Vec<Tac> = front_manager.tacs;
-    if matches.is_present("dump-tac") {
-        eprintln!("{}", "--------dump-tac--------".blue().bold());
-        for tac in tacs.iter() {
-            eprintln!("{}", tac.string());
-        }
-    }
     let mut optimizer: b::Optimizer = b::Optimizer::new(tacs);
     optimizer.build_cfg();
     if matches.is_present("dump-cfg") {
@@ -138,6 +132,12 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
         optimizer.dump_liveness();
     }
     optimizer.regalloc();
+    if matches.is_present("dump-tac") {
+        eprintln!("{}", "--------dump-tac--------".blue().bold());
+        for tac in optimizer.tacs.iter() {
+            eprintln!("{}", tac.string());
+        }
+    }
     let mut assembler_code: String = b::codegen::genx64(optimizer.tacs);
     if matches.is_present("intel") {
         assembler_code = format!(".intel_syntax noprefix\n.global main\n{}", assembler_code);

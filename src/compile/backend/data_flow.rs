@@ -1,9 +1,9 @@
 use super::super::ir::tac::{Operand, Tac};
 use super::Optimizer;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
 impl Optimizer {
     pub fn build_cfg(&mut self) {
-        let label_map: HashMap<String, usize> = self.build_labelmap();
+        let label_map: BTreeMap<String, usize> = self.build_labelmap();
         let tacs = self.tacs.clone();
         for (n, t) in tacs.iter().enumerate() {
             match t {
@@ -68,9 +68,9 @@ impl Optimizer {
         }
     }
     pub fn build_cfg_for_reaching(&mut self) {
-        self.cfg.used = vec![HashSet::new(); self.tacs.len()]; // gen()
-        self.cfg.def = vec![HashSet::new(); self.tacs.len()]; // kill()
-        let mut var_map: HashMap<Operand, HashSet<Operand>> = HashMap::new();
+        self.cfg.used = vec![BTreeSet::new(); self.tacs.len()]; // gen()
+        self.cfg.def = vec![BTreeSet::new(); self.tacs.len()]; // kill()
+        let mut var_map: BTreeMap<Operand, BTreeSet<Operand>> = BTreeMap::new();
         let tacs = self.tacs.clone();
         for (n, t) in tacs.iter().enumerate() {
             match t {
@@ -78,7 +78,7 @@ impl Optimizer {
                     if let Some(set) = var_map.get_mut(lv) {
                         set.insert(Operand::INTLIT(n as i128));
                     } else {
-                        let mut tmp_set: HashSet<Operand> = HashSet::new();
+                        let mut tmp_set: BTreeSet<Operand> = BTreeSet::new();
                         tmp_set.insert(Operand::INTLIT(n as i128));
                         var_map.insert(lv.clone(), tmp_set);
                     }
@@ -87,7 +87,7 @@ impl Optimizer {
                     if let Some(set) = var_map.get_mut(lv) {
                         set.insert(Operand::INTLIT(n as i128));
                     } else {
-                        let mut tmp_set: HashSet<Operand> = HashSet::new();
+                        let mut tmp_set: BTreeSet<Operand> = BTreeSet::new();
                         tmp_set.insert(Operand::INTLIT(n as i128));
                         var_map.insert(lv.clone(), tmp_set);
                     }
@@ -96,7 +96,7 @@ impl Optimizer {
                     if let Some(set) = var_map.get_mut(lv) {
                         set.insert(Operand::INTLIT(n as i128));
                     } else {
-                        let mut tmp_set: HashSet<Operand> = HashSet::new();
+                        let mut tmp_set: BTreeSet<Operand> = BTreeSet::new();
                         tmp_set.insert(Operand::INTLIT(n as i128));
                         var_map.insert(lv.clone(), tmp_set);
                     }
@@ -109,7 +109,7 @@ impl Optimizer {
                 Tac::EX(lv, _, _lop, _rop) => {
                     self.cfg.used[n].insert(Operand::INTLIT(n as i128));
                     if let Some(set) = var_map.get(lv) {
-                        let mut tmp_set: HashSet<Operand> = HashSet::new();
+                        let mut tmp_set: BTreeSet<Operand> = BTreeSet::new();
                         tmp_set.insert(Operand::INTLIT(n as i128));
                         self.cfg.def[n] = set - &tmp_set;
                     }
@@ -117,7 +117,7 @@ impl Optimizer {
                 Tac::UNEX(lv, _, _op) => {
                     self.cfg.used[n].insert(Operand::INTLIT(n as i128));
                     if let Some(set) = var_map.get(lv) {
-                        let mut tmp_set: HashSet<Operand> = HashSet::new();
+                        let mut tmp_set: BTreeSet<Operand> = BTreeSet::new();
                         tmp_set.insert(Operand::INTLIT(n as i128));
                         self.cfg.def[n] = set - &tmp_set;
                     }
@@ -127,7 +127,7 @@ impl Optimizer {
                 Tac::LET(lv, _op) => {
                     self.cfg.used[n].insert(Operand::INTLIT(n as i128));
                     if let Some(set) = var_map.get(lv) {
-                        let mut tmp_set: HashSet<Operand> = HashSet::new();
+                        let mut tmp_set: BTreeSet<Operand> = BTreeSet::new();
                         tmp_set.insert(Operand::INTLIT(n as i128));
                         self.cfg.def[n] = set - &tmp_set;
                     }
@@ -142,8 +142,8 @@ impl Optimizer {
         }
     }
     pub fn build_cfg_for_liveness(&mut self) {
-        self.cfg.used = vec![HashSet::new(); self.tacs.len()];
-        self.cfg.def = vec![HashSet::new(); self.tacs.len()];
+        self.cfg.used = vec![BTreeSet::new(); self.tacs.len()];
+        self.cfg.def = vec![BTreeSet::new(); self.tacs.len()];
         let tacs = self.tacs.clone();
         for (n, t) in tacs.iter().enumerate() {
             match t {
@@ -194,8 +194,8 @@ impl Optimizer {
             }
         }
     }
-    fn build_labelmap(&self) -> HashMap<String, usize> {
-        let mut map: HashMap<String, usize> = HashMap::new();
+    fn build_labelmap(&self) -> BTreeMap<String, usize> {
+        let mut map: BTreeMap<String, usize> = BTreeMap::new();
         for (idx, t) in self.tacs.iter().enumerate() {
             if let Tac::LABEL(name) = t {
                 map.insert(name.to_string(), idx);

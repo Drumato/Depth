@@ -6,6 +6,7 @@ with_argument.dep 60
 mutable.dep 40
 array.dep 15
 condloop.dep 55
+compint.dep 6
 sub.dep 3
 paren_expr.dep 2
 mul.dep 30
