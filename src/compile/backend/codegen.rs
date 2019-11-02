@@ -1064,8 +1064,9 @@ impl Generator {
                 }
                 x64::IR::DIVIMM(dst, value) => {
                     out += &(format!("  mov rax, {}\n", gr(dst)).as_str());
+                    out += &(format!("  mov rcx, {}\n", value).as_str());
                     out += "  cqo\n";
-                    out += &(format!("  idiv {}\n", value).as_str());
+                    out += &("  idiv rcx\n".to_string().as_str());
                     out += &(format!("  mov {}, rax\n", gr(dst)).as_str());
                 }
                 x64::IR::DIVMEM(dst, offset) => {
