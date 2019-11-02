@@ -11,6 +11,7 @@ struct Parser {
     cur: usize,
     next: usize,
     lit: usize,
+    comp_table: BTreeMap<String, i128>,
 }
 pub fn parsing(tokens: Vec<Token>) -> Vec<Func> {
     let mut parser: Parser = Parser::new(tokens);
@@ -26,12 +27,16 @@ impl Parser {
             cur: 0,
             next: 1,
             lit: 0,
+            comp_table: BTreeMap::new(),
         }
     }
     fn toplevel(&mut self) {
         loop {
             let t: &Token = self.cur_token();
             match t {
+                &Token::COMPINT => {
+                    self.parse_compint();
+                }
                 &Token::TYPE => {
                     self.parse_alias();
                 }
@@ -61,6 +66,18 @@ impl Parser {
                 Node::INVALID
             }
         }
+    }
+    fn parse_compint(&mut self) {
+        self.expect(&Token::COMPINT);
+        let comp_name: String = self.consume_ident();
+        self.expect(&Token::ASSIGN);
+        let t = self.get_token();
+        if let Token::INTEGER(val) = t {
+            self.comp_table.insert(comp_name, val);
+        } else {
+            Error::PARSE.found(&"compint statement's expression must be integer".to_string());
+        }
+        self.next_token();
     }
     fn parse_func(&mut self) {
         self.cur_env = Env::new();
@@ -334,7 +351,12 @@ impl Parser {
         }
     }
     fn term(&mut self) -> Node {
+        if let Some(val) = self.consume_compint() {
+            self.next_token();
+            return Node::INTEGER(val);
+        }
         let t: Token = self.get_token();
+
         match t {
             Token::LPAREN => {
                 self.expect(&Token::LPAREN);
@@ -483,6 +505,17 @@ impl Parser {
                 Error::PARSE.found(&format!("got {} it's not typename ", t.string()));
                 Token::EOF
             }
+        }
+    }
+    fn consume_compint(&mut self) -> Option<i128> {
+        let t: Token = self.get_token();
+        if let Token::IDENT(name) = t {
+            if let None = self.comp_table.get(&name) {
+                return None;
+            }
+            return Some(*self.comp_table.get(&name).unwrap());
+        } else {
+            return None;
         }
     }
     fn consume_ident(&mut self) -> String {

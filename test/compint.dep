@@ -1,0 +1,6 @@
+compint one = 1
+compint two = 2
+compint three = 3
+func main(){
+  return one + two + three
+}

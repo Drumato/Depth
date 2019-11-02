@@ -38,6 +38,7 @@ pub enum Token {
     GOTO,
     STRUCT,
     I64,
+    COMPINT,
     POINTER(Box<Token>),
     ARRAY(Box<Token>, Box<Token>),
     EOF,
@@ -85,6 +86,7 @@ impl Token {
             Token::MUT => "MUTABLE".to_string(),
             Token::STRUCT => "STRUCT".to_string(),
             Token::I64 => "i64".to_string(),
+            Token::COMPINT => "compint".to_string(),
             Token::POINTER(ptr_to) => format!("POINTER<{}>", ptr_to.string()),
             Token::ARRAY(elem_type, ary_size) => {
                 format!("ARRAY<{},{}>", elem_type.string(), ary_size.string())

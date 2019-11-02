@@ -1,7 +1,5 @@
 extern crate colored;
-use super::super::super::ce::types::Error;
 use super::elf64;
-use std::collections::HashMap;
 
 impl elf64::ELF {
     pub fn read_elf(file_path: &String) -> Self {
