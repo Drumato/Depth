@@ -1,4 +1,4 @@
-use super::super::ir::tac::{Operand, Tac};
+use super::super::ir::tac::Operand;
 use super::Optimizer;
 use std::collections::BTreeSet;
 
@@ -30,35 +30,5 @@ impl Optimizer {
                 break 'outer;
             }
         }
-        let tacs = self.tacs.clone();
-        for (idx, t) in tacs.iter().enumerate() {
-            match t {
-                Tac::EX(_lv, _op, lch, rch) => {
-                    if let Some(_def_idx) = self.check_duplicate(lch.clone(), reach_in[idx].clone())
-                    {
-                    }
-                    if let Some(_def_idx) = self.check_duplicate(rch.clone(), reach_in[idx].clone())
-                    {
-                    }
-                }
-                Tac::UNEX(_lv, _op, ch) => {
-                    if let Some(_def_idx) = self.check_duplicate(ch.clone(), reach_in[idx].clone())
-                    {
-                    }
-                }
-                Tac::LET(_lv, ch) => {
-                    if let Some(_def_idx) = self.check_duplicate(ch.clone(), reach_in[idx].clone())
-                    {
-                    }
-                }
-                _ => (),
-            }
-        }
-        self.tacs = tacs;
-    }
-    fn check_duplicate(&mut self, _lv: Operand, reach_in: BTreeSet<Operand>) -> Option<usize> {
-        let ret_idx: Option<usize> = None;
-        for _idx in reach_in.iter() {}
-        return ret_idx;
     }
 }

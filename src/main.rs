@@ -134,8 +134,8 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
     optimizer.regalloc();
     if matches.is_present("dump-tac") {
         eprintln!("{}", "--------dump-tac--------".blue().bold());
-        for tac in optimizer.tacs.iter() {
-            eprintln!("{}", tac.string());
+        for (i, tac) in optimizer.tacs.iter().enumerate() {
+            eprintln!("{}: {}", i, tac.string());
         }
     }
     let mut assembler_code: String = b::codegen::genx64(optimizer.tacs);
