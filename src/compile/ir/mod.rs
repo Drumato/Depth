@@ -1,3 +1,9 @@
+pub mod basicblock;
+pub mod context;
+pub mod function;
 pub mod gen;
+pub mod instruction;
 pub mod lir;
+pub mod llvm;
+pub mod module;
 pub mod tac;
