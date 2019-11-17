@@ -17,8 +17,8 @@ impl Context {
     }
     pub fn dump(&self) {
         println!("source_filename = \"{}\"", self.source_filename);
-        println!("target_triple = \"{}\"", self.target_triple.string());
-        println!("data_layout = \"{}\"", self.data_layout.string());
+        println!("target triple = \"{}\"", self.target_triple.string());
+        println!("target datalayout = \"{}\"", self.data_layout.string());
     }
 }
 
@@ -60,7 +60,7 @@ enum CPU {
 impl fmt::Display for CPU {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::X64 => write!(f, "x86-64"),
+            Self::X64 => write!(f, "x86_64"),
         }
     }
 }

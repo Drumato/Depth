@@ -112,9 +112,7 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
     if matches.is_present("dump-symbol") {
         front_manager.dump_symbol();
     }
-    if matches.is_present("Opt1") {
-        front_manager.constant_folding();
-    }
+    front_manager.constant_folding();
     if matches.is_present("emit-llvm") {
         llvm::emit_llvm(file_name, front_manager);
         std::process::exit(0);

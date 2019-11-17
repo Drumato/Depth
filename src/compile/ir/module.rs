@@ -18,4 +18,10 @@ impl Module {
             f.dump();
         }
     }
+    pub fn dump_id(&self) {
+        println!(";ModuleID = '{}'", self.id);
+    }
+    pub fn add_func(&mut self, f: Function) {
+        self.funcs.push(f);
+    }
 }
