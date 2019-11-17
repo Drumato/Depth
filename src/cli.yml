@@ -45,3 +45,6 @@ args:
     - Opt1:
         short: O1
         long: Opt1
+    - emit-llvm:
+        long: emit-llvm
+        help: emit llvm-ir

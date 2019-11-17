@@ -9,6 +9,7 @@ use colored::*;
 mod compile;
 use compile::backend as b;
 use compile::frontend as f;
+use compile::ir::llvm;
 use compile::ir::tac::Tac;
 use f::frontmanager::frontmanager as fm;
 mod object;
@@ -104,15 +105,17 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
     if !file_name.contains(".dep") {
         return read_file(&file_name);
     }
-    let tokens: Vec<f::token::token::Token> = lex_phase(file_name, &matches);
+    let tokens: Vec<f::token::token::Token> = lex_phase(file_name.to_string(), &matches);
     let funcs: Vec<f::parse::node::Func> = parse_phase(&matches, tokens);
     let mut front_manager: fm::FrontManager = fm::FrontManager::new(funcs);
     front_manager.semantics();
     if matches.is_present("dump-symbol") {
         front_manager.dump_symbol();
     }
-    if matches.is_present("Opt1") {
-        front_manager.constant_folding();
+    front_manager.constant_folding();
+    if matches.is_present("emit-llvm") {
+        llvm::emit_llvm(file_name, front_manager);
+        std::process::exit(0);
     }
     front_manager.gen_tacs();
     let tacs: Vec<Tac> = front_manager.tacs;
