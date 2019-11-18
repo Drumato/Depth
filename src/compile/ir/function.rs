@@ -1,20 +1,21 @@
 use super::basicblock::BasicBlock;
 use super::instruction::Instruction;
 pub struct Function {
-    blocks: Vec<BasicBlock>,
+    pub blocks: Vec<BasicBlock>,
     // ty: FuncType
-    name: String,
-    insert_point: usize,
-    label: usize,
+    pub name: String,
+    pub insert_point: usize,
+    pub label: usize,
 }
 
 impl Function {
     pub fn new(name: String) -> Function {
+        let entry_block = BasicBlock::new(0);
         Self {
-            blocks: Vec::new(),
+            blocks: vec![entry_block],
             name: name,
             insert_point: 0,
-            label: 0,
+            label: 1,
         }
     }
     pub fn dump(&self) {
@@ -25,10 +26,14 @@ impl Function {
         }
     }
     pub fn add_inst(&mut self, inst: Instruction) {
-        if self.blocks.len() == 0 {
-            let entry_block = BasicBlock::new(self.label);
-            self.label += 1;
-            self.blocks.push(entry_block);
+        match inst {
+            Instruction::Alloca(_, _, _) => {
+                self.label += 1;
+            }
+            Instruction::Load(_, _, _, _) => {
+                self.label += 1;
+            }
+            _ => (),
         }
         self.blocks[self.insert_point].insts.push(inst);
     }

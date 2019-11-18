@@ -6,6 +6,7 @@ pub enum Error {
     UNDEFINED,
     ELF,
     ASSEMBLE,
+    LLVM,
 }
 
 impl Error {
@@ -18,6 +19,7 @@ impl Error {
             Self::TYPE => "TypeError".to_string(),
             Self::UNDEFINED => "UndefinedError".to_string(),
             Self::ELF => "ELFError".to_string(),
+            Self::LLVM => "LLVMError".to_string(),
             Self::ASSEMBLE => "AssembleError".to_string(),
         }
     }

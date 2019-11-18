@@ -1,11 +1,28 @@
+use super::llvm_type::LLVMType;
 use std::fmt;
 pub enum LLVMValue {
     INTEGER(i128),
+    VREG(usize),
 }
 impl fmt::Display for LLVMValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::INTEGER(v) => write!(f, "{}", v),
+            Self::VREG(i) => write!(f, "%{}", i),
+        }
+    }
+}
+
+pub struct LLVMSymbol {
+    pub label: usize,
+    pub ty: LLVMType,
+}
+
+impl LLVMSymbol {
+    pub fn new(label: usize, ty: LLVMType) -> Self {
+        Self {
+            label: label,
+            ty: ty,
         }
     }
 }
