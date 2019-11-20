@@ -1,6 +1,6 @@
 use super::super::super::ce::types::Error;
 use std::fmt;
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum LLVMType {
     I64,
     UNKNOWN,

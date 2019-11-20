@@ -2,11 +2,31 @@ use super::llvm_type::LLVMType;
 use super::llvm_value::LLVMValue;
 type Label = usize;
 type Alignment = usize;
+type Expr = LLVMValue;
+type ReturnType = LLVMType;
+type DstType = LLVMType;
+type DstReg = LLVMValue;
+type Lop = LLVMValue;
+type Rop = LLVMValue;
+
+use std::fmt;
 pub enum Instruction {
-    RetTy(LLVMType, LLVMValue),
-    Alloca(Label, LLVMType, Alignment),
-    Store(LLVMType, LLVMValue, Label, Alignment),
-    Load(Label, LLVMType, LLVMValue, Alignment),
+    RetTy(ReturnType, Expr),
+    Alloca(Label, DstType, Alignment),
+    Store(DstType, Expr, Label, Alignment),
+    Load(Label, DstType, DstReg, Alignment),
+    Add(Label, CalcMode, ReturnType, Lop, Rop),
+}
+
+pub enum CalcMode {
+    NSW,
+}
+impl fmt::Display for CalcMode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::NSW => write!(f, "nsw"),
+        }
+    }
 }
 
 impl Instruction {
@@ -23,6 +43,10 @@ impl Instruction {
             Self::Load(label, ty, v, alignment) => println!(
                 "  %{} = load {}, {}* {}, align {}",
                 label, ty, ty, v, alignment
+            ),
+            Self::Add(label, mode, return_type, lop, rop) => println!(
+                "  %{} = add {} {} {}, {}",
+                label, mode, return_type, lop, rop,
             ),
         }
     }
