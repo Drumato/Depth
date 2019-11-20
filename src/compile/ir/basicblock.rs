@@ -14,8 +14,8 @@ impl BasicBlock {
         }
     }
     pub fn dump(&self) {
+        println!("{}:", self.label);
         for inst in self.insts.iter() {
-            println!("{}:", self.label);
             inst.dump();
         }
     }
