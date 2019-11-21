@@ -16,6 +16,7 @@ pub enum Instruction {
     Store(DstType, Expr, Label, Alignment),
     Load(Label, DstType, DstReg, Alignment),
     Add(Label, CalcMode, ReturnType, Lop, Rop),
+    Sub(Label, CalcMode, ReturnType, Lop, Rop),
 }
 
 pub enum CalcMode {
@@ -46,6 +47,10 @@ impl Instruction {
             ),
             Self::Add(label, mode, return_type, lop, rop) => println!(
                 "  %{} = add {} {} {}, {}",
+                label, mode, return_type, lop, rop,
+            ),
+            Self::Sub(label, mode, return_type, lop, rop) => println!(
+                "  %{} = sub {} {} {}, {}",
                 label, mode, return_type, lop, rop,
             ),
         }
