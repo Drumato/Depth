@@ -17,6 +17,7 @@ pub enum Instruction {
     Load(Label, DstType, DstReg, Alignment),
     Add(Label, CalcMode, ReturnType, Lop, Rop),
     Sub(Label, CalcMode, ReturnType, Lop, Rop),
+    Mul(Label, CalcMode, ReturnType, Lop, Rop),
 }
 
 pub enum CalcMode {
@@ -51,6 +52,10 @@ impl Instruction {
             ),
             Self::Sub(label, mode, return_type, lop, rop) => println!(
                 "  %{} = sub {} {} {}, {}",
+                label, mode, return_type, lop, rop,
+            ),
+            Self::Mul(label, mode, return_type, lop, rop) => println!(
+                "  %{} = mul {} {} {}, {}",
                 label, mode, return_type, lop, rop,
             ),
         }
