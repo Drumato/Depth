@@ -4,6 +4,7 @@ type Label = usize;
 type Alignment = usize;
 type Expr = LLVMValue;
 type ReturnType = LLVMType;
+type SrcType = LLVMType;
 type DstType = LLVMType;
 type DstReg = LLVMValue;
 type Lop = LLVMValue;
@@ -20,6 +21,8 @@ pub enum Instruction {
     Mul(Label, CalcMode, ReturnType, Lop, Rop),
     Sdiv(Label, ReturnType, Lop, Rop),
     Srem(Label, ReturnType, Lop, Rop),
+    Icmp(Label, CompareMode, ReturnType, Lop, Rop),
+    Zext(Label, DstType, Expr, SrcType),
 }
 
 pub enum CalcMode {
@@ -29,6 +32,18 @@ impl fmt::Display for CalcMode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::NSW => write!(f, "nsw"),
+        }
+    }
+}
+pub enum CompareMode {
+    EQUAL,
+    NOTEQUAL,
+}
+impl fmt::Display for CompareMode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::EQUAL => write!(f, "eq"),
+            Self::NOTEQUAL => write!(f, "ne"),
         }
     }
 }
@@ -65,6 +80,13 @@ impl Instruction {
             }
             Self::Srem(label, return_type, lop, rop) => {
                 println!("  %{} = srem {} {}, {}", label, return_type, lop, rop)
+            }
+            Self::Icmp(label, compare_type, return_type, lop, rop) => println!(
+                "  %{} = icmp {} {} {}, {}",
+                label, compare_type, return_type, lop, rop
+            ),
+            Self::Zext(label, src_type, expr, dst_type) => {
+                println!("  %{} = zext {} {} to {}", label, src_type, expr, dst_type)
             }
         }
     }

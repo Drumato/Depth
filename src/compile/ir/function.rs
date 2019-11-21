@@ -4,6 +4,7 @@ use super::super::frontend::parse::node::{Func, Node};
 use super::super::frontend::sema::semantics::Type;
 use super::basicblock::BasicBlock;
 use super::instruction::CalcMode;
+use super::instruction::CompareMode;
 use super::instruction::Instruction as Inst;
 use super::llvm_type::LLVMType;
 use super::llvm_value::{LLVMSymbol, LLVMValue};
@@ -154,6 +155,32 @@ impl Function {
                 if lop_type == rop_type {
                     self.add_inst(Inst::Srem(label + 1, lop_type, lop, rop));
                     return (LLVMValue::VREG(self.label), rop_type);
+                } else {
+                    Error::LLVM.found(&format!(
+                        "type inference failed between {} and {}",
+                        lop, rop
+                    ));
+                    return (LLVMValue::UNKNOWN, LLVMType::UNKNOWN);
+                }
+            }
+            Node::EQ(blop, brop) => {
+                let (lop, lop_type) = self.build_expr(*blop);
+                let (rop, rop_type) = self.build_expr(*brop);
+                if lop_type == rop_type {
+                    self.add_inst(Inst::Icmp(
+                        label + 1,
+                        CompareMode::EQUAL,
+                        lop_type,
+                        lop,
+                        rop,
+                    ));
+                    self.add_inst(Inst::Zext(
+                        self.label + 1,
+                        LLVMType::I1,
+                        LLVMValue::VREG(label + 1),
+                        rop_type.clone(),
+                    ));
+                    return (LLVMValue::VREG(self.label + 1), rop_type);
                 } else {
                     Error::LLVM.found(&format!(
                         "type inference failed between {} and {}",
