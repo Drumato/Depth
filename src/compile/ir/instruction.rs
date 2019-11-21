@@ -18,6 +18,7 @@ pub enum Instruction {
     Add(Label, CalcMode, ReturnType, Lop, Rop),
     Sub(Label, CalcMode, ReturnType, Lop, Rop),
     Mul(Label, CalcMode, ReturnType, Lop, Rop),
+    Sdiv(Label, ReturnType, Lop, Rop),
 }
 
 pub enum CalcMode {
@@ -58,6 +59,9 @@ impl Instruction {
                 "  %{} = mul {} {} {}, {}",
                 label, mode, return_type, lop, rop,
             ),
+            Self::Sdiv(label, return_type, lop, rop) => {
+                println!("  %{} = sdiv {} {}, {}", label, return_type, lop, rop)
+            }
         }
     }
 }

@@ -134,6 +134,20 @@ impl Function {
                     return (LLVMValue::UNKNOWN, LLVMType::UNKNOWN);
                 }
             }
+            Node::DIV(blop, brop) => {
+                let (lop, lop_type) = self.build_expr(*blop);
+                let (rop, rop_type) = self.build_expr(*brop);
+                if lop_type == rop_type {
+                    self.add_inst(Inst::Sdiv(label + 1, lop_type, lop, rop));
+                    return (LLVMValue::VREG(self.label), rop_type);
+                } else {
+                    Error::LLVM.found(&format!(
+                        "type inference failed between {} and {}",
+                        lop, rop
+                    ));
+                    return (LLVMValue::UNKNOWN, LLVMType::UNKNOWN);
+                }
+            }
             _ => (LLVMValue::UNKNOWN, LLVMType::UNKNOWN),
         }
     }
