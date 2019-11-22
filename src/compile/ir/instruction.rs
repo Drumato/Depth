@@ -38,12 +38,20 @@ impl fmt::Display for CalcMode {
 pub enum CompareMode {
     EQUAL,
     NOTEQUAL,
+    GREATERTHAN,
+    GREATERTHANEQUAL,
+    LESSTHAN,
+    LESSTHANEQUAL,
 }
 impl fmt::Display for CompareMode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::EQUAL => write!(f, "eq"),
             Self::NOTEQUAL => write!(f, "ne"),
+            Self::GREATERTHAN => write!(f, "sgt"),
+            Self::GREATERTHANEQUAL => write!(f, "sge"),
+            Self::LESSTHAN => write!(f, "slt"),
+            Self::LESSTHANEQUAL => write!(f, "sle"),
         }
     }
 }
