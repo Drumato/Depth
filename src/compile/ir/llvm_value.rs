@@ -1,5 +1,6 @@
 use super::llvm_type::LLVMType;
 use std::fmt;
+#[derive(Clone)]
 pub enum LLVMValue {
     INTEGER(i128),
     VREG(usize),
@@ -10,7 +11,7 @@ impl fmt::Display for LLVMValue {
         match self {
             Self::INTEGER(v) => write!(f, "{}", v),
             Self::VREG(i) => write!(f, "%{}", i),
-            Self::UNKNOWN => write!(f, "unkown"),
+            Self::UNKNOWN => write!(f, "unknown"),
         }
     }
 }

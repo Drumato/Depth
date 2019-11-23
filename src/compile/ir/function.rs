@@ -11,7 +11,7 @@ use super::llvm_value::{LLVMSymbol, LLVMValue};
 use std::collections::BTreeMap;
 pub struct Function {
     pub blocks: Vec<BasicBlock>,
-    // ty: FuncType
+    // ty: LLVMType
     pub name: String,
     pub insert_point: usize,
     pub label: usize,
@@ -70,6 +70,10 @@ impl Function {
             self.add_inst(Inst::Store(llvm_type, llvm_value, label, alignment));
         }
     }
+    fn build_return(&mut self, expr: Node) {
+        let (llvm_value, llvm_type) = self.build_expr(expr);
+        self.add_inst(Inst::RetTy(llvm_type, llvm_value));
+    }
     fn build_expr(&mut self, expr: Node) -> (LLVMValue, LLVMType) {
         match expr {
             Node::INTEGER(value) => (LLVMValue::INTEGER(value), LLVMType::I64),
@@ -80,7 +84,59 @@ impl Function {
                 let alignment = llvm_type.alignment();
                 let llvm_value = LLVMValue::VREG(llvm_symbol.label);
                 self.add_inst(Inst::Load(label, llvm_type.clone(), llvm_value, alignment));
-                (LLVMValue::VREG(label), llvm_type)
+                (LLVMValue::VREG(self.label), llvm_type)
+            }
+            Node::ADDRESS(bchild) => {
+                if let Node::IDENT(name) = *bchild {
+                    let llvm_symbol = self.get_symbol_if_defined(&name);
+                    let llvm_value = LLVMValue::VREG(llvm_symbol.label);
+                    let inner_type = Box::new(llvm_symbol.ty.clone());
+                    (llvm_value, LLVMType::POINTER(inner_type))
+                } else {
+                    Error::LLVM.found(&"addressing with constant".to_string());
+                    (LLVMValue::UNKNOWN, LLVMType::UNKNOWN)
+                }
+            }
+            Node::DEREFERENCE(bchild) => {
+                if let Node::IDENT(name) = *bchild.clone() {
+                    let label = self.label;
+                    let llvm_symbol = self.get_symbol_if_defined(&name);
+                    let llvm_value = LLVMValue::VREG(llvm_symbol.label);
+                    let llvm_type = llvm_symbol.ty.clone();
+                    let alignment = llvm_type.alignment();
+                    self.add_inst(Inst::Load(label, llvm_type.clone(), llvm_value, alignment));
+                    if let LLVMType::POINTER(binner) = llvm_type {
+                        self.add_inst(Inst::Load(
+                            self.label,
+                            *binner.clone(),
+                            LLVMValue::VREG(label),
+                            alignment,
+                        ));
+                        (LLVMValue::VREG(self.label - 1), *binner)
+                    } else {
+                        Error::LLVM.found(&"dereference with not pointer".to_string());
+                        (LLVMValue::UNKNOWN, LLVMType::UNKNOWN)
+                    }
+                } else if let Node::DEREFERENCE(bchild_child) = *bchild.clone() {
+                    let (child_value, child_type) = self.build_expr(*bchild_child.clone());
+                    let alignment = child_type.alignment();
+                    let label = self.label;
+                    self.add_inst(Inst::Load(
+                        label,
+                        child_type.clone(),
+                        child_value.clone(),
+                        alignment,
+                    ));
+                    if let LLVMType::POINTER(binner) = child_type {
+                        (LLVMValue::VREG(label), *binner)
+                    } else {
+                        Error::LLVM.found(&"dereference with not pointer".to_string());
+                        (LLVMValue::UNKNOWN, LLVMType::UNKNOWN)
+                    }
+                } else {
+                    Error::LLVM.found(&"dereference with invalid node".to_string());
+                    (LLVMValue::UNKNOWN, LLVMType::UNKNOWN)
+                }
             }
             Node::ADD(blop, brop) => {
                 let (lop, lop_type) = self.build_expr(*blop);
@@ -88,13 +144,13 @@ impl Function {
                 let label = self.label;
                 if lop_type == rop_type {
                     self.add_inst(Inst::Add(label, CalcMode::NSW, lop_type, lop, rop));
-                    return (LLVMValue::VREG(label), rop_type);
+                    (LLVMValue::VREG(label), rop_type)
                 } else {
                     Error::LLVM.found(&format!(
                         "type inference failed between {} and {}",
                         lop, rop
                     ));
-                    return (LLVMValue::UNKNOWN, LLVMType::UNKNOWN);
+                    (LLVMValue::UNKNOWN, LLVMType::UNKNOWN)
                 }
             }
             Node::SUB(blop, brop) => {
@@ -307,12 +363,12 @@ impl Function {
     fn get_llvmtype_from_type(&mut self, ty: &Type) -> LLVMType {
         match ty {
             Type::INTEGER => LLVMType::I64,
+            Type::POINTER(inner) => {
+                let inner_type = self.get_llvmtype_from_type(inner);
+                LLVMType::POINTER(Box::new(inner_type))
+            }
             _ => LLVMType::UNKNOWN,
         }
-    }
-    fn build_return(&mut self, expr: Node) {
-        let (llvm_value, llvm_type) = self.build_expr(expr);
-        self.add_inst(Inst::RetTy(llvm_type, llvm_value));
     }
     fn get_symbol_if_defined(&mut self, name: &str) -> &LLVMSymbol {
         if let Some(llvm_symbol) = self.env.get(name) {
