@@ -8,10 +8,13 @@ use super::instruction::CompareMode;
 use super::instruction::Instruction as Inst;
 use super::llvm_type::LLVMType;
 use super::llvm_value::{LLVMSymbol, LLVMValue};
+
 use std::collections::BTreeMap;
+use std::fmt::Write;
 pub struct Function {
     pub blocks: Vec<BasicBlock>,
     // ty: LLVMType
+    pub args: Vec<LLVMType>,
     pub name: String,
     pub insert_point: usize,
     pub label: usize,
@@ -20,21 +23,42 @@ pub struct Function {
 
 impl Function {
     pub fn new(name: String) -> Function {
-        let entry_block = BasicBlock::new(0);
+        let entry_block = BasicBlock::new("entry".to_string());
         Self {
             blocks: vec![entry_block],
             name: name,
             insert_point: 0,
-            label: 1,
+            args: Vec::new(),
+            label: 0,
             env: BTreeMap::new(),
         }
     }
     pub fn dump(&self) {
+        println!(
+            "define i64 @{}({}) {}",
+            self.name,
+            self.format_argtype(),
+            "{"
+        );
         for bb in self.blocks.iter() {
-            println!("define i64 @{}() {}", self.name, "{");
             bb.dump();
-            println!("{}", "}");
         }
+        println!("{}", "}");
+    }
+    fn format_argtype(&self) -> String {
+        let mut base_string = String::new();
+        for (i, arg) in self.args.iter().enumerate() {
+            if i == self.args.len() - 1 {
+                if let Err(err) = base_string.write_fmt(format_args!("{}", arg)) {
+                    Error::LLVM.found(&format!("{}", err));
+                }
+            } else {
+                if let Err(err) = base_string.write_fmt(format_args!("{},", arg)) {
+                    Error::LLVM.found(&format!("{}", err));
+                }
+            }
+        }
+        base_string
     }
     pub fn add_inst(&mut self, inst: Inst) {
         match inst {
@@ -44,6 +68,29 @@ impl Function {
         self.blocks[self.insert_point].insts.push(inst);
     }
     pub fn build_function(&mut self, f: &Func) {
+        for arg in f.args.iter() {
+            if let Node::DEFARG(name) = arg {
+                if let Some(ref mut s) = f.env.sym_table.get(name) {
+                    if let Ok(ty) = s.ty.clone() {
+                        let llvm_type = self.get_llvmtype_from_type(&ty);
+                        let alignment = llvm_type.alignment();
+                        self.args.push(llvm_type.clone());
+                        self.add_inst(Inst::Alloca(self.label, llvm_type.clone(), alignment));
+                        let llvm_symbol = LLVMSymbol::new(self.label - 1, llvm_type.clone());
+                        self.env.insert(name.to_string(), llvm_symbol);
+                    }
+                }
+            }
+        }
+        for (_key, value) in self.env.clone().iter() {
+            let alignment = value.ty.alignment();
+            self.add_inst(Inst::Store(
+                value.ty.clone(),
+                LLVMValue::VREG(self.label),
+                value.label,
+                alignment,
+            ));
+        }
         for st in f.stmts.iter() {
             match st {
                 Node::RETURN(bexpr) => self.build_return(*bexpr.clone()),
@@ -85,6 +132,16 @@ impl Function {
                 let llvm_value = LLVMValue::VREG(llvm_symbol.label);
                 self.add_inst(Inst::Load(label, llvm_type.clone(), llvm_value, alignment));
                 (LLVMValue::VREG(self.label), llvm_type)
+            }
+            Node::CALL(name, elements) => {
+                let mut args: Vec<(LLVMValue, LLVMType)> = Vec::new();
+                for elem in elements.iter() {
+                    let (elem_value, elem_type) = self.build_expr(elem.clone());
+                    args.push((elem_value, elem_type));
+                }
+                let label = self.label;
+                self.add_inst(Inst::Call(label, LLVMType::I64, name, args)); // TODO: func_type
+                (LLVMValue::VREG(label), LLVMType::I64)
             }
             Node::ADDRESS(bchild) => {
                 if let Node::IDENT(name) = *bchild {

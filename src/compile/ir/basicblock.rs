@@ -1,20 +1,20 @@
 use super::instruction::Instruction;
 pub struct BasicBlock {
-    label: usize,
+    entry: String,
     pub insts: Vec<Instruction>,
     // prev: &mut BasicBlock
     // next: &mut BasicBlock
 }
 
 impl BasicBlock {
-    pub fn new(label: usize) -> Self {
+    pub fn new(e: String) -> Self {
         Self {
-            label: label,
+            entry: e,
             insts: Vec::new(),
         }
     }
     pub fn dump(&self) {
-        println!("{}:", self.label);
+        println!("{}:", self.entry);
         for inst in self.insts.iter() {
             inst.dump();
         }

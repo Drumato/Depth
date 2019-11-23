@@ -16,6 +16,7 @@ impl fmt::Display for LLVMValue {
     }
 }
 
+#[derive(Clone)]
 pub struct LLVMSymbol {
     pub label: usize,
     pub ty: LLVMType,

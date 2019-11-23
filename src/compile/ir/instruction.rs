@@ -1,7 +1,13 @@
+use super::super::super::ce::types::Error;
 use super::llvm_type::LLVMType;
 use super::llvm_value::LLVMValue;
+
+use std::fmt;
+use std::fmt::Write;
+
 type Label = usize;
 type Alignment = usize;
+type FuncName = String;
 type Expr = LLVMValue;
 type ReturnType = LLVMType;
 type SrcType = LLVMType;
@@ -9,8 +15,8 @@ type DstType = LLVMType;
 type DstReg = LLVMValue;
 type Lop = LLVMValue;
 type Rop = LLVMValue;
+type Args = Vec<(LLVMValue, LLVMType)>;
 
-use std::fmt;
 pub enum Instruction {
     RetTy(ReturnType, Expr),
     Alloca(Label, DstType, Alignment),
@@ -23,6 +29,7 @@ pub enum Instruction {
     Srem(Label, ReturnType, Lop, Rop),
     Icmp(Label, CompareMode, ReturnType, Lop, Rop),
     Zext(Label, DstType, Expr, SrcType),
+    Call(Label, ReturnType, FuncName, Args),
 }
 
 pub enum CalcMode {
@@ -95,6 +102,28 @@ impl Instruction {
             ),
             Self::Zext(label, src_type, expr, dst_type) => {
                 println!("  %{} = zext {} {} to {}", label, src_type, expr, dst_type)
+            }
+            Self::Call(label, return_type, func_name, args) => {
+                let mut arg_string = String::new();
+                for (i, (arg_value, arg_type)) in args.iter().enumerate() {
+                    if i == args.len() - 1 {
+                        if let Err(err) =
+                            arg_string.write_fmt(format_args!("{} {}", arg_type, arg_value))
+                        {
+                            Error::LLVM.found(&format!("{}", err));
+                        }
+                    } else {
+                        if let Err(err) =
+                            arg_string.write_fmt(format_args!("{} {},", arg_type, arg_value))
+                        {
+                            Error::LLVM.found(&format!("{}", err));
+                        }
+                    }
+                }
+                println!(
+                    "  %{} = call {} @{}({})",
+                    label, return_type, func_name, arg_string
+                );
             }
         }
     }
