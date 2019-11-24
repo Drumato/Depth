@@ -101,6 +101,10 @@ impl Function {
                         Error::LLVM.found(&format!("{} is not defined", &ident_name));
                     }
                 }
+                Node::ASSIGN(ident_name, bexpr) => {
+                    let label = self.get_symbol_if_defined(ident_name).label;
+                    self.build_assign(label, *bexpr.clone())
+                }
                 _ => (),
             }
         }
@@ -116,6 +120,11 @@ impl Function {
             let (llvm_value, _) = self.build_expr(expr);
             self.add_inst(Inst::Store(llvm_type, llvm_value, label, alignment));
         }
+    }
+    fn build_assign(&mut self, label: usize, expr: Node) {
+        let (llvm_value, llvm_type) = self.build_expr(expr);
+        let alignment = llvm_type.alignment();
+        self.add_inst(Inst::Store(llvm_type, llvm_value, label, alignment));
     }
     fn build_return(&mut self, expr: Node) {
         let (llvm_value, llvm_type) = self.build_expr(expr);
