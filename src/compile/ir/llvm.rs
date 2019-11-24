@@ -18,7 +18,7 @@ impl IRBuilder {
     fn build_module(&mut self) {
         let functions = self.functions.clone();
         for f in functions.iter() {
-            let mut llvm_func = LLVMFunc::new(f.name.to_string());
+            let mut llvm_func = LLVMFunc::new(f.name.to_string(), f.args.len());
             llvm_func.build_function(f);
             self.module.add_func(llvm_func);
         }

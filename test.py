@@ -104,10 +104,10 @@ if __name__ == "__main__":
     test_compile()
     compile_time = time.time() - start
     print(f"test-volatile time -> {Color.BLUE}{round(compile_time,2)}{Color.CLEAR}s")
-    start = time.time()
-    test_optimize1()
-    compile_time = time.time() - start
-    print(f"test-optimize1 time -> {Color.BLUE}{round(compile_time,2)}{Color.CLEAR}s")
+    # start = time.time()
+    # test_optimize1()
+    # compile_time = time.time() - start
+    # print(f"test-optimize1 time -> {Color.BLUE}{round(compile_time,2)}{Color.CLEAR}s")
     start = time.time()
     test_llvm()
     compile_time = time.time() - start

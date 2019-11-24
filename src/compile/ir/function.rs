@@ -22,14 +22,14 @@ pub struct Function {
 }
 
 impl Function {
-    pub fn new(name: String) -> Function {
+    pub fn new(name: String, len: usize) -> Function {
         let entry_block = BasicBlock::new("entry".to_string());
         Self {
             blocks: vec![entry_block],
             name: name,
             insert_point: 0,
             args: Vec::new(),
-            label: 0,
+            label: len,
             env: BTreeMap::new(),
         }
     }
@@ -82,11 +82,11 @@ impl Function {
                 }
             }
         }
-        for (_key, value) in self.env.clone().iter() {
+        for (i, (_key, value)) in self.env.clone().iter().enumerate() {
             let alignment = value.ty.alignment();
             self.add_inst(Inst::Store(
                 value.ty.clone(),
-                LLVMValue::VREG(self.label),
+                LLVMValue::VREG(i),
                 value.label,
                 alignment,
             ));
@@ -131,7 +131,7 @@ impl Function {
                 let alignment = llvm_type.alignment();
                 let llvm_value = LLVMValue::VREG(llvm_symbol.label);
                 self.add_inst(Inst::Load(label, llvm_type.clone(), llvm_value, alignment));
-                (LLVMValue::VREG(self.label), llvm_type)
+                (LLVMValue::VREG(label), llvm_type)
             }
             Node::CALL(name, elements) => {
                 let mut args: Vec<(LLVMValue, LLVMType)> = Vec::new();
