@@ -7,10 +7,11 @@ use super::constant::Constant;
 use super::instruction::CalcMode;
 use super::instruction::CompareMode;
 use super::instruction::Instruction as Inst;
+use super::intrinsic::Intrinsic;
 use super::llvm_type::LLVMType;
 use super::llvm_value::{LLVMSymbol, LLVMValue};
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::fmt::Write;
 pub struct Function {
     pub blocks: Vec<BasicBlock>,
@@ -22,6 +23,7 @@ pub struct Function {
     pub env: BTreeMap<String, LLVMSymbol>,
     pub constants: Vec<Constant>,
     pub const_label: usize,
+    pub declares: HashSet<Intrinsic>,
 }
 
 impl Function {
@@ -35,6 +37,7 @@ impl Function {
             label: len,
             env: BTreeMap::new(),
             constants: Vec::new(),
+            declares: HashSet::new(),
             const_label: 0,
         }
     }
@@ -68,6 +71,7 @@ impl Function {
     pub fn add_inst(&mut self, inst: Inst) {
         match inst {
             Inst::Store(_, _, _, _) => (),
+            Inst::Memcpy64(_, _, _, _) => (),
             _ => self.label += 1,
         }
         self.blocks[self.insert_point].insts.push(inst);
@@ -143,6 +147,7 @@ impl Function {
                     total_size,
                     false,
                 ));
+                self.declares.insert(Intrinsic::Memcpy);
                 self.add_constant_array((*elements).to_vec(), llvm_type, name.to_string());
             } else {
                 let (llvm_value, _) = self.build_expr(expr);
@@ -166,6 +171,9 @@ impl Function {
                 let label = self.label;
                 let llvm_symbol = self.get_symbol_if_defined(&name);
                 let llvm_type = llvm_symbol.ty.clone();
+                if let LLVMType::ARRAY(_, _) = &llvm_type {
+                    return (LLVMValue::VREG(llvm_symbol.label), llvm_type);
+                }
                 let alignment = llvm_type.alignment();
                 let llvm_value = LLVMValue::VREG(llvm_symbol.label);
                 self.add_inst(Inst::Load(label, llvm_type.clone(), llvm_value, alignment));
@@ -181,18 +189,26 @@ impl Function {
                 self.add_inst(Inst::Call(label, LLVMType::I64, name, args)); // TODO: func_type
                 (LLVMValue::VREG(label), LLVMType::I64)
             }
-            Node::INDEX(ary_node, bidx_node) => {
+            Node::INDEX(bary_node, bidx_node) => {
                 let (index_value, index_type) = self.build_expr(*bidx_node.clone());
-                let (ary_value, ary_type) = self.build_expr(*bidx_node);
+                let (ary_value, ary_type) = self.build_expr(*bary_node);
+                let label = self.label;
                 self.add_inst(Inst::GetElementPtrInbounds(
+                    label,
                     ary_type.clone(),
                     ary_value,
                     index_type,
                     index_value,
                 ));
-                let label = self.label;
                 if let LLVMType::ARRAY(elem_type, _) = ary_type {
-                    (LLVMValue::VREG(label), *elem_type)
+                    let alignment = elem_type.alignment();
+                    self.add_inst(Inst::Load(
+                        label + 1,
+                        *elem_type.clone(),
+                        LLVMValue::VREG(label),
+                        alignment,
+                    ));
+                    (LLVMValue::VREG(label + 1), *elem_type)
                 } else {
                     eprintln!("something wrong in index expression");
                     (LLVMValue::UNKNOWN, LLVMType::UNKNOWN)
@@ -471,8 +487,9 @@ impl Function {
             }
             Node::ARRAYLIT(elements, name) => {
                 for (i, elem) in elements.iter().enumerate() {
-                    let (elem_value, elem_type) = self.build_expr(elem.clone());
+                    let (_elem_value, elem_type) = self.build_expr(elem.clone());
                     if i == elements.len() - 1 {
+                        eprintln!("reached");
                         return (
                             LLVMValue::Const(name),
                             LLVMType::ARRAY(Box::new(elem_type), elements.len()),

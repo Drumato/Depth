@@ -15,6 +15,7 @@ impl IRBuilder {
         self.ctx.dump();
         self.module.dump_constants();
         self.module.dump();
+        self.module.dump_declare();
     }
     fn build_module(&mut self) {
         let functions = self.functions.clone();
@@ -24,6 +25,7 @@ impl IRBuilder {
             self.module
                 .constants
                 .append(&mut llvm_func.constants.clone());
+            self.module.declares = llvm_func.declares.clone();
             self.module.add_func(llvm_func);
         }
     }

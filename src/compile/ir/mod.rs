@@ -4,6 +4,7 @@ pub mod context;
 pub mod function;
 pub mod gen;
 pub mod instruction;
+pub mod intrinsic;
 pub mod lir;
 pub mod llvm;
 pub mod llvm_type;

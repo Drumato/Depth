@@ -36,7 +36,7 @@ pub enum Instruction {
     Call(Label, ReturnType, FuncName, Args),
     BitCast(Label, SrcType, Expr, DstType),
     Memcpy64(Expr, Expr, TotalSize, IsVolatile),
-    GetElementPtrInbounds(ReturnType, Expr, IndexType, IndexValue),
+    GetElementPtrInbounds(Label, ReturnType, Expr, IndexType, IndexValue),
 }
 
 pub enum CalcMode {
@@ -140,7 +140,10 @@ impl Instruction {
             "  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 {}, i8* align 16 {}, i64 {}, i1 {:?})"
             ,dst,src,total_size,is_volatile,
             ),
-            Self::GetElementPtrInbounds(return_type,target,idx_type,idx_value) => println!(),
+            Self::GetElementPtrInbounds(label,return_type,target,idx_type,idx_value) => println!(
+                "  %{} = getelementptr inbounds {}, {}* {}, i64 0, {} {}",
+                label,return_type,return_type,target,idx_type,idx_value
+                ),
         }
     }
 }
