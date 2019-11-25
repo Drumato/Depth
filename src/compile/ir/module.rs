@@ -1,7 +1,9 @@
+use super::constant::Constant;
 use super::function::Function;
 pub struct Module {
     id: String,
     funcs: Vec<Function>,
+    pub constants: Vec<Constant>,
 }
 
 impl Module {
@@ -9,11 +11,17 @@ impl Module {
         Self {
             id: id,
             funcs: Vec::new(),
+            constants: Vec::new(),
         }
     }
     pub fn dump(&self) {
         for f in self.funcs.iter() {
             f.dump();
+        }
+    }
+    pub fn dump_constants(&self) {
+        for c in self.constants.iter() {
+            c.dump();
         }
     }
     pub fn dump_id(&self) {

@@ -1,4 +1,5 @@
 pub mod basicblock;
+pub mod constant;
 pub mod context;
 pub mod function;
 pub mod gen;

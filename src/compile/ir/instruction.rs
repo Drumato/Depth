@@ -6,6 +6,9 @@ use std::fmt;
 use std::fmt::Write;
 
 type Label = usize;
+type IndexType = LLVMType;
+type IndexValue = LLVMValue;
+type TotalSize = usize;
 type Alignment = usize;
 type FuncName = String;
 type Expr = LLVMValue;
@@ -16,6 +19,7 @@ type DstReg = LLVMValue;
 type Lop = LLVMValue;
 type Rop = LLVMValue;
 type Args = Vec<(LLVMValue, LLVMType)>;
+type IsVolatile = bool;
 
 pub enum Instruction {
     RetTy(ReturnType, Expr),
@@ -30,6 +34,9 @@ pub enum Instruction {
     Icmp(Label, CompareMode, ReturnType, Lop, Rop),
     Zext(Label, DstType, Expr, SrcType),
     Call(Label, ReturnType, FuncName, Args),
+    BitCast(Label, SrcType, Expr, DstType),
+    Memcpy64(Expr, Expr, TotalSize, IsVolatile),
+    GetElementPtrInbounds(ReturnType, Expr, IndexType, IndexValue),
 }
 
 pub enum CalcMode {
@@ -125,6 +132,15 @@ impl Instruction {
                     label, return_type, func_name, arg_string
                 );
             }
+            Self::BitCast(label, src_type, target, dst_type) => println!(
+                "  %{} = bitcast {}* {} to {}*",
+                label, src_type, target, dst_type
+            ),
+            Self::Memcpy64(dst, src, total_size, is_volatile) => println!(
+            "  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 {}, i8* align 16 {}, i64 {}, i1 {:?})"
+            ,dst,src,total_size,is_volatile,
+            ),
+            Self::GetElementPtrInbounds(return_type,target,idx_type,idx_value) => println!(),
         }
     }
 }

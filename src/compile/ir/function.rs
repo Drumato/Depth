@@ -3,6 +3,7 @@ use super::super::frontend::frontmanager::frontmanager::Symbol;
 use super::super::frontend::parse::node::{Func, Node};
 use super::super::frontend::sema::semantics::Type;
 use super::basicblock::BasicBlock;
+use super::constant::Constant;
 use super::instruction::CalcMode;
 use super::instruction::CompareMode;
 use super::instruction::Instruction as Inst;
@@ -19,6 +20,8 @@ pub struct Function {
     pub insert_point: usize,
     pub label: usize,
     pub env: BTreeMap<String, LLVMSymbol>,
+    pub constants: Vec<Constant>,
+    pub const_label: usize,
 }
 
 impl Function {
@@ -31,6 +34,8 @@ impl Function {
             args: Vec::new(),
             label: len,
             env: BTreeMap::new(),
+            constants: Vec::new(),
+            const_label: 0,
         }
     }
     pub fn dump(&self) {
@@ -109,7 +114,7 @@ impl Function {
             }
         }
     }
-    fn build_let(&mut self, ident_name: String, symbol: &Symbol, expr: Node) {
+    fn build_let(&mut self, ident_name: String, symbol: &Symbol, mut expr: Node) {
         if let Ok(ty) = &symbol.ty {
             let llvm_type = self.get_llvmtype_from_type(ty);
             let alignment = llvm_type.alignment();
@@ -117,8 +122,32 @@ impl Function {
             let llvm_symbol = LLVMSymbol::new(label, llvm_type.clone());
             self.env.insert(ident_name, llvm_symbol);
             self.add_inst(Inst::Alloca(label, llvm_type.clone(), alignment));
-            let (llvm_value, _) = self.build_expr(expr);
-            self.add_inst(Inst::Store(llvm_type, llvm_value, label, alignment));
+            if let Node::ARRAYLIT(ref mut elements, ref mut name) = expr {
+                *name = format!("{}", self.const_label);
+                self.const_label += 1;
+                self.add_inst(Inst::BitCast(
+                    self.label,
+                    llvm_type.clone(),
+                    LLVMValue::VREG(label),
+                    LLVMType::I8,
+                ));
+                let total_size = alignment * elements.len();
+                self.add_inst(Inst::Memcpy64(
+                    LLVMValue::VREG(self.label - 1),
+                    LLVMValue::ConstBitCast(
+                        llvm_type.clone(),
+                        self.name.to_string(),
+                        name.to_string(),
+                        LLVMType::I8,
+                    ),
+                    total_size,
+                    false,
+                ));
+                self.add_constant_array((*elements).to_vec(), llvm_type, name.to_string());
+            } else {
+                let (llvm_value, _) = self.build_expr(expr);
+                self.add_inst(Inst::Store(llvm_type, llvm_value, label, alignment));
+            }
         }
     }
     fn build_assign(&mut self, label: usize, expr: Node) {
@@ -151,6 +180,23 @@ impl Function {
                 let label = self.label;
                 self.add_inst(Inst::Call(label, LLVMType::I64, name, args)); // TODO: func_type
                 (LLVMValue::VREG(label), LLVMType::I64)
+            }
+            Node::INDEX(ary_node, bidx_node) => {
+                let (index_value, index_type) = self.build_expr(*bidx_node.clone());
+                let (ary_value, ary_type) = self.build_expr(*bidx_node);
+                self.add_inst(Inst::GetElementPtrInbounds(
+                    ary_type.clone(),
+                    ary_value,
+                    index_type,
+                    index_value,
+                ));
+                let label = self.label;
+                if let LLVMType::ARRAY(elem_type, _) = ary_type {
+                    (LLVMValue::VREG(label), *elem_type)
+                } else {
+                    eprintln!("something wrong in index expression");
+                    (LLVMValue::UNKNOWN, LLVMType::UNKNOWN)
+                }
             }
             Node::ADDRESS(bchild) => {
                 if let Node::IDENT(name) = *bchild {
@@ -423,6 +469,18 @@ impl Function {
                     return (LLVMValue::UNKNOWN, LLVMType::UNKNOWN);
                 }
             }
+            Node::ARRAYLIT(elements, name) => {
+                for (i, elem) in elements.iter().enumerate() {
+                    let (elem_value, elem_type) = self.build_expr(elem.clone());
+                    if i == elements.len() - 1 {
+                        return (
+                            LLVMValue::Const(name),
+                            LLVMType::ARRAY(Box::new(elem_type), elements.len()),
+                        );
+                    }
+                }
+                (LLVMValue::UNKNOWN, LLVMType::UNKNOWN)
+            }
             _ => (LLVMValue::UNKNOWN, LLVMType::UNKNOWN),
         }
     }
@@ -432,6 +490,10 @@ impl Function {
             Type::POINTER(inner) => {
                 let inner_type = self.get_llvmtype_from_type(inner);
                 LLVMType::POINTER(Box::new(inner_type))
+            }
+            Type::ARRAY(elem, length) => {
+                let elem_type = self.get_llvmtype_from_type(elem);
+                LLVMType::ARRAY(Box::new(elem_type), *length)
             }
             _ => LLVMType::UNKNOWN,
         }
@@ -446,5 +508,14 @@ impl Function {
                 ty: LLVMType::UNKNOWN,
             };
         }
+    }
+    fn add_constant_array(&mut self, elements: Vec<Node>, ty: LLVMType, name: String) {
+        let mut values: Vec<(LLVMType, LLVMValue)> = Vec::new();
+        for elem in elements.iter() {
+            let (elem_value, elem_type) = self.build_expr(elem.clone());
+            values.push((elem_type, elem_value));
+        }
+        let cons = Constant::Array(format!("@__const.{}.{}", self.name, name), ty, values);
+        self.constants.push(cons);
     }
 }

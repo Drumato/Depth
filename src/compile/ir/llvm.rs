@@ -5,14 +5,15 @@ use super::function::Function as LLVMFunc;
 use super::module::Module;
 
 pub struct IRBuilder {
-    module: Module,
-    ctx: Context,
-    functions: Vec<Func>,
+    pub module: Module,
+    pub ctx: Context,
+    pub functions: Vec<Func>,
 }
 impl IRBuilder {
     fn emit(&self) {
         self.module.dump_id();
         self.ctx.dump();
+        self.module.dump_constants();
         self.module.dump();
     }
     fn build_module(&mut self) {
@@ -20,6 +21,9 @@ impl IRBuilder {
         for f in functions.iter() {
             let mut llvm_func = LLVMFunc::new(f.name.to_string(), f.args.len());
             llvm_func.build_function(f);
+            self.module
+                .constants
+                .append(&mut llvm_func.constants.clone());
             self.module.add_func(llvm_func);
         }
     }

@@ -4,6 +4,8 @@ use std::fmt;
 pub enum LLVMValue {
     INTEGER(i128),
     VREG(usize),
+    ConstBitCast(LLVMType, String, String, LLVMType),
+    Const(String),
     UNKNOWN,
 }
 impl fmt::Display for LLVMValue {
@@ -11,6 +13,12 @@ impl fmt::Display for LLVMValue {
         match self {
             Self::INTEGER(v) => write!(f, "{}", v),
             Self::VREG(i) => write!(f, "%{}", i),
+            Self::ConstBitCast(src, func_name, const_name, dst) => write!(
+                f,
+                "bitcast ({}* @__const.{}.{} to {}*)",
+                src, func_name, const_name, dst
+            ),
+            Self::Const(name) => write!(f, "{}", name),
             Self::UNKNOWN => write!(f, "unknown"),
         }
     }
