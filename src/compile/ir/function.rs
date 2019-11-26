@@ -122,6 +122,13 @@ impl Function {
                 Node::CONDLOOP(bcond_expr, bblock) => {
                     self.build_condloop(f, *bcond_expr, *bblock);
                 }
+                Node::IF(bcond_expr, bblock, opt_balter) => {
+                    if let Some(balter) = opt_balter {
+                        self.build_ifelse(f, *bcond_expr, *bblock, *balter);
+                    } else {
+                        self.build_if(f, *bcond_expr, *bblock);
+                    }
+                }
                 Node::BLOCK(bstmts) => {
                     for bst in bstmts.iter() {
                         self.build_stmt(Some(f), bst.clone());
@@ -130,6 +137,33 @@ impl Function {
                 _ => (),
             }
         }
+    }
+    fn build_ifelse(&mut self, f: &Func, cond_node: Node, block: Node, alter: Node) {}
+    fn build_if(&mut self, f: &Func, cond_node: Node, block: Node) {
+        let (cond_value, _) = self.build_expr(cond_node);
+        let insert_point_after_generate_all = self.insert_point;
+
+        let true_label = self.label;
+        let true_block = BasicBlock::new(format!("{}", true_label));
+        self.blocks.push(true_block);
+        self.insert_point += 1;
+        self.label += 1;
+
+        self.build_stmt(Some(f), block);
+        let false_label = self.label;
+        self.add_inst(Inst::UnconditionalBranch(false_label));
+
+        let false_block = BasicBlock::new(format!("{}", false_label));
+        self.blocks.push(false_block);
+        self.insert_point += 1;
+        self.blocks[insert_point_after_generate_all]
+            .insts
+            .push(Inst::ConditionalBranch(
+                LLVMType::I1,
+                cond_value,
+                true_label,
+                false_label,
+            ));
     }
     fn build_condloop(&mut self, f: &Func, cond_node: Node, block: Node) {
         let cond_label = self.label;

@@ -34,7 +34,6 @@ pub enum Instruction {
     Sdiv(Label, ReturnType, Lop, Rop),
     Srem(Label, ReturnType, Lop, Rop),
     Icmp(Label, CompareMode, ReturnType, Lop, Rop),
-    Zext(Label, DstType, Expr, SrcType),
     Call(Label, ReturnType, FuncName, Args),
     BitCast(Label, SrcType, Expr, DstType),
     Memcpy64(Expr, Expr, TotalSize, IsVolatile),
@@ -112,9 +111,6 @@ impl Instruction {
                 "  %{} = icmp {} {} {}, {}",
                 label, compare_type, return_type, lop, rop
             ),
-            Self::Zext(label, src_type, expr, dst_type) => {
-                println!("  %{} = zext {} {} to {}", label, src_type, expr, dst_type)
-            }
             Self::Call(label, return_type, func_name, args) => {
                 let mut arg_string = String::new();
                 for (i, (arg_value, arg_type)) in args.iter().enumerate() {
