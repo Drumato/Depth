@@ -103,6 +103,16 @@ impl Function {
         for st in f.stmts.iter() {
             self.build_stmt(Some(f), st.clone());
         }
+        let blocks = self.blocks.clone();
+        for (i, bb) in blocks.iter().enumerate() {
+            if bb.insts.len() == 0 {
+                self.blocks[i].insts.push(Inst::DoNothing);
+                self.blocks[i]
+                    .insts
+                    .push(Inst::RetTy(LLVMType::I64, LLVMValue::INTEGER(0)));
+                self.declares.insert(Intrinsic::DoNothing);
+            }
+        }
     }
     fn build_stmt(&mut self, option_f: Option<&Func>, stmt: Node) {
         if let Some(f) = option_f {
@@ -138,7 +148,45 @@ impl Function {
             }
         }
     }
-    fn build_ifelse(&mut self, f: &Func, cond_node: Node, block: Node, alter: Node) {}
+    fn build_ifelse(&mut self, f: &Func, cond_node: Node, block: Node, alter: Node) {
+        let (cond_value, _) = self.build_expr(cond_node);
+        let conditional_branch_index = self.insert_point;
+
+        let true_label = self.label;
+        let true_block = BasicBlock::new(format!("{}", true_label));
+        self.blocks.push(true_block);
+        self.insert_point += 1;
+        self.label += 1;
+
+        self.build_stmt(Some(f), block);
+        let unconditional_branch_index = self.insert_point;
+
+        let false_label = self.label;
+        let false_block = BasicBlock::new(format!("{}", false_label));
+        self.blocks.push(false_block);
+        self.insert_point += 1;
+        self.label += 1;
+
+        self.build_stmt(Some(f), alter);
+
+        let breaked_label = self.label;
+        self.blocks[conditional_branch_index]
+            .insts
+            .push(Inst::ConditionalBranch(
+                LLVMType::I1,
+                cond_value,
+                true_label,
+                false_label,
+            ));
+        self.blocks[unconditional_branch_index]
+            .insts
+            .push(Inst::UnconditionalBranch(breaked_label));
+        self.add_inst(Inst::UnconditionalBranch(breaked_label));
+
+        let breaked_block = BasicBlock::new(format!("{}", breaked_label));
+        self.blocks.push(breaked_block);
+        self.insert_point += 1;
+    }
     fn build_if(&mut self, f: &Func, cond_node: Node, block: Node) {
         let (cond_value, _) = self.build_expr(cond_node);
         let insert_point_after_generate_all = self.insert_point;

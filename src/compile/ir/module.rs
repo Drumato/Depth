@@ -37,6 +37,9 @@ impl Module {
                 Intrinsic::Memcpy => {
                     println!("declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture writeonly, i8* nocapture readonly, i64, i1 immarg) #1");
                 }
+                Intrinsic::DoNothing => {
+                    println!("declare void @llvm.donothing() readnone");
+                }
             }
         }
     }

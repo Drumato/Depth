@@ -23,8 +23,10 @@ type Rop = LLVMValue;
 type Args = Vec<(LLVMValue, LLVMType)>;
 type IsVolatile = bool;
 
+#[derive(Clone)]
 pub enum Instruction {
     RetTy(ReturnType, Expr),
+    RetVoid,
     Alloca(Label, DstType, Alignment),
     Store(DstType, Expr, Label, Alignment),
     Load(Label, DstType, DstReg, Alignment),
@@ -36,13 +38,16 @@ pub enum Instruction {
     Icmp(Label, CompareMode, ReturnType, Lop, Rop),
     Call(Label, ReturnType, FuncName, Args),
     BitCast(Label, SrcType, Expr, DstType),
-    Memcpy64(Expr, Expr, TotalSize, IsVolatile),
     GetElementPtrInbounds(Label, ReturnType, Expr, IndexType, IndexValue),
     UnconditionalBranch(Label),
     ConditionalBranch(SrcType, Expr, TrueLabel, FalseLabel),
+
+    Memcpy64(Expr, Expr, TotalSize, IsVolatile),
+    DoNothing,
     NOP,
 }
 
+#[derive(Clone)]
 pub enum CalcMode {
     NSW,
 }
@@ -53,6 +58,7 @@ impl fmt::Display for CalcMode {
         }
     }
 }
+#[derive(Clone)]
 pub enum CompareMode {
     EQUAL,
     NOTEQUAL,
@@ -78,6 +84,7 @@ impl Instruction {
     pub fn dump(&self) {
         match self {
             Self::RetTy(ty, v) => println!("  ret {} {}", ty, v),
+            Self::RetVoid => println!("  ret void"),
             Self::Alloca(dst, ty, alignment) => {
                 println!("  %{} = alloca {}, align {}", dst, ty, alignment)
             }
@@ -141,6 +148,9 @@ impl Instruction {
             "  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 {}, i8* align 16 {}, i64 {}, i1 {:?})"
             ,dst,src,total_size,is_volatile,
             ),
+            Self::DoNothing => println!(
+                "  call void @llvm.donothing()"
+                ),
             Self::GetElementPtrInbounds(label,return_type,target,idx_type,idx_value) => println!(
                 "  %{} = getelementptr inbounds {}, {}* {}, i64 0, {} {}",
                 label,return_type,return_type,target,idx_type,idx_value

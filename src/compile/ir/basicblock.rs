@@ -1,4 +1,5 @@
 use super::instruction::Instruction;
+#[derive(Clone)]
 pub struct BasicBlock {
     entry: String,
     pub insts: Vec<Instruction>,
