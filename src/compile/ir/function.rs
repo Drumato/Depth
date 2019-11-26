@@ -101,22 +101,69 @@ impl Function {
             ));
         }
         for st in f.stmts.iter() {
-            match st {
+            self.build_stmt(Some(f), st.clone());
+        }
+    }
+    fn build_stmt(&mut self, option_f: Option<&Func>, stmt: Node) {
+        if let Some(f) = option_f {
+            match stmt {
                 Node::RETURN(bexpr) => self.build_return(*bexpr.clone()),
                 Node::LET(ident_name, bexpr) => {
-                    if let Some(v) = f.env.sym_table.get(ident_name) {
+                    if let Some(v) = f.env.sym_table.get(&ident_name) {
                         self.build_let(ident_name.to_string(), v, *bexpr.clone())
                     } else {
                         Error::LLVM.found(&format!("{} is not defined", &ident_name));
                     }
                 }
                 Node::ASSIGN(ident_name, bexpr) => {
-                    let label = self.get_symbol_if_defined(ident_name).label;
+                    let label = self.get_symbol_if_defined(&ident_name.to_string()).label;
                     self.build_assign(label, *bexpr.clone())
+                }
+                Node::CONDLOOP(bcond_expr, bblock) => {
+                    self.build_condloop(f, *bcond_expr, *bblock);
+                }
+                Node::BLOCK(bstmts) => {
+                    for bst in bstmts.iter() {
+                        self.build_stmt(Some(f), bst.clone());
+                    }
                 }
                 _ => (),
             }
         }
+    }
+    fn build_condloop(&mut self, f: &Func, cond_node: Node, block: Node) {
+        let cond_label = self.label;
+        self.add_inst(Inst::UnconditionalBranch(cond_label));
+
+        self.insert_point += 1;
+        let insert_point_after_generate_all = self.insert_point;
+
+        let cond_block = BasicBlock::new(format!("{}", cond_label));
+        self.blocks.push(cond_block);
+        let (cond_value, _) = self.build_expr(cond_node);
+
+        let true_label = self.label;
+
+        let true_block = BasicBlock::new(format!("{}", true_label));
+        self.blocks.push(true_block);
+        self.insert_point += 1;
+        self.label += 1;
+
+        self.build_stmt(Some(f), block);
+        let false_label = self.label;
+        self.add_inst(Inst::UnconditionalBranch(cond_label));
+
+        self.blocks[insert_point_after_generate_all]
+            .insts
+            .push(Inst::ConditionalBranch(
+                LLVMType::I1,
+                cond_value,
+                true_label,
+                false_label,
+            ));
+        let breaked_block = BasicBlock::new(format!("{}", false_label));
+        self.blocks.push(breaked_block);
+        self.insert_point += 1;
     }
     fn build_let(&mut self, ident_name: String, symbol: &Symbol, mut expr: Node) {
         if let Ok(ty) = &symbol.ty {
@@ -347,13 +394,7 @@ impl Function {
                 let label = self.label;
                 if lop_type == rop_type {
                     self.add_inst(Inst::Icmp(label, CompareMode::EQUAL, lop_type, lop, rop));
-                    self.add_inst(Inst::Zext(
-                        self.label,
-                        LLVMType::I1,
-                        LLVMValue::VREG(label),
-                        rop_type.clone(),
-                    ));
-                    return (LLVMValue::VREG(label + 1), rop_type);
+                    return (LLVMValue::VREG(label), rop_type);
                 } else {
                     Error::LLVM.found(&format!(
                         "type inference failed between {} and {}",
@@ -368,13 +409,7 @@ impl Function {
                 let label = self.label;
                 if lop_type == rop_type {
                     self.add_inst(Inst::Icmp(label, CompareMode::NOTEQUAL, lop_type, lop, rop));
-                    self.add_inst(Inst::Zext(
-                        self.label,
-                        LLVMType::I1,
-                        LLVMValue::VREG(label),
-                        rop_type.clone(),
-                    ));
-                    return (LLVMValue::VREG(label + 1), rop_type);
+                    return (LLVMValue::VREG(label), rop_type);
                 } else {
                     Error::LLVM.found(&format!(
                         "type inference failed between {} and {}",
@@ -389,13 +424,7 @@ impl Function {
                 let label = self.label;
                 if lop_type == rop_type {
                     self.add_inst(Inst::Icmp(label, CompareMode::LESSTHAN, lop_type, lop, rop));
-                    self.add_inst(Inst::Zext(
-                        self.label,
-                        LLVMType::I1,
-                        LLVMValue::VREG(label),
-                        rop_type.clone(),
-                    ));
-                    return (LLVMValue::VREG(label + 1), rop_type);
+                    return (LLVMValue::VREG(label), rop_type);
                 } else {
                     Error::LLVM.found(&format!(
                         "type inference failed between {} and {}",
@@ -416,13 +445,7 @@ impl Function {
                         lop,
                         rop,
                     ));
-                    self.add_inst(Inst::Zext(
-                        self.label,
-                        LLVMType::I1,
-                        LLVMValue::VREG(label),
-                        rop_type.clone(),
-                    ));
-                    return (LLVMValue::VREG(label + 1), rop_type);
+                    return (LLVMValue::VREG(label), rop_type);
                 } else {
                     Error::LLVM.found(&format!(
                         "type inference failed between {} and {}",
@@ -443,13 +466,7 @@ impl Function {
                         lop,
                         rop,
                     ));
-                    self.add_inst(Inst::Zext(
-                        self.label,
-                        LLVMType::I1,
-                        LLVMValue::VREG(label),
-                        rop_type.clone(),
-                    ));
-                    return (LLVMValue::VREG(label + 1), rop_type);
+                    return (LLVMValue::VREG(label), rop_type);
                 } else {
                     Error::LLVM.found(&format!(
                         "type inference failed between {} and {}",
@@ -470,13 +487,7 @@ impl Function {
                         lop,
                         rop,
                     ));
-                    self.add_inst(Inst::Zext(
-                        self.label,
-                        LLVMType::I1,
-                        LLVMValue::VREG(label),
-                        rop_type.clone(),
-                    ));
-                    return (LLVMValue::VREG(label + 1), rop_type);
+                    return (LLVMValue::VREG(label), rop_type);
                 } else {
                     Error::LLVM.found(&format!(
                         "type inference failed between {} and {}",

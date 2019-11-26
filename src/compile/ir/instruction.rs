@@ -6,6 +6,8 @@ use std::fmt;
 use std::fmt::Write;
 
 type Label = usize;
+type TrueLabel = usize;
+type FalseLabel = usize;
 type IndexType = LLVMType;
 type IndexValue = LLVMValue;
 type TotalSize = usize;
@@ -37,6 +39,9 @@ pub enum Instruction {
     BitCast(Label, SrcType, Expr, DstType),
     Memcpy64(Expr, Expr, TotalSize, IsVolatile),
     GetElementPtrInbounds(Label, ReturnType, Expr, IndexType, IndexValue),
+    UnconditionalBranch(Label),
+    ConditionalBranch(SrcType, Expr, TrueLabel, FalseLabel),
+    NOP,
 }
 
 pub enum CalcMode {
@@ -143,7 +148,12 @@ impl Instruction {
             Self::GetElementPtrInbounds(label,return_type,target,idx_type,idx_value) => println!(
                 "  %{} = getelementptr inbounds {}, {}* {}, i64 0, {} {}",
                 label,return_type,return_type,target,idx_type,idx_value
-                ),
+            ),
+            Self::UnconditionalBranch(label) => println!("  br label %{}",label),
+            Self::ConditionalBranch(cond_type,cond_value,true_label,false_label) => println!(
+                "  br {} {}, label %{}, label %{}",
+                cond_type,cond_value,true_label,false_label),
+            Self::NOP => (),
         }
     }
 }

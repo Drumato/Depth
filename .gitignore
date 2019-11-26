@@ -213,3 +213,4 @@ GPATH
 *.s
 a.out
 core
+*.ll
