@@ -355,43 +355,14 @@ impl Function {
                 }
             }
             Node::DEREFERENCE(bchild) => {
-                if let Node::IDENT(name) = *bchild.clone() {
-                    let label = self.label;
-                    let llvm_symbol = self.get_symbol_if_defined(&name);
-                    let llvm_value = LLVMValue::VREG(llvm_symbol.label);
-                    let llvm_type = llvm_symbol.ty.clone();
-                    let alignment = llvm_type.alignment();
-                    self.add_inst(Inst::Load(label, llvm_type.clone(), llvm_value, alignment));
-                    if let LLVMType::POINTER(binner) = llvm_type {
-                        self.add_inst(Inst::Load(
-                            self.label,
-                            *binner.clone(),
-                            LLVMValue::VREG(label),
-                            alignment,
-                        ));
-                        (LLVMValue::VREG(self.label - 1), *binner)
-                    } else {
-                        Error::LLVM.found(&"dereference with not pointer".to_string());
-                        (LLVMValue::UNKNOWN, LLVMType::UNKNOWN)
-                    }
-                } else if let Node::DEREFERENCE(bchild_child) = *bchild.clone() {
-                    let (child_value, child_type) = self.build_expr(*bchild_child.clone());
-                    let alignment = child_type.alignment();
-                    let label = self.label;
-                    self.add_inst(Inst::Load(
-                        label,
-                        child_type.clone(),
-                        child_value.clone(),
-                        alignment,
-                    ));
-                    if let LLVMType::POINTER(binner) = child_type {
-                        (LLVMValue::VREG(label), *binner)
-                    } else {
-                        Error::LLVM.found(&"dereference with not pointer".to_string());
-                        (LLVMValue::UNKNOWN, LLVMType::UNKNOWN)
-                    }
+                let (inner, inner_type) = self.build_expr(*bchild);
+                let alignment = inner_type.alignment();
+                let label = self.label;
+                if let LLVMType::POINTER(binner) = inner_type {
+                    self.add_inst(Inst::Load(label, *binner.clone(), inner, alignment));
+                    (LLVMValue::VREG(label), *binner)
                 } else {
-                    Error::LLVM.found(&"dereference with invalid node".to_string());
+                    Error::LLVM.found(&"addressing with constant".to_string());
                     (LLVMValue::UNKNOWN, LLVMType::UNKNOWN)
                 }
             }
