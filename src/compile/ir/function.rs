@@ -10,6 +10,8 @@ use super::instruction::Instruction as Inst;
 use super::intrinsic::Intrinsic;
 use super::llvm_type::LLVMType;
 use super::llvm_value::{LLVMSymbol, LLVMValue};
+type InstructionLabel = usize;
+type BasicBlockLabel = usize;
 
 use std::collections::{BTreeMap, HashSet};
 use std::fmt::Write;
@@ -24,6 +26,7 @@ pub struct Function {
     pub constants: Vec<Constant>,
     pub const_label: usize,
     pub declares: HashSet<Intrinsic>,
+    pub jump_labels: BTreeMap<String, (InstructionLabel, BasicBlockLabel)>, // BTreeMap<String,(writeToInstructionIndex,writeToBasicBlockTo)>
 }
 
 impl Function {
@@ -36,6 +39,7 @@ impl Function {
             args: Vec::new(),
             label: len,
             env: BTreeMap::new(),
+            jump_labels: BTreeMap::new(),
             constants: Vec::new(),
             declares: HashSet::new(),
             const_label: 0,
@@ -143,6 +147,38 @@ impl Function {
                     for bst in bstmts.iter() {
                         self.build_stmt(Some(f), bst.clone());
                     }
+                }
+                Node::LABEL(name) => {
+                    if let Some((inst_label, block_label)) = self.jump_labels.get(&name) {
+                        self.blocks[*block_label].insts[*inst_label] =
+                            Inst::UnconditionalBranch(self.label);
+                        let label = self.label;
+                        let another_block = BasicBlock::new(format!("{}", label));
+                        self.blocks.push(another_block);
+                        self.insert_point += 1;
+                        self.label += 1;
+                        return;
+                    }
+                    let label = self.label;
+                    self.jump_labels.insert(name, (label, self.insert_point));
+                    let another_block = BasicBlock::new(format!("{}", label));
+                    self.blocks.push(another_block);
+                    self.insert_point += 1;
+                    self.label += 1;
+                }
+                Node::GOTO(name) => {
+                    if let Some((_inst_label, block_label)) = self.jump_labels.get(&name) {
+                        self.add_inst(Inst::UnconditionalBranch(*block_label));
+                        return;
+                    }
+                    self.jump_labels.insert(
+                        name,
+                        (
+                            self.blocks[self.insert_point].insts.len(),
+                            self.insert_point,
+                        ),
+                    );
+                    self.add_inst(Inst::NOP);
                 }
                 _ => (),
             }
