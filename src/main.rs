@@ -13,8 +13,7 @@ use compile::ir::llvm;
 use compile::ir::tac::Tac;
 use f::frontmanager::frontmanager as fm;
 mod object;
-use elf::elf64::ELF;
-use object::elf;
+use object::elf::elf64::ELF;
 mod assemble;
 use assemble as a;
 mod ce;
@@ -96,14 +95,15 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
     }
     assembler_code
 }
-fn assemble(assembler_code: String, matches: &clap::ArgMatches) -> elf::elf64::ELF {
+fn assemble(assembler_code: String, matches: &clap::ArgMatches) -> ELF {
+    use object::elf::elf64;
     let tokens: Vec<a::lex::Token> = a::lex::lexing(assembler_code);
     let (instructions, info_map, relas) = a::parse::parsing(tokens);
     if matches.is_present("dump-inst") {
         dump_inst(&instructions, &info_map);
     }
     let (code_map, mut relas) = a::gen::generate(instructions, info_map, relas);
-    let shstrtab: Vec<u8> = elf::elf64::strtab(vec![
+    let shstrtab: Vec<u8> = elf64::strtab(vec![
         ".text",
         ".symtab",
         ".strtab",
@@ -114,21 +114,21 @@ fn assemble(assembler_code: String, matches: &clap::ArgMatches) -> elf::elf64::E
         .iter()
         .map(|(name, _)| name.as_str())
         .collect::<Vec<&str>>();
-    let mut symbols: Vec<elf::elf64::Symbol> = Vec::with_capacity(100);
-    symbols.push(elf::elf64::init_nullsym());
+    let mut symbols: Vec<elf64::Symbol> = Vec::with_capacity(100);
+    symbols.push(elf64::init_nullsym());
     let mut total_len: u64 = 0;
     let mut total_code: Vec<u8> = Vec::with_capacity(2048);
     let mut name: u32 = 1;
     for (idx, (symbol_name, codes)) in code_map.iter().enumerate() {
         if codes.len() != 0 {
-            symbols.push(elf::elf64::init_sym(
+            symbols.push(elf64::init_sym(
                 name,
-                elf::elf64::STB_GLOBAL,
+                elf64::STB_GLOBAL,
                 codes.len() as u64,
                 total_len,
             ));
         } else {
-            symbols.push(elf::elf64::init_refsym(name, elf::elf64::STB_GLOBAL));
+            symbols.push(elf64::init_refsym(name, elf64::STB_GLOBAL));
         }
         name += symbol_name.len() as u32 + 1;
         total_len += codes.len() as u64;
@@ -139,29 +139,29 @@ fn assemble(assembler_code: String, matches: &clap::ArgMatches) -> elf::elf64::E
             rela.r_info = (((idx + 1) << 32) + 1) as u64;
         }
     }
-    let mut elf_file = elf::elf64::ELF::init();
-    let strtab: Vec<u8> = elf::elf64::strtab(strs);
-    elf_file.add_section(vec![], elf::elf64::init_nullhdr(), "null");
-    elf_file.add_section(total_code, elf::elf64::init_texthdr(total_len), ".text");
+    let mut elf_file = ELF::init();
+    let strtab: Vec<u8> = elf64::strtab(strs);
+    elf_file.add_section(vec![], elf64::init_nullhdr(), "null");
+    elf_file.add_section(total_code, elf64::init_texthdr(total_len), ".text");
     let symbol_length = symbols.len();
-    let symtab: Vec<u8> = elf::elf64::symbols_to_vec(symbols);
+    let symtab: Vec<u8> = elf64::symbols_to_vec(symbols);
     elf_file.add_section(
         symtab,
-        elf::elf64::init_symtabhdr(elf::elf64::Symbol::size() as u64 * symbol_length as u64),
+        elf64::init_symtabhdr(elf64::Symbol::size() as u64 * symbol_length as u64),
         ".symtab",
     );
     let strtab_length = strtab.len() as u64;
-    elf_file.add_section(strtab, elf::elf64::init_strtabhdr(strtab_length), ".strtab");
+    elf_file.add_section(strtab, elf64::init_strtabhdr(strtab_length), ".strtab");
     let relas_length = relas.len() as u64;
     elf_file.add_section(
-        elf::elf64::relas_to_vec(relas.values().collect::<Vec<&elf::elf64::Rela>>()),
-        elf::elf64::init_relahdr(elf::elf64::Rela::size() as u64 * relas_length),
+        elf64::relas_to_vec(relas.values().collect::<Vec<&elf64::Rela>>()),
+        elf64::init_relahdr(elf64::Rela::size() as u64 * relas_length),
         ".rela.text",
     );
     let shstrtab_length = shstrtab.len() as u64;
     elf_file.add_section(
         shstrtab,
-        elf::elf64::init_strtabhdr(shstrtab_length),
+        elf64::init_strtabhdr(shstrtab_length),
         ".shstrtab",
     );
     elf_file.condition();
