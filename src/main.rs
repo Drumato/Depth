@@ -13,6 +13,7 @@ use compile::ir::llvm;
 use compile::ir::tac::Tac;
 use f::frontmanager::frontmanager as fm;
 mod object;
+use elf::elf64::ELF;
 use object::elf;
 mod assemble;
 use assemble as a;
@@ -25,79 +26,27 @@ mod link;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
-    let mut file_names: Vec<String> = Vec::new();
-    let mut iter = matches.values_of("source").unwrap();
-    while let Some(name) = iter.next() {
-        file_names.push(name.to_string());
-    }
-    let assembler_codes: Vec<String> = file_names
-        .iter()
-        .map(|name| {
-            compile(name.to_string(), &matches)
-                + "_start:\n  call main\n  mov rdi, rax\n  mov rax, 60\n  syscall\n"
-        })
-        .collect::<Vec<String>>();
+
+    let file_name = matches.value_of("source").unwrap();
+    let assembly: String = compile(file_name.to_string(), &matches)
+        + "_start:\n  call main\n  mov rdi, rax\n  mov rax, 60\n  syscall\n";
     if matches.is_present("stop-c") {
-        for (idx, assembler_code) in assembler_codes.iter().enumerate() {
-            let file_name: String =
-                file_names[idx].split(".").collect::<Vec<&str>>()[0].to_string() + ".s";
-            let mut file = File::create(file_name)?;
-            file.write_all(assembler_code.as_bytes())?;
-        }
+        let output_path: String = file_name.split(".").collect::<Vec<&str>>()[0].to_string() + ".s";
+        let mut file = File::create(output_path)?;
+        file.write_all(assembly.as_bytes())?;
         std::process::exit(0);
     }
-    let elf_files: Vec<elf::elf64::ELF> = if !file_names[0].contains(".o") {
-        assembler_codes
-            .iter()
-            .map(|code| assemble(code.to_string(), &matches))
-            .collect::<Vec<elf::elf64::ELF>>()
+    let elf_binary: ELF = if !file_name.contains(".o") {
+        assemble(assembly.to_string(), &matches)
     } else {
-        file_names
-            .iter()
-            .map(|f| elf::elf64::ELF::read_elf(f))
-            .collect::<Vec<elf::elf64::ELF>>()
+        ELF::read_elf(&file_name.to_string())
     };
-    let mut elf_names: Vec<String> = Vec::new();
     if matches.is_present("stop-a") {
-        for idx in 0..elf_files.len() {
-            elf_names.push(file_names[idx].split(".").collect::<Vec<&str>>()[0].to_string() + ".o");
-        }
-        for (idx, file_name) in elf_names.iter().enumerate() {
-            let file = std::fs::OpenOptions::new()
-                .create(true)
-                .read(true)
-                .write(true)
-                .mode(0o755)
-                .open(file_name)
-                .unwrap();
-            let mut writer = BufWriter::new(file);
-            match writer.write_all(&elf_files[idx].to_vec()) {
-                Ok(_) => (),
-                Err(e) => eprintln!("{}", e),
-            }
-            match writer.flush() {
-                Ok(_) => (),
-                Err(e) => eprintln!("{}", e),
-            }
-        }
+        let output_path = file_name.split(".").collect::<Vec<&str>>()[0].to_string() + ".o";
+        output_file_with_binary(output_path, elf_binary);
     } else {
-        let exec_file: elf::elf64::ELF = link::linker::Linker::linking(elf_files);
-        let file = std::fs::OpenOptions::new()
-            .create(true)
-            .read(true)
-            .write(true)
-            .mode(0o755)
-            .open("a.out")
-            .unwrap();
-        let mut writer = BufWriter::new(file);
-        match writer.write_all(&exec_file.to_vec()) {
-            Ok(_) => (),
-            Err(e) => eprintln!("{}", e),
-        }
-        match writer.flush() {
-            Ok(_) => (),
-            Err(e) => eprintln!("{}", e),
-        }
+        let exec_file: ELF = link::linker::Linker::linking(vec![elf_binary]);
+        output_file_with_binary("a.out".to_string(), exec_file);
     }
     Ok(())
 }
@@ -293,5 +242,24 @@ fn dump_inst(
                 );
             }
         }
+    }
+}
+
+fn output_file_with_binary(output_path: String, binary: ELF) {
+    let file = std::fs::OpenOptions::new()
+        .create(true)
+        .read(true)
+        .write(true)
+        .mode(0o755)
+        .open(output_path)
+        .unwrap();
+    let mut writer = BufWriter::new(file);
+    match writer.write_all(&binary.to_vec()) {
+        Ok(_) => (),
+        Err(e) => eprintln!("{}", e),
+    }
+    match writer.flush() {
+        Ok(_) => (),
+        Err(e) => eprintln!("{}", e),
     }
 }
