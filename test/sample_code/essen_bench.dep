@@ -44,12 +44,12 @@ func main(){
         }
         sx = sx + 1
       }
-      //n = sn / (dn * dn)
       n = sn >> 4
       h = h + n
       x = x + 1
     }
     y = y + 1
   }
+  let result : i64 = h
   return 0
 }

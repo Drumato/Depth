@@ -129,10 +129,7 @@ impl Function {
                         Error::LLVM.found(&format!("{} is not defined", &ident_name));
                     }
                 }
-                Node::ASSIGN(ident_name, bexpr) => {
-                    let label = self.get_symbol_if_defined(&ident_name.to_string()).label;
-                    self.build_assign(label, *bexpr.clone())
-                }
+                Node::ASSIGN(ident_name, bexpr) => self.build_assign(ident_name, *bexpr.clone()),
                 Node::CONDLOOP(bcond_expr, bblock) => {
                     self.build_condloop(f, *bcond_expr, *bblock);
                 }
@@ -320,10 +317,20 @@ impl Function {
             }
         }
     }
-    fn build_assign(&mut self, label: usize, expr: Node) {
-        let (llvm_value, llvm_type) = self.build_expr(expr);
-        let alignment = llvm_type.alignment();
-        self.add_inst(Inst::Store(llvm_type, llvm_value, label, alignment));
+    fn build_assign(&mut self, ident_name: String, expr: Node) {
+        let symbol_type = self
+            .get_symbol_if_defined(&ident_name.to_string())
+            .ty
+            .clone();
+        let symbol_label = self.get_symbol_if_defined(&ident_name.to_string()).label;
+        let (llvm_value, _llvm_type) = self.build_expr(expr.clone());
+        let alignment = symbol_type.alignment();
+        self.add_inst(Inst::Store(
+            symbol_type,
+            llvm_value,
+            symbol_label,
+            alignment,
+        ));
     }
     fn build_return(&mut self, expr: Node) {
         let (llvm_value, llvm_type) = self.build_expr(expr);
@@ -576,6 +583,36 @@ impl Function {
                         lop,
                         rop,
                     ));
+                    return (LLVMValue::VREG(label), rop_type);
+                } else {
+                    Error::LLVM.found(&format!(
+                        "type inference failed between {} and {}",
+                        lop, rop
+                    ));
+                    return (LLVMValue::UNKNOWN, LLVMType::UNKNOWN);
+                }
+            }
+            Node::LSHIFT(blop, brop) => {
+                let (lop, lop_type) = self.build_expr(*blop);
+                let (rop, rop_type) = self.build_expr(*brop);
+                let label = self.label;
+                if lop_type == rop_type {
+                    self.add_inst(Inst::Shl(label, lop_type, lop, rop));
+                    return (LLVMValue::VREG(label), rop_type);
+                } else {
+                    Error::LLVM.found(&format!(
+                        "type inference failed between {} and {}",
+                        lop, rop
+                    ));
+                    return (LLVMValue::UNKNOWN, LLVMType::UNKNOWN);
+                }
+            }
+            Node::RSHIFT(blop, brop) => {
+                let (lop, lop_type) = self.build_expr(*blop);
+                let (rop, rop_type) = self.build_expr(*brop);
+                let label = self.label;
+                if lop_type == rop_type {
+                    self.add_inst(Inst::Ashr(label, lop_type, lop, rop));
                     return (LLVMValue::VREG(label), rop_type);
                 } else {
                     Error::LLVM.found(&format!(

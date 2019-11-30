@@ -36,6 +36,8 @@ pub enum Instruction {
     Sdiv(Label, ReturnType, Lop, Rop),
     Srem(Label, ReturnType, Lop, Rop),
     Icmp(Label, CompareMode, ReturnType, Lop, Rop),
+    Shl(Label, ReturnType, Lop, Rop),
+    Ashr(Label, ReturnType, Lop, Rop),
     Call(Label, ReturnType, FuncName, Args),
     BitCast(Label, SrcType, Expr, DstType),
     GetElementPtrInbounds(Label, ReturnType, Expr, IndexType, IndexValue),
@@ -113,6 +115,12 @@ impl Instruction {
             }
             Self::Srem(label, return_type, lop, rop) => {
                 println!("  %{} = srem {} {}, {}", label, return_type, lop, rop)
+            }
+            Self::Shl(label, return_type, lop, rop) => {
+                println!("  %{} = shl {} {}, {}", label, return_type, lop, rop)
+            }
+            Self::Ashr(label, return_type, lop, rop) => {
+                println!("  %{} = ashr {} {}, {}", label, return_type, lop, rop)
             }
             Self::Icmp(label, compare_type, return_type, lop, rop) => println!(
                 "  %{} = icmp {} {} {}, {}",
