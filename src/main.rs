@@ -21,6 +21,8 @@ use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::os::unix::fs::OpenOptionsExt;
 mod link;
+mod load;
+use load::elf::ELFLoader;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
@@ -31,7 +33,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let assembly: String = compile(file_name.to_string(), &matches)
         + "_start:\n  call main\n  mov rdi, rax\n  mov rax, 60\n  syscall\n";
 
-    /* if stop-c given so output the assembly-code to file. */
+    /* if 'stop-c' given so output the assembly-code to file. */
     if matches.is_present("stop-c") {
         let output_path: String = file_name.split(".").collect::<Vec<&str>>()[0].to_string() + ".s";
         let mut file = File::create(output_path)?;
@@ -47,15 +49,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ELF::read_elf(&file_name.to_string())
     };
 
-    /* if stop-a given so output the object-file. */
+    /* if 'stop-a' given so output the object-file. */
     if matches.is_present("stop-a") {
         let output_path = file_name.split(".").collect::<Vec<&str>>()[0].to_string() + ".o";
         output_file_with_binary(output_path, elf_binary);
     } else {
-        // link the object-file then we generate ET_EXEC from it.
+        /* link the object-file  */
         let exec_file: ELF = link::linker::Linker::linking(vec![elf_binary]);
-        output_file_with_binary("a.out".to_string(), exec_file);
+
+        /* if 'run' given then the loader load the binary and execute machine code. */
+        if matches.is_present("run") {
+            let return_value = ELFLoader::load(exec_file);
+            std::process::exit(return_value);
+        } else {
+            /* then we generate a.out from ET_EXEC. */
+            output_file_with_binary("a.out".to_string(), exec_file);
+        }
     }
+
     Ok(())
 }
 fn compile(file_name: String, matches: &clap::ArgMatches) -> String {

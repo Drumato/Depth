@@ -44,3 +44,6 @@ args:
     - emit-llvm:
         long: emit-llvm
         help: emit llvm-ir
+    - run:
+        long: run
+        help: run the program 
