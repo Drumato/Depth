@@ -13,14 +13,18 @@ impl ELFLoader {
         if let Some(unwrapped_phdrs) = elf_file.phdrs {
             let offset = unwrapped_phdrs[0].p_offset as usize;
             let segment_size = unwrapped_phdrs[0].p_filesz as usize;
+
+            /* get segment from binary */
             let load_segment = binary[offset..offset + segment_size].to_vec();
             let pointer_to_segment = load_segment.as_ptr();
+
             unsafe {
                 program.copy_from_nonoverlapping(pointer_to_segment, segment_size as usize);
                 let f: fn() -> i32 = ::std::mem::transmute(page);
                 f()
             }
         } else {
+            eprintln!("not found program header table");
             0
         }
     }
@@ -28,7 +32,10 @@ impl ELFLoader {
     fn setup_page_with_using_mmap() -> (*mut u8, *mut c_void) {
         unsafe {
             let program: *mut u8;
+            /* set the pointer to 0x400000 because target binary expect to load to 0x400000 */
             let start: *mut c_void = 0x400000 as *mut c_void;
+
+            /* mmap with the flags it can execute */
             let page: *mut c_void = libc::mmap(
                 start,
                 PAGE_SIZE,

@@ -34,7 +34,7 @@ def test_compile():
     for filename, expect in cases.items():
         fn = f"test/{filename}"
         f = open(fn)
-        p = subprocess.Popen(f"./target/debug/depth {fn}  ; ./a.out", shell=True)
+        p = subprocess.Popen(f"./target/debug/depth {fn} --run", shell=True)
         exit_status = p.wait()
         if exit_status != expect:
             print(
