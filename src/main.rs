@@ -62,6 +62,7 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
     if !file_name.contains(".dep") {
         return read_file(&file_name);
     }
+
     /* tokenize */
     let tokens: Vec<f::token::token::Token> = lex_phase(file_name.to_string(), &matches);
 
@@ -216,13 +217,18 @@ fn assemble(assembler_code: String, matches: &clap::ArgMatches) -> ELF {
 
 fn lex_phase(file_name: String, matches: &clap::ArgMatches) -> Vec<f::token::token::Token> {
     let filecontent: String = read_file(&file_name);
+
+    /* lex */
     let tokens: Vec<f::token::token::Token> = f::lex::lexing::lexing(filecontent);
+
+    /* render tokens to stderr */
     if matches.is_present("dump-token") {
         eprintln!("{}", "--------dumptoken--------".blue().bold());
         for t in tokens.iter() {
             eprintln!("{}", t.string().green().bold());
         }
     }
+
     tokens
 }
 
@@ -230,7 +236,10 @@ fn parse_phase(
     matches: &clap::ArgMatches,
     tokens: Vec<f::token::token::Token>,
 ) -> Vec<f::parse::node::Func> {
+    /* parse */
     let funcs: Vec<f::parse::node::Func> = f::parse::parser::parsing(tokens);
+
+    /* render ast by string to stderr */
     if matches.is_present("dump-ast") {
         f::parse::node::dump_ast(&funcs);
     }

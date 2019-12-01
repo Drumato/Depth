@@ -3,20 +3,30 @@ use super::super::token::token::Token;
 use std::collections::HashMap;
 
 type TokenLen = usize;
+
 pub fn lexing(mut input: String) -> Vec<Token> {
     let mut tokens: Vec<Token> = Vec::with_capacity(2048);
+
+    /* build all keywords they used in depth. */
     let keywords: HashMap<&str, (Token, usize)> = build_keywords();
+
+    /* append this_token to tokens while given tokens are valid. */
     while let Some((t, idx)) = tokenize(&input, &keywords) {
+        /* next point. */
         input.drain(..idx);
+
         if t.should_ignore() {
             continue;
         }
+
+        /* if this_token is End-Of-File then we should exit from tokenize. */
         if let &Token::EOF = &t {
             tokens.push(t);
             break;
         }
         tokens.push(t);
     }
+
     tokens
 }
 
