@@ -151,8 +151,10 @@ fn assemble(assembler_code: String, matches: &clap::ArgMatches) -> ELF {
     /* initialize with null symbol. */
     let mut symbols: Vec<elf64::Symbol> = vec![elf64::init_nullsym()];
 
-    let mut total_len: u64 = 0;
+    let total_len: u64 = sum_all_code_length(&code_map);
     let mut total_code: Vec<u8> = Vec::with_capacity(2048);
+
+    /* initialize string-index with null byte. */
     let mut name: u32 = 1;
     for (idx, (symbol_name, codes)) in code_map.iter().enumerate() {
         if codes.len() != 0 {
@@ -160,13 +162,16 @@ fn assemble(assembler_code: String, matches: &clap::ArgMatches) -> ELF {
                 name,
                 elf64::STB_GLOBAL,
                 codes.len() as u64,
-                total_len,
+                total_code.len() as u64,
             ));
         } else {
             symbols.push(elf64::init_refsym(name, elf64::STB_GLOBAL));
         }
+
+        /* progress the index with null byte. */
         name += symbol_name.len() as u32 + 1;
-        total_len += codes.len() as u64;
+
+        /* merge binaries into one vector. */
         for b in codes.iter() {
             total_code.push(*b);
         }
@@ -174,31 +179,37 @@ fn assemble(assembler_code: String, matches: &clap::ArgMatches) -> ELF {
             rela.r_info = (((idx + 1) << 32) + 1) as u64;
         }
     }
+
     let mut elf_file = ELF::init();
+
+    /* add all-sections. */
     let strtab: Vec<u8> = elf64::strtab(symbol_names);
     elf_file.add_section(vec![], elf64::init_nullhdr(), "null");
+
+    /* .text */
     elf_file.add_section(total_code, elf64::init_texthdr(total_len), ".text");
+
+    /* .symtab */
     let symbol_length = symbols.len();
     let symtab: Vec<u8> = elf64::symbols_to_vec(symbols);
-    elf_file.add_section(
-        symtab,
-        elf64::init_symtabhdr(elf64::Symbol::size() as u64 * symbol_length as u64),
-        ".symtab",
-    );
+    let symtab_size = elf64::Symbol::size() as u64 * symbol_length as u64;
+    elf_file.add_section(symtab, elf64::init_symtabhdr(symtab_size), ".symtab");
+
+    /* .strtab */
     let strtab_length = strtab.len() as u64;
     elf_file.add_section(strtab, elf64::init_strtabhdr(strtab_length), ".strtab");
+
+    /* .rela.text */
     let relas_length = relas.len() as u64;
-    elf_file.add_section(
-        elf64::relas_to_vec(relas.values().collect::<Vec<&elf64::Rela>>()),
-        elf64::init_relahdr(elf64::Rela::size() as u64 * relas_length),
-        ".rela.text",
-    );
+    let relas_tab = elf64::relas_to_vec(relas.values().collect::<Vec<&elf64::Rela>>());
+    let relas_size = elf64::Rela::size() as u64 * relas_length;
+    elf_file.add_section(relas_tab, elf64::init_relahdr(relas_size), ".rela.text");
+
+    /* .shstrtab */
     let shstrtab_length = shstrtab.len() as u64;
-    elf_file.add_section(
-        shstrtab,
-        elf64::init_strtabhdr(shstrtab_length),
-        ".shstrtab",
-    );
+    let shstrtab_hdr = elf64::init_strtabhdr(shstrtab_length);
+    elf_file.add_section(shstrtab, shstrtab_hdr, ".shstrtab");
+
     elf_file.condition();
     elf_file
 }
@@ -308,4 +319,13 @@ fn build_shstrtab() -> Vec<u8> {
         ".rela.text",
         ".shstrtab",
     ])
+}
+
+fn sum_all_code_length(
+    code_map: &std::collections::BTreeMap<std::string::String, std::vec::Vec<u8>>,
+) -> u64 {
+    code_map
+        .iter()
+        .map(|(_, codes)| codes.len() as u64)
+        .sum::<u64>()
 }
