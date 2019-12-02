@@ -31,13 +31,15 @@ pub fn lexing(mut input: String) -> Vec<Token> {
 }
 
 fn tokenize(input: &String, keywords: &HashMap<&str, (Token, usize)>) -> Option<(Token, TokenLen)> {
+    /* return None if can not tokenize */
     if input.len() == 0 {
         return None;
     }
     match input.as_bytes()[0] as char {
+        /* keyword and identifier */
         c if c.is_alphabetic() => tokenize_keywords(input, keywords),
 
-        c if c == '0' => Some((Token::INTEGER(0), 1)),
+        /* integer-literal */
         c if is_decimal(c) => {
             let length: TokenLen = count_len(input, |c| c.is_ascii_digit());
             Some((
@@ -45,29 +47,29 @@ fn tokenize(input: &String, keywords: &HashMap<&str, (Token, usize)>) -> Option<
                 length,
             ))
         }
+        /* ignore comment or Token::SLASH */
         '/' => {
             if input.as_bytes()[1] as char == '/' {
-                let length: TokenLen = input
-                    .chars()
-                    .take_while(|c| c != &'\n')
-                    .collect::<String>()
-                    .len()
-                    + 1;
+                let length: TokenLen = count_len(input, |c| c != &'\n') + 1;
                 return Some((Token::COMMENT, length));
             }
             tokenize_symbols(input)
         }
+        /* ignore white-space */
         ' ' => Some((Token::BLANK, count_len(input, |c| c == &' '))),
+        /* symbol */
         _ => tokenize_symbols(input),
     }
 }
 fn tokenize_symbols(input: &String) -> Option<(Token, TokenLen)> {
     if input.len() >= 2 {
+        /* check the symbol has multilength at read-offset */
         let multilength: String = std::str::from_utf8(&input.as_bytes()[0..2]).unwrap().into();
         if let Some(t) = tokenize_multisymbols(&multilength) {
             return Some((t, 2));
         }
     }
+
     match input.as_bytes()[0] as char {
         '+' => Some((Token::PLUS, 1)),
         '-' => Some((Token::MINUS, 1)),

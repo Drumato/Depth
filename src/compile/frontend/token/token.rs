@@ -1,6 +1,6 @@
 #[derive(Eq, PartialEq, Clone)]
 pub enum Token {
-    INTEGER(i128),
+    /* symbol */
     PLUS,
     MINUS,
     STAR,
@@ -26,9 +26,9 @@ pub enum Token {
     DOT,
     AMPERSAND,
 
+    /* keyword */
     FUNC,
     TYPE,
-    IDENT(String),
     RETURN,
     IF,
     ELSE,
@@ -41,6 +41,10 @@ pub enum Token {
     COMPINT,
     POINTER(Box<Token>),
     ARRAY(Box<Token>, Box<Token>),
+
+    /* etc */
+    INTEGER(i128),
+    IDENT(String),
     EOF,
     BLANK,
     LF,

@@ -14,6 +14,31 @@ type Alter = Option<Box<Node>>;
 type Elements = Box<Vec<Node>>;
 #[derive(Clone)]
 pub enum Node {
+    /* statement */
+    RETURN(Expr),
+    LET(Name, Expr),
+    ASSIGN(Name, Expr),
+    CONDLOOP(Condition, Blk),
+    IF(Condition, Blk, Alter),
+    BLOCK(Elements),
+    LABEL(Name),
+    GOTO(Name),
+
+    /* factor */
+    INTEGER(i128),
+    IDENT(Name),
+    ARRAYLIT(Elements, Name),
+    STRUCTLIT(Name, Box<BTreeMap<String, Node>>),
+
+    /* unary-operation*/
+    ADDRESS(Child),
+    DEREFERENCE(Child),
+    MINUS(Child),
+    INDEX(Ary, Idx),
+    MEMBER(Struct, Name),
+    CALL(Name, Elements),
+
+    /* binary-operation*/
     ADD(Child, Child),
     SUB(Child, Child),
     MUL(Child, Child),
@@ -27,25 +52,9 @@ pub enum Node {
     GTEQ(Child, Child),
     LSHIFT(Child, Child),
     RSHIFT(Child, Child),
-    ADDRESS(Child),
-    DEREFERENCE(Child),
-    MINUS(Child),
-    INTEGER(i128),
-    IDENT(Name),
-    INDEX(Ary, Idx),
-    MEMBER(Struct, Name),
-    ARRAYLIT(Elements, Name),
-    STRUCTLIT(Name, Box<BTreeMap<String, Node>>),
-    CALL(Name, Elements),
-    RETURN(Expr),
-    LET(Name, Expr),
-    ASSIGN(Name, Expr),
-    CONDLOOP(Condition, Blk),
-    IF(Condition, Blk, Alter),
-    BLOCK(Elements),
+
+    /* etc */
     DEFARG(Name),
-    LABEL(Name),
-    GOTO(Name),
     INVALID,
 }
 impl Node {
