@@ -42,22 +42,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 fn linux_main(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
     return if matches.is_present("readelf") {
-        Ok(())
+        analyze_elf(matches)
     } else if matches.is_present("dump-symbol") {
         panic!("not implemented --dump-symbol option");
-        Ok(())
     } else {
         linux_generate_binary_main(matches)
     };
 }
 
+fn analyze_elf(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
+    let file_name = matches.value_of("source").unwrap().to_string();
+    let elf_file = ELF::read_elf(&file_name);
+    elf_file.ehdr.print_to_stdout();
+    Ok(())
+}
 fn linux_generate_binary_main(
     matches: &clap::ArgMatches,
 ) -> Result<(), Box<dyn std::error::Error>> {
     /* compile phase */
     let file_name = matches.value_of("source").unwrap();
-    let assembly: String = compile(file_name.to_string(), &matches)
-        + "_start:\n  call main\n  mov rdi, rax\n  mov rax, 60\n  syscall\n";
+    let assembly: String =
+        compile(file_name.to_string(), &matches) + &read_file("lib/start_up_linux.s");
 
     /* if 'stop-c' given so output the assembly-code to file. */
     if matches.is_present("stop-c") {

@@ -47,3 +47,6 @@ args:
     - run:
         long: run
         help: run the program 
+    - readelf:
+        long: readelf
+        help: analyze elf binary 

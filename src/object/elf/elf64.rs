@@ -1,5 +1,6 @@
 extern crate colored;
 use super::super::super::ce::types::Error;
+use colored::*;
 use std::collections::HashMap;
 
 type Elf64Half = u16;
@@ -107,8 +108,59 @@ impl ELF {
         }
     }
 }
+
+/* EI_CLASS */
+static EI_CLASS: usize = 4;
+static ELFCLASSNONE: EIDENT = 0;
+static ELFCLASS32: EIDENT = 1;
+static ELFCLASS64: EIDENT = 2;
+static ELFCLASSNUM: EIDENT = 3;
+
+/* EI_DATA */
+static EI_DATA: usize = 5;
+static ELFDATANONE: EIDENT = 0; /* Invalid data encoding */
+static ELFDATA2LSB: EIDENT = 1; /* 2's complement, little endian */
+static ELFDATA2MSB: EIDENT = 2; /* 2's complement, big endian */
+static ELFDATANUM: EIDENT = 3;
+
+/* EI_VERSION */
+static EI_VERSION: usize = 6;
+static EV_CURRENT: EIDENT = 1;
+
+/* EI_OSABI */
+static EI_OSABI: usize = 7;
+
+/* EI_OSABIVERSION */
+static EI_OSABIVERSION: usize = 8;
+
+static ELFOSABI_NONE: EIDENT = 0; /* UNIX System V ABi */
+static ELFOSABI_SYSV: EIDENT = 0; /* Alias */
+static ELFOSABI_HPUX: EIDENT = 1; /* HP-UX */
+static ELFOSABI_NETBSD: EIDENT = 2; /* NetBSD */
+static ELFOSABI_GNU: EIDENT = 3; /* NetBSD */
+static ELFOSABI_LINUX: EIDENT = ELFOSABI_GNU; /* Compatibility alias */
+static ELFOSABI_SOLARIS: EIDENT = 6; /* Sun Solaris */
+static ELFOSABI_AIX: EIDENT = 7; /* IBM AIX. */
+static ELFOSABI_IRIX: EIDENT = 8; /* SGI Irix. */
+static ELFOSABI_FREEBSD: EIDENT = 9; /* FreeBSD. */
+static ELFOSABI_TRU64: EIDENT = 10; /* Compaq TRU64 UNIX. */
+static ELFOSABI_MODESTO: EIDENT = 11; /* Compaq TRU64 UNIX. */
+static ELFOSABI_OPENBSD: EIDENT = 12; /* OpenBSD. */
+static ELFOSABI_ARM_AEABI: EIDENT = 64; /* ARM EABI */
+static ELFOSABI_ARM: EIDENT = 97; /* ARM */
+static ELFOSABI_STANDALONE: EIDENT = 255; /* Standalone (embedded) application */
+
+/* ELF File Type */
+static ET_NONE: Elf64Half = 0;
 pub static ET_REL: Elf64Half = 1;
 pub static ET_EXEC: Elf64Half = 2;
+static ET_DYN: Elf64Half = 3;
+static ET_CORE: Elf64Half = 4;
+static ET_LOOS: Elf64Half = 0xfe00;
+static ET_HIOS: Elf64Half = 0xfeff;
+static ET_LOPROC: Elf64Half = 0xff00;
+static ET_HIPROC: Elf64Half = 0xffff;
+
 #[repr(C)]
 pub struct Ehdr {
     pub e_ident: EIDENT,
@@ -178,6 +230,115 @@ impl Ehdr {
     }
     pub fn size() -> usize {
         0x40
+    }
+    pub fn print_to_stdout(&self) {
+        println!("{}", "ELF Header:".bold().green());
+        println!("  Class: {}", self.get_elf_class());
+        println!("  Data: {}", self.get_elf_data());
+        println!("  Version: {}", self.get_elf_version());
+        println!("  OS/ABI: {}", self.get_elf_osabi());
+        println!("  ABI Version: {}", self.get_elf_osabi_version());
+        println!("  Type: {}", self.get_file_type());
+    }
+    fn get_elf_class(&self) -> String {
+        let ei_class = self.e_ident.to_le_bytes()[EI_CLASS] as u128;
+        let check_class = |const_class| ei_class == const_class;
+        return if check_class(ELFCLASSNONE) {
+            "None".to_string()
+        } else if check_class(ELFCLASS32) {
+            "ELF32".to_string()
+        } else if check_class(ELFCLASS64) {
+            "ELF64".to_string()
+        } else if check_class(ELFCLASSNUM) {
+            "ELFNUM".to_string()
+        } else {
+            "Invalid".to_string()
+        };
+    }
+    fn get_elf_data(&self) -> String {
+        let ei_data = self.e_ident.to_le_bytes()[EI_DATA] as u128;
+        let check_data = |const_data| ei_data == const_data;
+        return if check_data(ELFDATANONE) {
+            "Invalid Data Encoding".to_string()
+        } else if check_data(ELFDATA2LSB) {
+            "2's complement, little endian".to_string()
+        } else if check_data(ELFDATA2MSB) {
+            "2's complement, big endian".to_string()
+        } else if check_data(ELFDATANUM) {
+            "ELFNUM".to_string()
+        } else {
+            "Invalid".to_string()
+        };
+    }
+    fn get_elf_version(&self) -> String {
+        let ei_version = self.e_ident.to_le_bytes()[EI_VERSION] as u128;
+        if ei_version != EV_CURRENT {
+            panic!("EI_VERSION must be EV_CURRENT");
+        }
+        "(current)".to_string()
+    }
+    fn get_elf_osabi(&self) -> String {
+        let ei_osabi = self.e_ident.to_le_bytes()[EI_OSABI] as u128;
+        let check_osabi = |const_osabi| ei_osabi == const_osabi;
+        return if check_osabi(ELFOSABI_NONE) || check_osabi(ELFOSABI_SYSV) {
+            "UNIX - System V".to_string()
+        } else if check_osabi(ELFOSABI_HPUX) {
+            "UNIX - HP-UX".to_string()
+        } else if check_osabi(ELFOSABI_NETBSD) {
+            "UNIX - NetBSD".to_string()
+        } else if check_osabi(ELFOSABI_LINUX) {
+            "UNIX - Linux".to_string()
+        } else if check_osabi(ELFOSABI_SOLARIS) {
+            "UNIX - Solaris".to_string()
+        } else if check_osabi(ELFOSABI_AIX) {
+            "UNIX - AIX".to_string()
+        } else if check_osabi(ELFOSABI_IRIX) {
+            "UNIX - IRIX".to_string()
+        } else if check_osabi(ELFOSABI_FREEBSD) {
+            "UNIX - FreeBSD".to_string()
+        } else if check_osabi(ELFOSABI_TRU64) {
+            "UNIX - TRU64".to_string()
+        } else if check_osabi(ELFOSABI_MODESTO) {
+            "Novell - Modesto".to_string()
+        } else if check_osabi(ELFOSABI_OPENBSD) {
+            "UNIX - OpenBSD".to_string()
+        } else if check_osabi(ELFOSABI_ARM) {
+            "ARM".to_string()
+        } else if check_osabi(ELFOSABI_ARM_AEABI) {
+            "ARM EABI".to_string()
+        } else if check_osabi(ELFOSABI_STANDALONE) {
+            "Standalone Application".to_string()
+        } else {
+            "Invalid".to_string()
+        };
+    }
+    fn get_elf_osabi_version(&self) -> String {
+        let ei_osabi_version = self.e_ident.to_le_bytes()[EI_OSABIVERSION] as u128;
+        if ei_osabi_version != 0 {
+            panic!("EI_VERSION must be 0");
+        }
+        "0".to_string()
+    }
+
+    fn get_file_type(&self) -> String {
+        let check_file_type = |const_type| self.e_type == const_type;
+        return if check_file_type(ET_NONE) {
+            "NONE (None)".to_string()
+        } else if check_file_type(ET_REL) {
+            "REL (Relocation file)".to_string()
+        } else if check_file_type(ET_EXEC) {
+            "EXEC (Executable file)".to_string()
+        } else if check_file_type(ET_DYN) {
+            "DYN (Shared object file)".to_string()
+        } else if check_file_type(ET_CORE) {
+            "CORE (Core file)".to_string()
+        } else if ET_LOOS <= self.e_type && self.e_type <= ET_HIOS {
+            format!("OS Specific: ({:x})", self.e_type)
+        } else if ET_LOPROC <= self.e_type && self.e_type <= ET_HIPROC {
+            format!("Processor Specific: ({:x})", self.e_type)
+        } else {
+            "Invalid".to_string()
+        };
     }
 }
 
