@@ -27,6 +27,8 @@ use load::elf::ELFLoader;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
+
+    /* switch the process each OS */
     return if cfg!(target_os = "linux") {
         linux_main(&matches)
     } else if cfg!(target_os = "mac_os") {
@@ -39,6 +41,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn linux_main(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
+    return if matches.is_present("readelf") {
+        Ok(())
+    } else if matches.is_present("dump-symbol") {
+        panic!("not implemented --dump-symbol option");
+        Ok(())
+    } else {
+        linux_generate_binary_main(matches)
+    };
+}
+
+fn linux_generate_binary_main(
+    matches: &clap::ArgMatches,
+) -> Result<(), Box<dyn std::error::Error>> {
     /* compile phase */
     let file_name = matches.value_of("source").unwrap();
     let assembly: String = compile(file_name.to_string(), &matches)
@@ -94,10 +109,6 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
 
     /* semantic-analyze */
     front_manager.semantics();
-
-    if matches.is_present("dump-symbol") {
-        front_manager.dump_symbol();
-    }
 
     /* constant-fold with ast */
     front_manager.constant_folding();

@@ -4,8 +4,6 @@ use super::super::parse::node::Func;
 use super::super::sema::semantics::Type;
 use super::super::token::token::Token;
 use std::collections::BTreeMap;
-extern crate colored;
-use colored::*;
 pub struct FrontManager {
     pub functions: Vec<Func>,
     pub stack_offset: usize,
@@ -24,31 +22,6 @@ impl FrontManager {
             tacs: Vec::new(),
             virt: 0,
             label: 0,
-        }
-    }
-    pub fn dump_symbol(&self) {
-        eprintln!("{}", "--------symbol_table--------".green().bold());
-        for f in self.functions.iter() {
-            eprintln!("{}'s symbols:", f.name);
-            for (name, symbol) in f.env.sym_table.iter() {
-                if let Ok(ty) = &symbol.ty {
-                    eprintln!(
-                        "{}:offset->{} type->{} mutable->{:?}",
-                        name.bold().green(),
-                        symbol.stack_offset,
-                        ty.string().bold().blue(),
-                        symbol.is_mutable
-                    );
-                } else if let Err(type_t) = &symbol.ty {
-                    eprintln!(
-                        "{}:offset->{} type->{} mutable->{:?}",
-                        name.bold().green(),
-                        symbol.stack_offset,
-                        type_t.string().bold().blue(),
-                        symbol.is_mutable
-                    );
-                }
-            }
         }
     }
 }
