@@ -39,6 +39,8 @@ fn tokenize(input: &String, keywords: &HashMap<&str, (Token, usize)>) -> Option<
         /* keyword and identifier */
         c if c.is_alphabetic() => tokenize_keywords(input, keywords),
 
+        c if c == '0' => Some((Token::INTEGER(0), 1)),
+
         /* integer-literal */
         c if is_decimal(c) => {
             let length: TokenLen = count_len(input, |c| c.is_ascii_digit());
@@ -47,6 +49,7 @@ fn tokenize(input: &String, keywords: &HashMap<&str, (Token, usize)>) -> Option<
                 length,
             ))
         }
+
         /* ignore comment or Token::SLASH */
         '/' => {
             if input.as_bytes()[1] as char == '/' {

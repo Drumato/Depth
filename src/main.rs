@@ -27,7 +27,18 @@ use load::elf::ELFLoader;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
+    return if cfg!(target_os = "linux") {
+        linux_main(&matches)
+    } else if cfg!(target_os = "mac_os") {
+        panic!("not implemented on MacOS");
+    } else if cfg!(target_os = "windows") {
+        panic!("not implemented on Windows");
+    } else {
+        Ok(())
+    };
+}
 
+fn linux_main(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
     /* compile phase */
     let file_name = matches.value_of("source").unwrap();
     let assembly: String = compile(file_name.to_string(), &matches)
