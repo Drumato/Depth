@@ -6,6 +6,8 @@ impl elf64::ELF {
         let mut elf_file = Self::init();
         let binary: Vec<u8> = read_binary(file_path);
         elf_file.ehdr = elf64::Ehdr::new_unsafe(binary[0..63].to_vec());
+
+        /* setup section header table */
         let shdrs: Vec<elf64::Shdr> = Self::build_shdrs(
             &elf_file.ehdr,
             binary[elf_file.ehdr.e_shoff as usize..].to_vec(),
@@ -25,8 +27,24 @@ impl elf64::ELF {
                 &sh_name,
             );
         }
+
+        /* setup program header table */
+        let phdrs: Vec<elf64::Phdr> = Self::build_phdrs(
+            &elf_file.ehdr,
+            binary[elf_file.ehdr.e_phoff as usize..].to_vec(),
+        );
+        elf_file.phdrs = Some(phdrs);
         elf_file.condition();
         return elf_file;
+    }
+    fn build_phdrs(ehdr: &elf64::Ehdr, binary: Vec<u8>) -> Vec<elf64::Phdr> {
+        let mut phdrs: Vec<elf64::Phdr> = Vec::new();
+        for i in 0..ehdr.e_phnum {
+            phdrs.push(elf64::Phdr::new_unsafe(
+                binary[(i * ehdr.e_phentsize) as usize..].to_vec(),
+            ));
+        }
+        phdrs
     }
     fn build_shdrs(ehdr: &elf64::Ehdr, binary: Vec<u8>) -> Vec<elf64::Shdr> {
         let mut shdrs: Vec<elf64::Shdr> = Vec::new();

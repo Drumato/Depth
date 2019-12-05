@@ -5,6 +5,8 @@ use clap::App;
 
 extern crate colored;
 use colored::*;
+extern crate cli_table;
+use cli_table::{Row, Table};
 
 mod compile;
 use compile::backend as b;
@@ -54,8 +56,31 @@ fn analyze_elf(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Err
     let file_name = matches.value_of("source").unwrap().to_string();
     let elf_file = ELF::read_elf(&file_name);
     elf_file.ehdr.print_to_stdout();
+
+    /* if Program Header Table exists so dump it. */
+    let phnum = elf_file.ehdr.e_phnum;
+    let phoff = elf_file.ehdr.e_phoff;
+    if phnum != 0 {
+        println!("\n\n{}", "Program Headers:".bold().green());
+        println!("There are {} program headers, starting at {}", phnum, phoff);
+        print_phdrs_stdout(&elf_file)?;
+    }
     Ok(())
 }
+
+fn print_phdrs_stdout(elf_file: &ELF) -> Result<(), Box<dyn std::error::Error>> {
+    if let Some(derefered_phdrs) = &elf_file.phdrs {
+        let mut rows: Vec<Row> = derefered_phdrs
+            .iter()
+            .map(|phdr| phdr.to_stdout())
+            .collect::<Vec<Row>>();
+        rows.insert(0, ELF::program_header_columns());
+        let table = Table::new(rows, Default::default());
+        table.print_stdout()?;
+    }
+    Ok(())
+}
+
 fn linux_generate_binary_main(
     matches: &clap::ArgMatches,
 ) -> Result<(), Box<dyn std::error::Error>> {

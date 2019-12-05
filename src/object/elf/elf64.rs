@@ -1,6 +1,9 @@
 extern crate colored;
 use super::super::super::ce::types::Error;
 use colored::*;
+extern crate cli_table;
+use cli_table::{Cell, Row};
+
 use std::collections::HashMap;
 
 type Elf64Half = u16;
@@ -107,6 +110,14 @@ impl ELF {
             names: HashMap::new(),
         }
     }
+    pub fn program_header_columns() -> Row {
+        let mut cells: Vec<Cell> = Vec::new();
+        cells.push(Cell::new(
+            &format!("{}", "Type".bold().green()),
+            Default::default(),
+        ));
+        Row::new(cells)
+    }
 }
 
 /* EI_CLASS */
@@ -160,6 +171,9 @@ static ET_LOOS: Elf64Half = 0xfe00;
 static ET_HIOS: Elf64Half = 0xfeff;
 static ET_LOPROC: Elf64Half = 0xff00;
 static ET_HIPROC: Elf64Half = 0xffff;
+
+/* Machine Architecture */
+static EM_X86_64: Elf64Half = 0x3e;
 
 #[repr(C)]
 pub struct Ehdr {
@@ -239,6 +253,24 @@ impl Ehdr {
         println!("  OS/ABI: {}", self.get_elf_osabi());
         println!("  ABI Version: {}", self.get_elf_osabi_version());
         println!("  Type: {}", self.get_file_type());
+        println!("  Machine: {}", self.get_machine_name());
+        println!("  Version: 0x{:x}", self.e_version);
+        println!("  Entry point address: 0x{:x}", self.e_entry);
+        println!(
+            "  Start of program headers: {} (bytes into file)",
+            self.e_phoff
+        );
+        println!(
+            "  Start of section headers: {} (bytes into file)",
+            self.e_shoff
+        );
+        println!("  Flags: 0x{:x}", self.e_flags);
+        println!("  Size of this header: {} (bytes)", self.e_ehsize);
+        println!("  Size of program header: {} (bytes)", self.e_phentsize);
+        println!("  Number of program header: {}", self.e_phnum);
+        println!("  Size of section header: {} (bytes)", self.e_shentsize);
+        println!("  Number of program header: {}", self.e_shnum);
+        println!("  Section header string table index: {}", self.e_shstrndx);
     }
     fn get_elf_class(&self) -> String {
         let ei_class = self.e_ident.to_le_bytes()[EI_CLASS] as u128;
@@ -338,6 +370,13 @@ impl Ehdr {
             format!("Processor Specific: ({:x})", self.e_type)
         } else {
             "Invalid".to_string()
+        };
+    }
+    fn get_machine_name(&self) -> String {
+        return if self.e_machine == EM_X86_64 {
+            "Advanced Micro Devices X86-64".to_string()
+        } else {
+            format!("ERROR: not implement 0x{:x}", self.e_machine)
         };
     }
 }
@@ -497,7 +536,18 @@ pub fn init_nullhdr() -> Shdr {
         sh_entsize: 0,
     }
 }
+pub static PT_NULL: Elf64Word = 0;
 pub static PT_LOAD: Elf64Word = 1;
+pub static PT_DYNAMIC: Elf64Word = 2;
+pub static PT_INTERP: Elf64Word = 3;
+pub static PT_NOTE: Elf64Word = 4;
+pub static PT_SHLIB: Elf64Word = 5;
+pub static PT_PHDR: Elf64Word = 6;
+pub static PT_TLS: Elf64Word = 7;
+pub static PT_GNU_EH_FRAME: Elf64Word = 0x6474e550;
+pub static PT_GNU_STACK: Elf64Word = 0x6474e551;
+pub static PT_GNU_RELRO: Elf64Word = 0x6474e552;
+
 pub static PF_X: Elf64Word = 1 << 0;
 pub static PF_W: Elf64Word = 1 << 1;
 pub static PF_R: Elf64Word = 1 << 2;
@@ -514,6 +564,14 @@ pub struct Phdr {
 }
 
 impl Phdr {
+    pub fn new_unsafe(binary: Vec<u8>) -> Self {
+        unsafe { std::ptr::read(binary.as_ptr() as *const Phdr) }
+    }
+    pub fn to_stdout(&self) -> Row {
+        let mut cells: Vec<Cell> = Vec::new();
+        cells.push(Cell::new(&self.get_type(), Default::default()));
+        Row::new(cells)
+    }
     pub fn to_vec(&self) -> Vec<u8> {
         let mut bb: Vec<u8> = Vec::new();
         for b in self.p_type.to_le_bytes().to_vec() {
@@ -544,6 +602,34 @@ impl Phdr {
     }
     pub fn size() -> usize {
         56
+    }
+    fn get_type(&self) -> String {
+        let check_type = |const_type| self.p_type == const_type;
+        return if check_type(PT_NULL) {
+            "NULL".to_string()
+        } else if check_type(PT_LOAD) {
+            "LOAD".to_string()
+        } else if check_type(PT_DYNAMIC) {
+            "DYNAMIC".to_string()
+        } else if check_type(PT_INTERP) {
+            "INTERP".to_string()
+        } else if check_type(PT_NOTE) {
+            "NOTE".to_string()
+        } else if check_type(PT_SHLIB) {
+            "SHLIB".to_string()
+        } else if check_type(PT_PHDR) {
+            "PHDR".to_string()
+        } else if check_type(PT_TLS) {
+            "TLS".to_string()
+        } else if check_type(PT_GNU_EH_FRAME) {
+            "GNU_EH_FRAME".to_string()
+        } else if check_type(PT_GNU_STACK) {
+            "GNU_STACK".to_string()
+        } else if check_type(PT_GNU_RELRO) {
+            "GNU_RELRO".to_string()
+        } else {
+            "INVALID".to_string()
+        };
     }
 }
 

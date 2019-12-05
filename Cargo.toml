@@ -10,3 +10,4 @@ clap = {version = "2.33", features = ["yaml"]}
 yaml-rust = "0.4.3"
 colored = "1.8"
 libc = "0.2"
+cli-table = "0.2"
