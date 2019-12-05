@@ -116,6 +116,26 @@ impl ELF {
             &format!("{}", "Type".bold().green()),
             Default::default(),
         ));
+        cells.push(Cell::new(
+            &format!("{}", "Offset".bold().green()),
+            Default::default(),
+        ));
+        cells.push(Cell::new(
+            &format!("{}", "VirtAddr".bold().green()),
+            Default::default(),
+        ));
+        cells.push(Cell::new(
+            &format!("{}", "PhysAddr".bold().green()),
+            Default::default(),
+        ));
+        cells.push(Cell::new(
+            &format!("{}", "FileSiz".bold().green()),
+            Default::default(),
+        ));
+        cells.push(Cell::new(
+            &format!("{}", "MemSiz".bold().green()),
+            Default::default(),
+        ));
         Row::new(cells)
     }
 }
@@ -570,6 +590,26 @@ impl Phdr {
     pub fn to_stdout(&self) -> Row {
         let mut cells: Vec<Cell> = Vec::new();
         cells.push(Cell::new(&self.get_type(), Default::default()));
+        cells.push(Cell::new(
+            &format!("0x{:x}", self.p_offset),
+            Default::default(),
+        ));
+        cells.push(Cell::new(
+            &format!("0x{:x}", self.p_vaddr),
+            Default::default(),
+        ));
+        cells.push(Cell::new(
+            &format!("0x{:x}", self.p_paddr),
+            Default::default(),
+        ));
+        cells.push(Cell::new(
+            &format!("0x{:x}", self.p_filesz),
+            Default::default(),
+        ));
+        cells.push(Cell::new(
+            &format!("0x{:x}", self.p_memsz),
+            Default::default(),
+        ));
         Row::new(cells)
     }
     pub fn to_vec(&self) -> Vec<u8> {

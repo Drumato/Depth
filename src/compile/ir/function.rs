@@ -146,7 +146,7 @@ impl Function {
                     }
                 }
                 Node::LABEL(name) => {
-                    if let Some((inst_label, block_label)) = self.jump_labels.get(&name) {
+                    if let Some((inst_label, block_label)) = self.jump_labels.clone().get(&name) {
                         self.blocks[*block_label].insts[*inst_label] =
                             Inst::UnconditionalBranch(self.label);
                         let label = self.label;
@@ -164,7 +164,7 @@ impl Function {
                     self.label += 1;
                 }
                 Node::GOTO(name) => {
-                    if let Some((_inst_label, block_label)) = self.jump_labels.get(&name) {
+                    if let Some((_inst_label, block_label)) = self.jump_labels.clone().get(&name) {
                         self.add_inst(Inst::UnconditionalBranch(*block_label));
                         return;
                     }
