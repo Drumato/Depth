@@ -136,6 +136,14 @@ impl ELF {
             &format!("{}", "MemSiz".bold().green()),
             Default::default(),
         ));
+        cells.push(Cell::new(
+            &format!("{}", "Flags".bold().green()),
+            Default::default(),
+        ));
+        cells.push(Cell::new(
+            &format!("{}", "Align".bold().green()),
+            Default::default(),
+        ));
         Row::new(cells)
     }
 }
@@ -610,6 +618,11 @@ impl Phdr {
             &format!("0x{:x}", self.p_memsz),
             Default::default(),
         ));
+        cells.push(Cell::new(&self.get_flags(), Default::default()));
+        cells.push(Cell::new(
+            &format!("0x{:x}", self.p_align),
+            Default::default(),
+        ));
         Row::new(cells)
     }
     pub fn to_vec(&self) -> Vec<u8> {
@@ -670,6 +683,26 @@ impl Phdr {
         } else {
             "INVALID".to_string()
         };
+    }
+    fn get_flags(&self) -> String {
+        let mut flag_string = String::new();
+        let check_flag = |const_flag| self.p_flags & const_flag != 0;
+        if check_flag(PF_R) {
+            flag_string.push('R')
+        } else {
+            flag_string.push(' ')
+        }
+        if check_flag(PF_W) {
+            flag_string.push('W')
+        } else {
+            flag_string.push(' ')
+        }
+        if check_flag(PF_X) {
+            flag_string.push('E')
+        } else {
+            flag_string.push(' ')
+        }
+        flag_string
     }
 }
 
