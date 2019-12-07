@@ -49,4 +49,20 @@ args:
         help: run the program 
     - readelf:
         long: readelf
-        help: analyze elf binary 
+        help: analyze elf binary
+    - section:
+        short: S
+        long: section
+        help: read section header table
+    - segment:
+        short: l
+        long: program
+        help: read program header table
+    - header:
+        short: h
+        long: header
+        help: read elf header
+    - all:
+        short: a
+        long: all
+        help: read all of elf components

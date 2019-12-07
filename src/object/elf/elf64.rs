@@ -4,7 +4,7 @@ use colored::*;
 extern crate cli_table;
 use cli_table::{Cell, Row};
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 type Elf64Half = u16;
 type Elf64Word = u32;
@@ -20,7 +20,7 @@ pub struct ELF {
     pub shdrs: Vec<Shdr>,
     pub sections: Vec<Vec<u8>>,
     pub phdrs: Option<Vec<Phdr>>,
-    pub names: HashMap<String, usize>,
+    pub names: BTreeMap<String, usize>,
 }
 
 impl ELF {
@@ -107,44 +107,28 @@ impl ELF {
             sections: vec![],
             shdrs: vec![],
             phdrs: None,
-            names: HashMap::new(),
+            names: BTreeMap::new(),
         }
     }
     pub fn program_header_columns() -> Row {
         let mut cells: Vec<Cell> = Vec::new();
-        cells.push(Cell::new(
-            &format!("{}", "Type".bold().green()),
-            Default::default(),
-        ));
-        cells.push(Cell::new(
-            &format!("{}", "Offset".bold().green()),
-            Default::default(),
-        ));
-        cells.push(Cell::new(
-            &format!("{}", "VirtAddr".bold().green()),
-            Default::default(),
-        ));
-        cells.push(Cell::new(
-            &format!("{}", "PhysAddr".bold().green()),
-            Default::default(),
-        ));
-        cells.push(Cell::new(
-            &format!("{}", "FileSiz".bold().green()),
-            Default::default(),
-        ));
-        cells.push(Cell::new(
-            &format!("{}", "MemSiz".bold().green()),
-            Default::default(),
-        ));
-        cells.push(Cell::new(
-            &format!("{}", "Flags".bold().green()),
-            Default::default(),
-        ));
-        cells.push(Cell::new(
-            &format!("{}", "Align".bold().green()),
-            Default::default(),
-        ));
+        Self::add_cell(&mut cells, &format!("{}", "Type".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "Offset".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "VirtAddr".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "PhysAddr".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "FileSiz".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "MemSiz".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "Flags".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "Align".bold().green()));
         Row::new(cells)
+    }
+    pub fn section_header_columns() -> Row {
+        let mut cells: Vec<Cell> = Vec::new();
+        Self::add_cell(&mut cells, &format!("{}", "Name".bold().green()));
+        Row::new(cells)
+    }
+    fn add_cell(vec: &mut Vec<Cell>, contents: &String) {
+        vec.push(Cell::new(contents, Default::default()));
     }
 }
 
@@ -452,6 +436,12 @@ pub struct Shdr {
 }
 
 impl Shdr {
+    pub fn to_stdout(&self, elf_file: &ELF) -> Row {
+        let mut cells: Vec<Cell> = Vec::new();
+        ELF::add_cell(&mut cells, &self.get_name(elf_file));
+
+        Row::new(cells)
+    }
     pub fn new_unsafe(binary: Vec<u8>) -> Self {
         unsafe { std::ptr::read(binary.as_ptr() as *const Shdr) }
     }
@@ -491,6 +481,15 @@ impl Shdr {
     }
     pub fn size() -> usize {
         0x40
+    }
+    fn get_name(&self, elf_file: &ELF) -> String {
+        let shstrtab = elf_file.sections[elf_file.ehdr.e_shstrndx as usize].clone();
+        let mut section_name = ELF::collect_name(shstrtab[self.sh_name as usize..].to_vec());
+        let length = section_name.len();
+        if length == 0 {
+            section_name = "(NULL)".to_string();
+        }
+        section_name
     }
 }
 pub fn init_texthdr(size: u64) -> Shdr {
@@ -597,32 +596,14 @@ impl Phdr {
     }
     pub fn to_stdout(&self) -> Row {
         let mut cells: Vec<Cell> = Vec::new();
-        cells.push(Cell::new(&self.get_type(), Default::default()));
-        cells.push(Cell::new(
-            &format!("0x{:x}", self.p_offset),
-            Default::default(),
-        ));
-        cells.push(Cell::new(
-            &format!("0x{:x}", self.p_vaddr),
-            Default::default(),
-        ));
-        cells.push(Cell::new(
-            &format!("0x{:x}", self.p_paddr),
-            Default::default(),
-        ));
-        cells.push(Cell::new(
-            &format!("0x{:x}", self.p_filesz),
-            Default::default(),
-        ));
-        cells.push(Cell::new(
-            &format!("0x{:x}", self.p_memsz),
-            Default::default(),
-        ));
-        cells.push(Cell::new(&self.get_flags(), Default::default()));
-        cells.push(Cell::new(
-            &format!("0x{:x}", self.p_align),
-            Default::default(),
-        ));
+        ELF::add_cell(&mut cells, &self.get_type());
+        ELF::add_cell(&mut cells, &format!("0x{:x}", self.p_offset));
+        ELF::add_cell(&mut cells, &format!("0x{:x}", self.p_vaddr));
+        ELF::add_cell(&mut cells, &format!("0x{:x}", self.p_paddr));
+        ELF::add_cell(&mut cells, &format!("0x{:x}", self.p_filesz));
+        ELF::add_cell(&mut cells, &format!("0x{:x}", self.p_memsz));
+        ELF::add_cell(&mut cells, &self.get_flags());
+        ELF::add_cell(&mut cells, &format!("0x{:x}", self.p_align));
         Row::new(cells)
     }
     pub fn to_vec(&self) -> Vec<u8> {

@@ -55,7 +55,7 @@ impl elf64::ELF {
         }
         shdrs
     }
-    fn collect_name(binary: Vec<u8>) -> String {
+    pub fn collect_name(binary: Vec<u8>) -> String {
         binary
             .iter()
             .take_while(|b| *b != &0x00)

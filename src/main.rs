@@ -55,16 +55,41 @@ fn linux_main(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Erro
 fn analyze_elf(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
     let file_name = matches.value_of("source").unwrap().to_string();
     let elf_file = ELF::read_elf(&file_name);
-    elf_file.ehdr.print_to_stdout();
-
-    /* if Program Header Table exists so dump it. */
-    let phnum = elf_file.ehdr.e_phnum;
-    let phoff = elf_file.ehdr.e_phoff;
-    if phnum != 0 {
-        println!("\n\n{}", "Program Headers:".bold().green());
-        println!("There are {} program headers, starting at {}", phnum, phoff);
-        print_phdrs_stdout(&elf_file)?;
+    if matches.is_present("all") || matches.is_present("header") {
+        elf_file.ehdr.print_to_stdout();
     }
+
+    if matches.is_present("all") || matches.is_present("section") {
+        print_shdrs_stdout(&elf_file)?;
+        println!("Key to Flags:");
+        println!("  W (write), A (alloc), X (execute), M (merge), S (strings), I (info),");
+        println!("  L (link order), O (extra OS processing required), G (group), T (TLS),");
+        println!("  C (compressed), x (unknown), o (OS specific), E (exclude),");
+        println!("  l (large), p (processor specific)");
+    }
+
+    if matches.is_present("all") || matches.is_present("segment") {
+        let phnum = elf_file.ehdr.e_phnum;
+        let phoff = elf_file.ehdr.e_phoff;
+        if phnum != 0 {
+            println!("\n\n{}", "Program Headers:".bold().green());
+            println!("There are {} program headers, starting at {}", phnum, phoff);
+            print_phdrs_stdout(&elf_file)?;
+        }
+    }
+    Ok(())
+}
+
+fn print_shdrs_stdout(elf_file: &ELF) -> Result<(), Box<dyn std::error::Error>> {
+    let mut rows: Vec<Row> = elf_file
+        .shdrs
+        .iter()
+        .map(|shdr| shdr.to_stdout(elf_file))
+        .collect::<Vec<Row>>();
+    rows.insert(0, ELF::section_header_columns());
+
+    let table = Table::new(rows, Default::default());
+    table.print_stdout()?;
     Ok(())
 }
 
@@ -75,6 +100,7 @@ fn print_phdrs_stdout(elf_file: &ELF) -> Result<(), Box<dyn std::error::Error>> 
             .map(|phdr| phdr.to_stdout())
             .collect::<Vec<Row>>();
         rows.insert(0, ELF::program_header_columns());
+
         let table = Table::new(rows, Default::default());
         table.print_stdout()?;
     }
