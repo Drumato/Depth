@@ -125,6 +125,7 @@ impl ELF {
     pub fn section_header_columns() -> Row {
         let mut cells: Vec<Cell> = Vec::new();
         Self::add_cell(&mut cells, &format!("{}", "Name".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "Type".bold().green()));
         Row::new(cells)
     }
     fn add_cell(vec: &mut Vec<Cell>, contents: &String) {
@@ -363,7 +364,6 @@ impl Ehdr {
         }
         "0".to_string()
     }
-
     fn get_file_type(&self) -> String {
         let check_file_type = |const_type| self.e_type == const_type;
         return if check_file_type(ET_NONE) {
@@ -411,10 +411,24 @@ pub fn init_ehdr() -> Ehdr {
         e_shstrndx: 0,
     }
 }
+pub static SHT_NULL: Elf64Word = 0;
 pub static SHT_PROGBITS: Elf64Word = 1;
 pub static SHT_SYMTAB: Elf64Word = 2;
 pub static SHT_STRTAB: Elf64Word = 3;
 pub static SHT_RELA: Elf64Word = 4;
+pub static SHT_HASH: Elf64Word = 5;
+pub static SHT_DYNAMIC: Elf64Word = 6;
+pub static SHT_NOTE: Elf64Word = 7;
+pub static SHT_NOBITS: Elf64Word = 8;
+pub static SHT_REL: Elf64Word = 9;
+pub static SHT_SHLIB: Elf64Word = 10;
+pub static SHT_DYNSYM: Elf64Word = 11;
+pub static SHT_INIT_ARRAY: Elf64Word = 14;
+pub static SHT_FINI_ARRAY: Elf64Word = 15;
+pub static SHT_FINI_ARRAY: Elf64Word = 15;
+pub static SHT_PREINIT_ARRAY: Elf64Word = 16;
+pub static SHT_GROUP: Elf64Word = 17;
+pub static SHT_SYMTAB_SHNDX: Elf64Word = 18;
 
 pub static SHF_ALLOC: Elf64Xword = 1 << 1;
 pub static SHF_EXECINSTR: Elf64Xword = 1 << 2;
@@ -439,7 +453,7 @@ impl Shdr {
     pub fn to_stdout(&self, elf_file: &ELF) -> Row {
         let mut cells: Vec<Cell> = Vec::new();
         ELF::add_cell(&mut cells, &self.get_name(elf_file));
-
+        ELF::add_cell(&mut cells, &self.get_type);
         Row::new(cells)
     }
     pub fn new_unsafe(binary: Vec<u8>) -> Self {
@@ -490,6 +504,9 @@ impl Shdr {
             section_name = "(NULL)".to_string();
         }
         section_name
+    }
+    fn get_type(&self) -> String {
+        let check_type = |const_type| self.sh_type == const_type;
     }
 }
 pub fn init_texthdr(size: u64) -> Shdr {

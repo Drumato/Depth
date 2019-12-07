@@ -10,59 +10,59 @@ args:
         multiple: true
     - dump-source:
         long: dump-source
-        help: dump source that inputed
+        help: Dump source that inputed
     - dump-token:
         long: dump-token
-        help: dump tokens with lexer
+        help: Dump tokens with lexer
     - dump-ast:
         long: dump-ast
-        help: dump ast with parser
+        help: Dump ast with parser
     - dump-symbol:
         long: dump-symbol
-        help: dump symbol-tables each environments
+        help: Dump symbol-tables each environments
     - dump-tac:
         long: dump-tac
-        help: dump tac
+        help: Dump tac
     - dump-inst:
         long: dump-inst
-        help: dump inst
+        help: Dump inst
     - dump-cfg:
         long: dump-cfg
-        help: dump cfg
+        help: Dump cfg
     - dump-liveness:
         long: dump-liveness
-        help: dump liveness
+        help: Dump liveness
     - stop-c:
         short: C
-        help: stop until compile
+        help: Stop when compiled
     - stop-a:
         short: A
-        help: stop until assemble
+        help: Stop when assembled
     - Opt1:
         short: O1
         long: Opt1
     - emit-llvm:
         long: emit-llvm
-        help: emit llvm-ir
+        help: Emit llvm-ir
     - run:
         long: run
-        help: run the program 
+        help: Run the program 
     - readelf:
         long: readelf
-        help: analyze elf binary
+        help: Analyze elf binary
     - section:
         short: S
         long: section
-        help: read section header table
+        help: Read section header table
     - segment:
         short: l
         long: program
-        help: read program header table
+        help: Read program header table
     - header:
         short: h
         long: header
-        help: read elf header
+        help: Read elf header
     - all:
         short: a
         long: all
-        help: read all of elf components
+        help: Read all of elf components
