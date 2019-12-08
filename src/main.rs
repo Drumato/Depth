@@ -43,6 +43,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn linux_main(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
+    if let Err(r) = std::env::var("DEPTH_ROOT") {
+        panic!("{} -> DEPTH_ROOT", r);
+    };
     return if matches.is_present("readelf") {
         analyze_elf(matches)
     } else if matches.is_present("dump-symbol") {
@@ -60,6 +63,12 @@ fn analyze_elf(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Err
     }
 
     if matches.is_present("all") || matches.is_present("section") {
+        let shnum = elf_file.ehdr.e_shnum;
+        let shoff = elf_file.ehdr.e_shoff;
+        println!(
+            "There are {} section headers, starting at 0x{:x}",
+            shnum, shoff
+        );
         print_shdrs_stdout(&elf_file)?;
         println!("Key to Flags:");
         println!("  W (write), A (alloc), X (execute), M (merge), S (strings), I (info),");
@@ -73,7 +82,10 @@ fn analyze_elf(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Err
         let phoff = elf_file.ehdr.e_phoff;
         if phnum != 0 {
             println!("\n\n{}", "Program Headers:".bold().green());
-            println!("There are {} program headers, starting at {}", phnum, phoff);
+            println!(
+                "There are {} program headers, starting at 0x{:x}",
+                phnum, phoff
+            );
             print_phdrs_stdout(&elf_file)?;
         }
     }
@@ -111,9 +123,10 @@ fn linux_generate_binary_main(
     matches: &clap::ArgMatches,
 ) -> Result<(), Box<dyn std::error::Error>> {
     /* compile phase */
+    let startup_routine =
+        read_file(&(std::env::var("DEPTH_ROOT").unwrap() + "/lib/start_up_linux.s").as_str());
     let file_name = matches.value_of("source").unwrap();
-    let assembly: String =
-        compile(file_name.to_string(), &matches) + &read_file("lib/start_up_linux.s");
+    let assembly: String = compile(file_name.to_string(), &matches) + &startup_routine;
 
     /* if 'stop-c' given so output the assembly-code to file. */
     if matches.is_present("stop-c") {

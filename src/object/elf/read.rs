@@ -13,11 +13,10 @@ impl elf64::ELF {
             binary[elf_file.ehdr.e_shoff as usize..].to_vec(),
         );
         let length: usize = shdrs.len();
+        let shstrndx_offset = shdrs[elf_file.ehdr.e_shstrndx as usize].sh_offset as usize;
         for idx in 0..length {
             let sh_name: String = Self::collect_name(
-                binary[shdrs[elf_file.ehdr.e_shstrndx as usize].sh_offset as usize
-                    + shdrs[idx].sh_name as usize..]
-                    .to_vec(),
+                binary[shstrndx_offset + shdrs[idx].sh_name as usize..].to_vec(),
             );
             let offset = shdrs[idx].sh_offset as usize;
             let size = shdrs[idx].sh_size as usize;
@@ -34,7 +33,7 @@ impl elf64::ELF {
             binary[elf_file.ehdr.e_phoff as usize..].to_vec(),
         );
         elf_file.phdrs = Some(phdrs);
-        elf_file.condition();
+        // elf_file.condition();
         return elf_file;
     }
     fn build_phdrs(ehdr: &elf64::Ehdr, binary: Vec<u8>) -> Vec<elf64::Phdr> {

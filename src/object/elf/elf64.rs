@@ -411,24 +411,27 @@ pub fn init_ehdr() -> Ehdr {
         e_shstrndx: 0,
     }
 }
-pub static SHT_NULL: Elf64Word = 0;
-pub static SHT_PROGBITS: Elf64Word = 1;
-pub static SHT_SYMTAB: Elf64Word = 2;
-pub static SHT_STRTAB: Elf64Word = 3;
-pub static SHT_RELA: Elf64Word = 4;
-pub static SHT_HASH: Elf64Word = 5;
-pub static SHT_DYNAMIC: Elf64Word = 6;
-pub static SHT_NOTE: Elf64Word = 7;
-pub static SHT_NOBITS: Elf64Word = 8;
-pub static SHT_REL: Elf64Word = 9;
-pub static SHT_SHLIB: Elf64Word = 10;
-pub static SHT_DYNSYM: Elf64Word = 11;
-pub static SHT_INIT_ARRAY: Elf64Word = 14;
-pub static SHT_FINI_ARRAY: Elf64Word = 15;
-pub static SHT_FINI_ARRAY: Elf64Word = 15;
-pub static SHT_PREINIT_ARRAY: Elf64Word = 16;
-pub static SHT_GROUP: Elf64Word = 17;
-pub static SHT_SYMTAB_SHNDX: Elf64Word = 18;
+pub static SHT_NULL: Elf64Xword = 0;
+pub static SHT_PROGBITS: Elf64Xword = 1;
+pub static SHT_SYMTAB: Elf64Xword = 2;
+pub static SHT_STRTAB: Elf64Xword = 3;
+pub static SHT_RELA: Elf64Xword = 4;
+pub static SHT_HASH: Elf64Xword = 5;
+pub static SHT_DYNAMIC: Elf64Xword = 6;
+pub static SHT_NOTE: Elf64Xword = 7;
+pub static SHT_NOBITS: Elf64Xword = 8;
+pub static SHT_REL: Elf64Xword = 9;
+pub static SHT_SHLIB: Elf64Xword = 10;
+pub static SHT_DYNSYM: Elf64Xword = 11;
+pub static SHT_INIT_ARRAY: Elf64Xword = 14;
+pub static SHT_FINI_ARRAY: Elf64Xword = 15;
+pub static SHT_PREINIT_ARRAY: Elf64Xword = 16;
+pub static SHT_GROUP: Elf64Xword = 17;
+pub static SHT_SYMTAB_SHNDX: Elf64Xword = 18;
+pub static SHT_GNU_HASH: Elf64Xword = 0x6ffffff6;
+pub static SHT_GNU_VERDEF: Elf64Xword = 0x6ffffffd;
+pub static SHT_GNU_VERNEED: Elf64Xword = 0x6ffffffe;
+pub static SHT_GNU_VERSYM: Elf64Xword = 0x6fffffff;
 
 pub static SHF_ALLOC: Elf64Xword = 1 << 1;
 pub static SHF_EXECINSTR: Elf64Xword = 1 << 2;
@@ -453,7 +456,7 @@ impl Shdr {
     pub fn to_stdout(&self, elf_file: &ELF) -> Row {
         let mut cells: Vec<Cell> = Vec::new();
         ELF::add_cell(&mut cells, &self.get_name(elf_file));
-        ELF::add_cell(&mut cells, &self.get_type);
+        ELF::add_cell(&mut cells, &self.get_type());
         Row::new(cells)
     }
     pub fn new_unsafe(binary: Vec<u8>) -> Self {
@@ -506,13 +509,58 @@ impl Shdr {
         section_name
     }
     fn get_type(&self) -> String {
-        let check_type = |const_type| self.sh_type == const_type;
+        let check_type = |const_type| self.sh_type as u64 == const_type;
+        return if check_type(SHT_NULL) {
+            "NULL".to_string()
+        } else if check_type(SHT_PROGBITS) {
+            "PROGBITS".to_string()
+        } else if check_type(SHT_SYMTAB) {
+            "SYMTAB".to_string()
+        } else if check_type(SHT_STRTAB) {
+            "STRTAB".to_string()
+        } else if check_type(SHT_RELA) {
+            "RELA".to_string()
+        } else if check_type(SHT_HASH) {
+            "HASH".to_string()
+        } else if check_type(SHT_DYNAMIC) {
+            "DYNAMIC".to_string()
+        } else if check_type(SHT_NOTE) {
+            "NOTE".to_string()
+        } else if check_type(SHT_NOBITS) {
+            "NOBITS".to_string()
+        } else if check_type(SHT_REL) {
+            "REL".to_string()
+        } else if check_type(SHT_SHLIB) {
+            "SHLIB".to_string()
+        } else if check_type(SHT_DYNSYM) {
+            "DYNSYM".to_string()
+        } else if check_type(SHT_INIT_ARRAY) {
+            "INIT_ARRAY".to_string()
+        } else if check_type(SHT_FINI_ARRAY) {
+            "FINI_ARRAY".to_string()
+        } else if check_type(SHT_PREINIT_ARRAY) {
+            "PREINIT_ARRAY".to_string()
+        } else if check_type(SHT_GROUP) {
+            "GROUP".to_string()
+        } else if check_type(SHT_SYMTAB_SHNDX) {
+            "SYMTAB SECTION INDICES".to_string()
+        } else if check_type(SHT_GNU_HASH) {
+            "GNU_HASH".to_string()
+        } else if check_type(SHT_GNU_VERDEF) {
+            "VERDEF".to_string()
+        } else if check_type(SHT_GNU_VERNEED) {
+            "VERNEED".to_string()
+        } else if check_type(SHT_GNU_VERSYM) {
+            "VERSYM".to_string()
+        } else {
+            "Invalid".to_string()
+        };
     }
 }
 pub fn init_texthdr(size: u64) -> Shdr {
     Shdr {
         sh_name: 0,
-        sh_type: SHT_PROGBITS,
+        sh_type: SHT_PROGBITS as u32,
         sh_flags: SHF_ALLOC | SHF_EXECINSTR,
         sh_addr: 0,
         sh_offset: 0,
@@ -526,7 +574,7 @@ pub fn init_texthdr(size: u64) -> Shdr {
 pub fn init_symtabhdr(size: u64) -> Shdr {
     Shdr {
         sh_name: 0,
-        sh_type: SHT_SYMTAB,
+        sh_type: SHT_SYMTAB as u32,
         sh_flags: 0,
         sh_addr: 0,
         sh_offset: 0,
@@ -540,7 +588,7 @@ pub fn init_symtabhdr(size: u64) -> Shdr {
 pub fn init_strtabhdr(size: u64) -> Shdr {
     Shdr {
         sh_name: 0,
-        sh_type: SHT_STRTAB,
+        sh_type: SHT_STRTAB as u32,
         sh_flags: 0,
         sh_addr: 0,
         sh_offset: 0,
@@ -555,7 +603,7 @@ pub fn init_strtabhdr(size: u64) -> Shdr {
 pub fn init_relahdr(size: u64) -> Shdr {
     Shdr {
         sh_name: 0,
-        sh_type: SHT_RELA,
+        sh_type: SHT_RELA as u32,
         sh_flags: SHF_INFO_LINK,
         sh_addr: 0,
         sh_offset: 0,
