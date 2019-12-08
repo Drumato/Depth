@@ -66,3 +66,7 @@ args:
         short: a
         long: all
         help: Read all of elf components
+    - symbol:
+        short: s
+        long: symbol
+        help: Read all of defined symbols

@@ -15,7 +15,7 @@ use compile::ir::llvm;
 use compile::ir::tac::Tac;
 use f::frontmanager::frontmanager as fm;
 mod object;
-use object::elf::elf64::ELF;
+use object::elf::elf64::{Symbol, ELF};
 mod assemble;
 use assemble as a;
 mod ce;
@@ -58,10 +58,12 @@ fn linux_main(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Erro
 fn analyze_elf(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
     let file_name = matches.value_of("source").unwrap().to_string();
     let elf_file = ELF::read_elf(&file_name);
+    // -h option
     if matches.is_present("all") || matches.is_present("header") {
         elf_file.ehdr.print_to_stdout();
     }
 
+    // -S option
     if matches.is_present("all") || matches.is_present("section") {
         let shnum = elf_file.ehdr.e_shnum;
         let shoff = elf_file.ehdr.e_shoff;
@@ -77,6 +79,7 @@ fn analyze_elf(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Err
         println!("  l (large), p (processor specific)");
     }
 
+    // -l option
     if matches.is_present("all") || matches.is_present("segment") {
         let phnum = elf_file.ehdr.e_phnum;
         let phoff = elf_file.ehdr.e_phoff;
@@ -87,35 +90,25 @@ fn analyze_elf(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Err
                 phnum, phoff
             );
             print_phdrs_stdout(&elf_file)?;
+        } else {
+            println!("There are no program header table");
         }
     }
-    Ok(())
-}
 
-fn print_shdrs_stdout(elf_file: &ELF) -> Result<(), Box<dyn std::error::Error>> {
-    let mut rows: Vec<Row> = elf_file
-        .shdrs
-        .iter()
-        .map(|shdr| shdr.to_stdout(elf_file))
-        .collect::<Vec<Row>>();
-    rows.insert(0, ELF::section_header_columns());
-
-    let table = Table::new(rows, Default::default());
-    table.print_stdout()?;
-    Ok(())
-}
-
-fn print_phdrs_stdout(elf_file: &ELF) -> Result<(), Box<dyn std::error::Error>> {
-    if let Some(derefered_phdrs) = &elf_file.phdrs {
-        let mut rows: Vec<Row> = derefered_phdrs
-            .iter()
-            .map(|phdr| phdr.to_stdout())
-            .collect::<Vec<Row>>();
-        rows.insert(0, ELF::program_header_columns());
-
-        let table = Table::new(rows, Default::default());
-        table.print_stdout()?;
+    // -s option
+    if matches.is_present("all") || matches.is_present("symbol") {
+        if elf_file.check_whether_given_section_is_exist(".symtab") {
+            print_symbols(&elf_file, ".symtab")?;
+        } else {
+            println!("There are no .symtab section");
+        }
+        if elf_file.check_whether_given_section_is_exist(".dynsym") {
+            print_symbols(&elf_file, ".dynsym")?;
+        } else {
+            println!("There are no .dynsym section");
+        }
     }
+
     Ok(())
 }
 
@@ -439,4 +432,55 @@ fn sum_all_code_length(
         .iter()
         .map(|(_, codes)| codes.len() as u64)
         .sum::<u64>()
+}
+fn print_shdrs_stdout(elf_file: &ELF) -> Result<(), Box<dyn std::error::Error>> {
+    let mut rows: Vec<Row> = elf_file
+        .shdrs
+        .iter()
+        .map(|shdr| shdr.to_stdout(elf_file))
+        .collect::<Vec<Row>>();
+    rows.insert(0, ELF::section_header_columns());
+
+    let table = Table::new(rows, Default::default());
+    table.print_stdout()?;
+    Ok(())
+}
+
+fn print_phdrs_stdout(elf_file: &ELF) -> Result<(), Box<dyn std::error::Error>> {
+    if let Some(derefered_phdrs) = &elf_file.phdrs {
+        let mut rows: Vec<Row> = derefered_phdrs
+            .iter()
+            .map(|phdr| phdr.to_stdout())
+            .collect::<Vec<Row>>();
+        rows.insert(0, ELF::program_header_columns());
+
+        let table = Table::new(rows, Default::default());
+        table.print_stdout()?;
+    }
+    Ok(())
+}
+fn print_symbols(elf_file: &ELF, section_name: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let symbol_size = Symbol::size() as usize;
+    let mut rows: Vec<Row> = Vec::new();
+    rows.push(ELF::symbol_table_columns());
+
+    let symtab_number = elf_file.get_section_number(section_name);
+    let symtab = elf_file.sections[symtab_number].clone();
+    let symtab_shdr = elf_file.shdrs[symtab_number].clone();
+    let symbol_number = symtab_shdr.sh_size as usize / symbol_size;
+    println!(
+        "\n\nSymbol table '{}' contains {} entries:",
+        section_name, symbol_number
+    );
+
+    for i in 0..symbol_number as usize {
+        let symbol_binary = symtab[i * symbol_size..(i + 1) * symbol_size].to_vec();
+        let symbol = Symbol::new_unsafe(symbol_binary);
+        rows.push(symbol.to_stdout());
+    }
+
+    let table = Table::new(rows, Default::default());
+    table.print_stdout()?;
+
+    Ok(())
 }

@@ -101,6 +101,9 @@ impl ELF {
             00
         }
     }
+    pub fn check_whether_given_section_is_exist(&self, name: &str) -> bool {
+        self.names.contains_key(name)
+    }
     pub fn init() -> Self {
         Self {
             ehdr: init_ehdr(),
@@ -134,6 +137,11 @@ impl ELF {
         Self::add_cell(&mut cells, &format!("{}", "Link".bold().green()));
         Self::add_cell(&mut cells, &format!("{}", "Info".bold().green()));
         Self::add_cell(&mut cells, &format!("{}", "Align".bold().green()));
+        Row::new(cells)
+    }
+    pub fn symbol_table_columns() -> Row {
+        let mut cells: Vec<Cell> = Vec::new();
+        Self::add_cell(&mut cells, &format!("{}", "Value".bold().green()));
         Row::new(cells)
     }
     fn add_cell(vec: &mut Vec<Cell>, contents: &String) {
@@ -861,6 +869,11 @@ impl Symbol {
             bb.push(b);
         }
         bb
+    }
+    pub fn to_stdout(&self) -> Row {
+        let mut cells: Vec<Cell> = Vec::new();
+        ELF::add_cell(&mut cells, &format!("0x{:x}", self.st_value));
+        Row::new(cells)
     }
 }
 pub fn symbols_to_vec(symbols: Vec<Symbol>) -> Vec<u8> {
