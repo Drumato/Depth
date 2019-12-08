@@ -126,6 +126,7 @@ impl ELF {
         let mut cells: Vec<Cell> = Vec::new();
         Self::add_cell(&mut cells, &format!("{}", "Name".bold().green()));
         Self::add_cell(&mut cells, &format!("{}", "Type".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "Flags".bold().green()));
         Row::new(cells)
     }
     fn add_cell(vec: &mut Vec<Cell>, contents: &String) {
@@ -134,59 +135,59 @@ impl ELF {
 }
 
 /* EI_CLASS */
-static EI_CLASS: usize = 4;
-static ELFCLASSNONE: EIDENT = 0;
-static ELFCLASS32: EIDENT = 1;
-static ELFCLASS64: EIDENT = 2;
-static ELFCLASSNUM: EIDENT = 3;
+const EI_CLASS: usize = 4;
+const ELFCLASSNONE: EIDENT = 0;
+const ELFCLASS32: EIDENT = 1;
+const ELFCLASS64: EIDENT = 2;
+const ELFCLASSNUM: EIDENT = 3;
 
 /* EI_DATA */
-static EI_DATA: usize = 5;
-static ELFDATANONE: EIDENT = 0; /* Invalid data encoding */
-static ELFDATA2LSB: EIDENT = 1; /* 2's complement, little endian */
-static ELFDATA2MSB: EIDENT = 2; /* 2's complement, big endian */
-static ELFDATANUM: EIDENT = 3;
+const EI_DATA: usize = 5;
+const ELFDATANONE: EIDENT = 0; /* Invalid data encoding */
+const ELFDATA2LSB: EIDENT = 1; /* 2's complement, little endian */
+const ELFDATA2MSB: EIDENT = 2; /* 2's complement, big endian */
+const ELFDATANUM: EIDENT = 3;
 
 /* EI_VERSION */
-static EI_VERSION: usize = 6;
-static EV_CURRENT: EIDENT = 1;
+const EI_VERSION: usize = 6;
+const EV_CURRENT: EIDENT = 1;
 
 /* EI_OSABI */
-static EI_OSABI: usize = 7;
+const EI_OSABI: usize = 7;
 
 /* EI_OSABIVERSION */
-static EI_OSABIVERSION: usize = 8;
+const EI_OSABIVERSION: usize = 8;
 
-static ELFOSABI_NONE: EIDENT = 0; /* UNIX System V ABi */
-static ELFOSABI_SYSV: EIDENT = 0; /* Alias */
-static ELFOSABI_HPUX: EIDENT = 1; /* HP-UX */
-static ELFOSABI_NETBSD: EIDENT = 2; /* NetBSD */
-static ELFOSABI_GNU: EIDENT = 3; /* NetBSD */
-static ELFOSABI_LINUX: EIDENT = ELFOSABI_GNU; /* Compatibility alias */
-static ELFOSABI_SOLARIS: EIDENT = 6; /* Sun Solaris */
-static ELFOSABI_AIX: EIDENT = 7; /* IBM AIX. */
-static ELFOSABI_IRIX: EIDENT = 8; /* SGI Irix. */
-static ELFOSABI_FREEBSD: EIDENT = 9; /* FreeBSD. */
-static ELFOSABI_TRU64: EIDENT = 10; /* Compaq TRU64 UNIX. */
-static ELFOSABI_MODESTO: EIDENT = 11; /* Compaq TRU64 UNIX. */
-static ELFOSABI_OPENBSD: EIDENT = 12; /* OpenBSD. */
-static ELFOSABI_ARM_AEABI: EIDENT = 64; /* ARM EABI */
-static ELFOSABI_ARM: EIDENT = 97; /* ARM */
-static ELFOSABI_STANDALONE: EIDENT = 255; /* Standalone (embedded) application */
+const ELFOSABI_NONE: EIDENT = 0; /* UNIX System V ABi */
+const ELFOSABI_SYSV: EIDENT = 0; /* Alias */
+const ELFOSABI_HPUX: EIDENT = 1; /* HP-UX */
+const ELFOSABI_NETBSD: EIDENT = 2; /* NetBSD */
+const ELFOSABI_GNU: EIDENT = 3; /* NetBSD */
+const ELFOSABI_LINUX: EIDENT = ELFOSABI_GNU; /* Compatibility alias */
+const ELFOSABI_SOLARIS: EIDENT = 6; /* Sun Solaris */
+const ELFOSABI_AIX: EIDENT = 7; /* IBM AIX. */
+const ELFOSABI_IRIX: EIDENT = 8; /* SGI Irix. */
+const ELFOSABI_FREEBSD: EIDENT = 9; /* FreeBSD. */
+const ELFOSABI_TRU64: EIDENT = 10; /* Compaq TRU64 UNIX. */
+const ELFOSABI_MODESTO: EIDENT = 11; /* Compaq TRU64 UNIX. */
+const ELFOSABI_OPENBSD: EIDENT = 12; /* OpenBSD. */
+const ELFOSABI_ARM_AEABI: EIDENT = 64; /* ARM EABI */
+const ELFOSABI_ARM: EIDENT = 97; /* ARM */
+const ELFOSABI_STANDALONE: EIDENT = 255; /* Standalone (embedded) application */
 
 /* ELF File Type */
-static ET_NONE: Elf64Half = 0;
-pub static ET_REL: Elf64Half = 1;
-pub static ET_EXEC: Elf64Half = 2;
-static ET_DYN: Elf64Half = 3;
-static ET_CORE: Elf64Half = 4;
-static ET_LOOS: Elf64Half = 0xfe00;
-static ET_HIOS: Elf64Half = 0xfeff;
-static ET_LOPROC: Elf64Half = 0xff00;
-static ET_HIPROC: Elf64Half = 0xffff;
+const ET_NONE: Elf64Half = 0;
+pub const ET_REL: Elf64Half = 1;
+pub const ET_EXEC: Elf64Half = 2;
+const ET_DYN: Elf64Half = 3;
+const ET_CORE: Elf64Half = 4;
+const ET_LOOS: Elf64Half = 0xfe00;
+const ET_HIOS: Elf64Half = 0xfeff;
+const ET_LOPROC: Elf64Half = 0xff00;
+const ET_HIPROC: Elf64Half = 0xffff;
 
 /* Machine Architecture */
-static EM_X86_64: Elf64Half = 0x3e;
+const EM_X86_64: Elf64Half = 0x3e;
 
 #[repr(C)]
 pub struct Ehdr {
@@ -411,31 +412,40 @@ pub fn init_ehdr() -> Ehdr {
         e_shstrndx: 0,
     }
 }
-pub static SHT_NULL: Elf64Xword = 0;
-pub static SHT_PROGBITS: Elf64Xword = 1;
-pub static SHT_SYMTAB: Elf64Xword = 2;
-pub static SHT_STRTAB: Elf64Xword = 3;
-pub static SHT_RELA: Elf64Xword = 4;
-pub static SHT_HASH: Elf64Xword = 5;
-pub static SHT_DYNAMIC: Elf64Xword = 6;
-pub static SHT_NOTE: Elf64Xword = 7;
-pub static SHT_NOBITS: Elf64Xword = 8;
-pub static SHT_REL: Elf64Xword = 9;
-pub static SHT_SHLIB: Elf64Xword = 10;
-pub static SHT_DYNSYM: Elf64Xword = 11;
-pub static SHT_INIT_ARRAY: Elf64Xword = 14;
-pub static SHT_FINI_ARRAY: Elf64Xword = 15;
-pub static SHT_PREINIT_ARRAY: Elf64Xword = 16;
-pub static SHT_GROUP: Elf64Xword = 17;
-pub static SHT_SYMTAB_SHNDX: Elf64Xword = 18;
-pub static SHT_GNU_HASH: Elf64Xword = 0x6ffffff6;
-pub static SHT_GNU_VERDEF: Elf64Xword = 0x6ffffffd;
-pub static SHT_GNU_VERNEED: Elf64Xword = 0x6ffffffe;
-pub static SHT_GNU_VERSYM: Elf64Xword = 0x6fffffff;
+pub const SHT_NULL: Elf64Xword = 0;
+pub const SHT_PROGBITS: Elf64Xword = 1;
+pub const SHT_SYMTAB: Elf64Xword = 2;
+pub const SHT_STRTAB: Elf64Xword = 3;
+pub const SHT_RELA: Elf64Xword = 4;
+pub const SHT_HASH: Elf64Xword = 5;
+pub const SHT_DYNAMIC: Elf64Xword = 6;
+pub const SHT_NOTE: Elf64Xword = 7;
+pub const SHT_NOBITS: Elf64Xword = 8;
+pub const SHT_REL: Elf64Xword = 9;
+pub const SHT_SHLIB: Elf64Xword = 10;
+pub const SHT_DYNSYM: Elf64Xword = 11;
+pub const SHT_INIT_ARRAY: Elf64Xword = 14;
+pub const SHT_FINI_ARRAY: Elf64Xword = 15;
+pub const SHT_PREINIT_ARRAY: Elf64Xword = 16;
+pub const SHT_GROUP: Elf64Xword = 17;
+pub const SHT_SYMTAB_SHNDX: Elf64Xword = 18;
+pub const SHT_GNU_HASH: Elf64Xword = 0x6ffffff6;
+pub const SHT_GNU_VERDEF: Elf64Xword = 0x6ffffffd;
+pub const SHT_GNU_VERNEED: Elf64Xword = 0x6ffffffe;
+pub const SHT_GNU_VERSYM: Elf64Xword = 0x6fffffff;
 
-pub static SHF_ALLOC: Elf64Xword = 1 << 1;
-pub static SHF_EXECINSTR: Elf64Xword = 1 << 2;
-pub static SHF_INFO_LINK: Elf64Xword = 1 << 6;
+pub const SHF_WRITE: Elf64Xword = 1 << 0;
+pub const SHF_ALLOC: Elf64Xword = 1 << 1;
+pub const SHF_EXECINSTR: Elf64Xword = 1 << 2;
+pub const SHF_MERGE: Elf64Xword = 1 << 4;
+pub const SHF_STRINGS: Elf64Xword = 1 << 5;
+pub const SHF_INFO_LINK: Elf64Xword = 1 << 6;
+pub const SHF_LINK_ORDER: Elf64Xword = 1 << 7;
+pub const SHF_OS_NONCONFORMING: Elf64Xword = 1 << 8;
+pub const SHF_GROUP: Elf64Xword = 1 << 9;
+pub const SHF_TLS: Elf64Xword = 1 << 10;
+pub const SHF_COMPRESSED: Elf64Xword = 1 << 11;
+pub const SHF_EXCLUDE: Elf64Xword = 1 << 31;
 
 #[derive(Clone)]
 #[repr(C)]
@@ -457,6 +467,7 @@ impl Shdr {
         let mut cells: Vec<Cell> = Vec::new();
         ELF::add_cell(&mut cells, &self.get_name(elf_file));
         ELF::add_cell(&mut cells, &self.get_type());
+        ELF::add_cell(&mut cells, &self.get_flags());
         Row::new(cells)
     }
     pub fn new_unsafe(binary: Vec<u8>) -> Self {
@@ -556,6 +567,28 @@ impl Shdr {
             "Invalid".to_string()
         };
     }
+    fn get_flags(&self) -> String {
+        let mut flag_string = String::new();
+        let check_flag = |const_flag| self.sh_flags & const_flag != 0;
+        Self::write_string_with_condition(&mut flag_string, 'W', check_flag(SHF_WRITE));
+        Self::write_string_with_condition(&mut flag_string, 'A', check_flag(SHF_ALLOC));
+        Self::write_string_with_condition(&mut flag_string, 'X', check_flag(SHF_EXECINSTR));
+        Self::write_string_with_condition(&mut flag_string, 'M', check_flag(SHF_MERGE));
+        Self::write_string_with_condition(&mut flag_string, 'S', check_flag(SHF_STRINGS));
+        Self::write_string_with_condition(&mut flag_string, 'I', check_flag(SHF_INFO_LINK));
+        Self::write_string_with_condition(&mut flag_string, 'L', check_flag(SHF_LINK_ORDER));
+        Self::write_string_with_condition(&mut flag_string, 'O', check_flag(SHF_OS_NONCONFORMING));
+        Self::write_string_with_condition(&mut flag_string, 'G', check_flag(SHF_GROUP));
+        Self::write_string_with_condition(&mut flag_string, 'T', check_flag(SHF_TLS));
+        Self::write_string_with_condition(&mut flag_string, 'E', check_flag(SHF_EXCLUDE));
+        Self::write_string_with_condition(&mut flag_string, 'C', check_flag(SHF_COMPRESSED));
+        flag_string
+    }
+    fn write_string_with_condition(s: &mut String, c: char, condition: bool) {
+        if condition {
+            s.push(c);
+        }
+    }
 }
 pub fn init_texthdr(size: u64) -> Shdr {
     Shdr {
@@ -628,21 +661,21 @@ pub fn init_nullhdr() -> Shdr {
         sh_entsize: 0,
     }
 }
-pub static PT_NULL: Elf64Word = 0;
-pub static PT_LOAD: Elf64Word = 1;
-pub static PT_DYNAMIC: Elf64Word = 2;
-pub static PT_INTERP: Elf64Word = 3;
-pub static PT_NOTE: Elf64Word = 4;
-pub static PT_SHLIB: Elf64Word = 5;
-pub static PT_PHDR: Elf64Word = 6;
-pub static PT_TLS: Elf64Word = 7;
-pub static PT_GNU_EH_FRAME: Elf64Word = 0x6474e550;
-pub static PT_GNU_STACK: Elf64Word = 0x6474e551;
-pub static PT_GNU_RELRO: Elf64Word = 0x6474e552;
+pub const PT_NULL: Elf64Word = 0;
+pub const PT_LOAD: Elf64Word = 1;
+pub const PT_DYNAMIC: Elf64Word = 2;
+pub const PT_INTERP: Elf64Word = 3;
+pub const PT_NOTE: Elf64Word = 4;
+pub const PT_SHLIB: Elf64Word = 5;
+pub const PT_PHDR: Elf64Word = 6;
+pub const PT_TLS: Elf64Word = 7;
+pub const PT_GNU_EH_FRAME: Elf64Word = 0x6474e550;
+pub const PT_GNU_STACK: Elf64Word = 0x6474e551;
+pub const PT_GNU_RELRO: Elf64Word = 0x6474e552;
 
-pub static PF_X: Elf64Word = 1 << 0;
-pub static PF_W: Elf64Word = 1 << 1;
-pub static PF_R: Elf64Word = 1 << 2;
+pub const PF_X: Elf64Word = 1 << 0;
+pub const PF_W: Elf64Word = 1 << 1;
+pub const PF_R: Elf64Word = 1 << 2;
 #[repr(C)]
 pub struct Phdr {
     pub p_type: Elf64Word,
@@ -733,22 +766,15 @@ impl Phdr {
     fn get_flags(&self) -> String {
         let mut flag_string = String::new();
         let check_flag = |const_flag| self.p_flags & const_flag != 0;
-        if check_flag(PF_R) {
-            flag_string.push('R')
-        } else {
-            flag_string.push(' ')
-        }
-        if check_flag(PF_W) {
-            flag_string.push('W')
-        } else {
-            flag_string.push(' ')
-        }
-        if check_flag(PF_X) {
-            flag_string.push('E')
-        } else {
-            flag_string.push(' ')
-        }
+        Self::write_string_with_condition(&mut flag_string, 'R', check_flag(PF_R));
+        Self::write_string_with_condition(&mut flag_string, 'W', check_flag(PF_W));
+        Self::write_string_with_condition(&mut flag_string, 'E', check_flag(PF_X));
         flag_string
+    }
+    fn write_string_with_condition(s: &mut String, c: char, condition: bool) {
+        if condition {
+            s.push(c);
+        }
     }
 }
 
@@ -780,9 +806,9 @@ pub fn strtab(names: Vec<&str>) -> Vec<u8> {
     }
     b
 }
-pub static STB_GLOBAL: u8 = 1;
-//pub static STB_LOCAL: u8 = 0;
-pub static STT_FUNC: u8 = 2;
+pub const STB_GLOBAL: u8 = 1;
+//pub const STB_LOCAL: u8 = 0;
+pub const STT_FUNC: u8 = 2;
 #[repr(C)]
 #[derive(Clone)]
 pub struct Symbol {
