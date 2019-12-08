@@ -127,6 +127,13 @@ impl ELF {
         Self::add_cell(&mut cells, &format!("{}", "Name".bold().green()));
         Self::add_cell(&mut cells, &format!("{}", "Type".bold().green()));
         Self::add_cell(&mut cells, &format!("{}", "Flags".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "Address".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "Offset".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "Size".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "EntSize".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "Link".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "Info".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "Align".bold().green()));
         Row::new(cells)
     }
     fn add_cell(vec: &mut Vec<Cell>, contents: &String) {
@@ -468,6 +475,13 @@ impl Shdr {
         ELF::add_cell(&mut cells, &self.get_name(elf_file));
         ELF::add_cell(&mut cells, &self.get_type());
         ELF::add_cell(&mut cells, &self.get_flags());
+        ELF::add_cell(&mut cells, &format!("0x{:x}", self.sh_addr));
+        ELF::add_cell(&mut cells, &format!("0x{:x}", self.sh_offset));
+        ELF::add_cell(&mut cells, &format!("{}", self.sh_size));
+        ELF::add_cell(&mut cells, &format!("{}", self.sh_entsize));
+        ELF::add_cell(&mut cells, &format!("{}", self.sh_link));
+        ELF::add_cell(&mut cells, &format!("{}", self.sh_info));
+        ELF::add_cell(&mut cells, &format!("{}", self.sh_addralign));
         Row::new(cells)
     }
     pub fn new_unsafe(binary: Vec<u8>) -> Self {
