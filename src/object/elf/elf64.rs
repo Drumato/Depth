@@ -142,6 +142,12 @@ impl ELF {
     pub fn symbol_table_columns() -> Row {
         let mut cells: Vec<Cell> = Vec::new();
         Self::add_cell(&mut cells, &format!("{}", "Value".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "Size".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "Type".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "Bind".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "Vis".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "Ndx".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "Name".bold().green()));
         Row::new(cells)
     }
     fn add_cell(vec: &mut Vec<Cell>, contents: &String) {
@@ -828,9 +834,32 @@ pub fn strtab(names: Vec<&str>) -> Vec<u8> {
     }
     b
 }
+/* Bind */
+pub const STB_LOCAL: u8 = 0;
 pub const STB_GLOBAL: u8 = 1;
-//pub const STB_LOCAL: u8 = 0;
+pub const STB_WEAK: u8 = 2;
+
+/* Type */
+pub const STT_NOTYPE: u8 = 0;
+pub const STT_OBJECT: u8 = 1;
 pub const STT_FUNC: u8 = 2;
+pub const STT_SECTION: u8 = 3;
+pub const STT_FILE: u8 = 4;
+pub const STT_COMMON: u8 = 5;
+pub const STT_TLS: u8 = 6;
+pub const STT_GNU_IFUNC: u8 = 10;
+
+/* Visibility */
+pub const STV_DEFAULT: u8 = 0;
+pub const STV_INTERNAL: u8 = 1;
+pub const STV_HIDDEN: u8 = 2;
+pub const STV_PROTECTED: u8 = 3;
+
+/* Index */
+pub const SHN_UNDEF: Elf64Section = 0;
+pub const SHN_ABS: Elf64Section = 0xff3f;
+pub const SHN_COMMON: Elf64Section = 0xfff2;
+
 #[repr(C)]
 #[derive(Clone)]
 pub struct Symbol {
@@ -870,10 +899,89 @@ impl Symbol {
         }
         bb
     }
-    pub fn to_stdout(&self) -> Row {
+    pub fn to_stdout(&self, elf_file: &ELF, link: u32) -> Row {
         let mut cells: Vec<Cell> = Vec::new();
         ELF::add_cell(&mut cells, &format!("0x{:x}", self.st_value));
+        ELF::add_cell(&mut cells, &format!("0x{:x}", self.st_size));
+        ELF::add_cell(&mut cells, &self.get_type());
+        ELF::add_cell(&mut cells, &self.get_bind());
+        ELF::add_cell(&mut cells, &self.get_visibility());
+        ELF::add_cell(&mut cells, &self.get_index());
+        ELF::add_cell(&mut cells, &self.get_name(elf_file, link));
         Row::new(cells)
+    }
+    fn get_type(&self) -> String {
+        let check_type = |const_type| self.st_info & 0xf == const_type;
+        return if check_type(STT_NOTYPE) {
+            "NOTYPE".to_string()
+        } else if check_type(STT_OBJECT) {
+            "OBJECT".to_string()
+        } else if check_type(STT_FUNC) {
+            "FUNC".to_string()
+        } else if check_type(STT_SECTION) {
+            "SECTION".to_string()
+        } else if check_type(STT_FILE) {
+            "FILE".to_string()
+        } else if check_type(STT_COMMON) {
+            "COMMON".to_string()
+        } else if check_type(STT_TLS) {
+            "TLS".to_string()
+        } else if check_type(STT_GNU_IFUNC) {
+            "IFUNC".to_string()
+        } else {
+            "Invalid".to_string()
+        };
+    }
+    fn get_bind(&self) -> String {
+        let check_bind = |const_bind| (self.st_info as u8) >> 4 == const_bind;
+        return if check_bind(STB_LOCAL) {
+            "LOCAL".to_string()
+        } else if check_bind(STB_GLOBAL) {
+            "GLOBAL".to_string()
+        } else if check_bind(STB_WEAK) {
+            "WEAK".to_string()
+        } else {
+            "Invalid".to_string()
+        };
+    }
+    fn get_visibility(&self) -> String {
+        let check_vis = |const_vis| (self.st_other as u8) & 0x03 == const_vis;
+        return if check_vis(STV_DEFAULT) {
+            "DEFAULT".to_string()
+        } else if check_vis(STV_INTERNAL) {
+            "INTERNAL".to_string()
+        } else if check_vis(STV_HIDDEN) {
+            "HIDDEN".to_string()
+        } else if check_vis(STV_PROTECTED) {
+            "PROTECTED".to_string()
+        } else {
+            "Invalid".to_string()
+        };
+    }
+    fn get_index(&self) -> String {
+        let check_index = |const_index| self.st_shndx == const_index;
+        return if check_index(SHN_UNDEF) {
+            "UND".to_string()
+        } else if check_index(SHN_COMMON) {
+            "COM".to_string()
+        } else if check_index(SHN_ABS) {
+            "ABS".to_string()
+        } else {
+            format!("{}", self.st_shndx)
+        };
+    }
+    fn get_name(&self, elf_file: &ELF, link: u32) -> String {
+        let strtab: Vec<u8> = if (self.st_info & 0xf) == STT_SECTION {
+            elf_file.sections[elf_file.ehdr.e_shstrndx as usize].clone()
+        } else {
+            elf_file.sections[link as usize].clone()
+        };
+        let mut section_name = ELF::collect_name(strtab[self.st_name as usize..].to_vec());
+        let length = section_name.len();
+        if length == 0 {
+            section_name = "(NULL)".to_string();
+        }
+        section_name
     }
 }
 pub fn symbols_to_vec(symbols: Vec<Symbol>) -> Vec<u8> {

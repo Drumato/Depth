@@ -476,7 +476,7 @@ fn print_symbols(elf_file: &ELF, section_name: &str) -> Result<(), Box<dyn std::
     for i in 0..symbol_number as usize {
         let symbol_binary = symtab[i * symbol_size..(i + 1) * symbol_size].to_vec();
         let symbol = Symbol::new_unsafe(symbol_binary);
-        rows.push(symbol.to_stdout());
+        rows.push(symbol.to_stdout(elf_file, symtab_shdr.sh_link));
     }
 
     let table = Table::new(rows, Default::default());
