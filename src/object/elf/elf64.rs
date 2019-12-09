@@ -966,6 +966,8 @@ impl Symbol {
             "COM".to_string()
         } else if check_index(SHN_ABS) {
             "ABS".to_string()
+        } else if check_index(0xfff1) {
+            "ABS".to_string()
         } else {
             format!("{}", self.st_shndx)
         };
