@@ -150,6 +150,18 @@ impl ELF {
         Self::add_cell(&mut cells, &format!("{}", "Name".bold().green()));
         Row::new(cells)
     }
+    pub fn relocation_table_columns() -> Row {
+        let mut cells: Vec<Cell> = Vec::new();
+        Self::add_cell(&mut cells, &format!("{}", "Offset".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "Info".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "Type".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "Sym. Value".bold().green()));
+        Self::add_cell(
+            &mut cells,
+            &format!("{}", "Sym. Name + Addend".bold().green()),
+        );
+        Row::new(cells)
+    }
     fn add_cell(vec: &mut Vec<Cell>, contents: &String) {
         vec.push(Cell::new(contents, Default::default()));
     }
@@ -1026,6 +1038,78 @@ pub fn init_nullsym() -> Symbol {
     }
 }
 
+pub const R_X86_64_NONE: u64 = 0;
+pub const R_X86_64_64: u64 = 1;
+pub const R_X86_64_PC32: u64 = 2;
+pub const R_X86_64_GOT32: u64 = 3;
+pub const R_X86_64_PLT32: u64 = 4;
+pub const R_X86_64_COPY: u64 = 5;
+pub const R_X86_64_GLOB_DAT: u64 = 6;
+pub const R_X86_64_JUMP_SLOT: u64 = 7;
+pub const R_X86_64_RELATIVE: u64 = 8;
+pub const R_X86_64_GOTPCREL: u64 = 9;
+pub const R_X86_64_32: u64 = 9;
+
+/* AMD x86-64 relocations.  */
+//#define R_X86_64_NONE		0	/* No reloc */
+/* AMD x86-64 relocations.  */
+//#define R_X86_64_NONE		0	/* No reloc */
+//#define R_X86_64_64		1	/* Direct 64 bit  */
+//#define R_X86_64_PC32		2	/* PC relative 32 bit signed */
+//#define R_X86_64_GOT32		3	/* 32 bit GOT entry */
+//#define R_X86_64_PLT32		4	/* 32 bit PLT address */
+//#define R_X86_64_COPY		5	/* Copy symbol at runtime */
+//#define R_X86_64_GLOB_DAT	6	/* Create GOT entry */
+//#define R_X86_64_JUMP_SLOT	7	/* Create PLT entry */
+//#define R_X86_64_RELATIVE	8	/* Adjust by program base */
+//#define R_X86_64_GOTPCREL	9	/* 32 bit signed PC relative
+//offset to GOT */
+//#define R_X86_64_32		10	/* Direct 32 bit zero extended */
+//#define R_X86_64_32S		11	/* Direct 32 bit sign extended */
+//#define R_X86_64_16		12	/* Direct 16 bit zero extended */
+//#define R_X86_64_PC16		13	/* 16 bit sign extended pc relative */
+//#define R_X86_64_8		14	/* Direct 8 bit sign extended  */
+//#define R_X86_64_PC8		15	/* 8 bit sign extended pc relative */
+////#define R_X86_64_DTPMOD64	16	/* ID of module containing symbol */
+//#define R_X86_64_DTPOFF64	17	/* Offset in module's TLS block */
+//#define R_X86_64_TPOFF64	18	/* Offset in initial TLS block */
+//#define R_X86_64_TLSGD		19	/* 32 bit signed PC relative offset
+//to two GOT entries for GD symbol */
+//#define R_X86_64_TLSLD		20	/* 32 bit signed PC relative offset
+//to two GOT entries for LD symbol */
+//#define R_X86_64_DTPOFF32	21	/* Offset in TLS block */
+//#define R_X86_64_GOTTPOFF	22	/* 32 bit signed PC relative offset
+//to GOT entry for IE symbol */
+//#define R_X86_64_TPOFF32	23	/* Offset in initial TLS block */
+////#define R_X86_64_PC64		24	/* PC relative 64 bit */
+//#define R_X86_64_GOTOFF64	25	/* 64 bit offset to GOT */
+//#define R_X86_64_GOTPC32	26	/* 32 bit signed pc relative
+//offset to GOT */
+//#define R_X86_64_GOT64		27	/* 64-bit GOT entry offset */
+//#define R_X86_64_GOTPCREL64	28	/* 64-bit PC relative offset
+//to GOT entry */
+//#define R_X86_64_GOTPC64	29	/* 64-bit PC relative offset to GOT */
+//#define R_X86_64_GOTPLT64	30 	/* like GOT64, says PLT entry needed */
+//#define R_X86_64_PLTOFF64	31	/* 64-bit GOT relative offset
+//to PLT entry */
+//#define R_X86_64_SIZE32		32	/* Size of symbol plus 32-bit addend */
+//#define R_X86_64_SIZE64		33	/* Size of symbol plus 64-bit addend */
+//#define R_X86_64_GOTPC32_TLSDESC 34	/* GOT offset for TLS descriptor.  */
+//#define R_X86_64_TLSDESC_CALL   35	/* Marker for call through TLS
+//descriptor.  */
+//#define R_X86_64_TLSDESC        36	/* TLS descriptor.  */
+//#define R_X86_64_IRELATIVE	37	/* Adjust indirectly by program base */
+//#define R_X86_64_RELATIVE64	38	/* 64-bit adjust by program base */
+/////* 39 Reserved was R_X86_64_PC32_BND */
+/////* 40 Reserved was R_X86_64_PLT32_BND */
+//#define R_X86_64_GOTPCRELX	41	/* Load from 32 bit signed pc relative
+//offset to GOT entry without REX
+//prefix, relaxable.  */
+//#define R_X86_64_REX_GOTPCRELX	42	/* Load from 32 bit signed pc relative
+//offset to GOT entry with REX prefix,
+//relaxable.  */
+//#define R_X86_64_NUM		43
+
 #[derive(Debug)]
 pub struct Rela {
     pub r_offset: Elf64Addr,
@@ -1060,6 +1144,91 @@ impl Rela {
             r_offset: 0,
             r_info: 0,
             r_addend: -4,
+        }
+    }
+    pub fn to_stdout(&self, elf_file: &ELF, related_symtab_sh_link: usize) -> Row {
+        let mut cells: Vec<Cell> = Vec::new();
+        ELF::add_cell(&mut cells, &format!("0x{:x}", self.r_offset));
+        ELF::add_cell(&mut cells, &format!("0x{:x}", self.r_info));
+        ELF::add_cell(&mut cells, &self.get_type());
+
+        let related_symbol_index = self.r_info >> 32;
+
+        ELF::add_cell(
+            &mut cells,
+            &self.get_sym_value(elf_file, related_symbol_index, related_symtab_sh_link),
+        );
+        ELF::add_cell(
+            &mut cells,
+            &self.get_symbol_name_and_addend(
+                elf_file,
+                related_symbol_index,
+                related_symtab_sh_link,
+            ),
+        );
+        Row::new(cells)
+    }
+    fn get_type(&self) -> String {
+        let check_type = |const_type| self.r_info & 0xffffffff == const_type;
+        return if check_type(R_X86_64_NONE) {
+            "R_X86_64_NONE".to_string()
+        } else if check_type(R_X86_64_64) {
+            "R_X86_64_64".to_string()
+        } else if check_type(R_X86_64_PC32) {
+            "R_X86_64_PC32".to_string()
+        } else if check_type(R_X86_64_GOT32) {
+            "R_X86_64_GOT32".to_string()
+        } else if check_type(R_X86_64_PLT32) {
+            "R_X86_64_PLT32".to_string()
+        } else if check_type(R_X86_64_COPY) {
+            "R_X86_64_COPY".to_string()
+        } else if check_type(R_X86_64_GLOB_DAT) {
+            "R_X86_64_GLOB_DAT".to_string()
+        } else if check_type(R_X86_64_JUMP_SLOT) {
+            "R_X86_64_JUMP_SLOT".to_string()
+        } else if check_type(R_X86_64_RELATIVE) {
+            "R_X86_64_RELATIVE".to_string()
+        } else if check_type(R_X86_64_GOTPCREL) {
+            "R_X86_64_GOTPCREL".to_string()
+        } else if check_type(R_X86_64_32) {
+            "R_X86_64_32".to_string()
+        } else {
+            "Invalid".to_string()
+        };
+    }
+    fn get_sym_value(
+        &self,
+        elf_file: &ELF,
+        related_symbol_index: u64,
+        related_symtab_sh_link: usize,
+    ) -> String {
+        let symtab = elf_file.sections[related_symtab_sh_link].clone();
+        let symbol_binary = symtab[related_symbol_index as usize * Symbol::size() as usize
+            ..(related_symbol_index as usize + 1) * Symbol::size() as usize]
+            .to_vec();
+        let symbol = Symbol::new_unsafe(symbol_binary);
+        format!("0x{:x}", symbol.st_value)
+    }
+    fn get_symbol_name_and_addend(
+        &self,
+        elf_file: &ELF,
+        related_symbol_index: u64,
+        related_symtab_sh_link: usize,
+    ) -> String {
+        let symtab = elf_file.sections[related_symtab_sh_link].clone();
+        let symtab_shdr = elf_file.shdrs[related_symtab_sh_link].clone();
+        let symbol_binary = symtab[related_symbol_index as usize * Symbol::size()
+            ..(related_symbol_index as usize + 1) * Symbol::size()]
+            .to_vec();
+        let symbol = Symbol::new_unsafe(symbol_binary);
+
+        let strtab = elf_file.sections[symtab_shdr.sh_link as usize].clone();
+        let symbol_name = ELF::collect_name(strtab[symbol.st_name as usize..].to_vec());
+
+        if self.r_addend < 0 {
+            format!("{} - {}", symbol_name, !self.r_addend)
+        } else {
+            format!("{} + {}", symbol_name, self.r_addend)
         }
     }
 }

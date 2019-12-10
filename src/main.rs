@@ -15,7 +15,7 @@ use compile::ir::llvm;
 use compile::ir::tac::Tac;
 use f::frontmanager::frontmanager as fm;
 mod object;
-use object::elf::elf64::{Symbol, ELF};
+use object::elf::elf64::{Rela, Symbol, ELF};
 mod assemble;
 use assemble as a;
 mod ce;
@@ -109,6 +109,10 @@ fn analyze_elf(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Err
         }
     }
 
+    // -r option
+    if matches.is_present("all") || matches.is_present("relocation") {
+        print_relocations(&elf_file)?;
+    }
     Ok(())
 }
 
@@ -481,6 +485,40 @@ fn print_symbols(elf_file: &ELF, section_name: &str) -> Result<(), Box<dyn std::
 
     let table = Table::new(rows, Default::default());
     table.print_stdout()?;
+
+    Ok(())
+}
+
+fn print_relocations(elf_file: &ELF) -> Result<(), Box<dyn std::error::Error>> {
+    let shstrtab = elf_file.sections[elf_file.ehdr.e_shstrndx as usize].clone();
+
+    for (i, shdr) in elf_file.shdrs.iter().enumerate() {
+        let mut rows: Vec<Row> = Vec::new();
+        rows.push(ELF::relocation_table_columns());
+
+        if shdr.sh_type as u64 == object::elf::elf64::SHT_RELA {
+            let relocation_number = shdr.sh_size as usize / Rela::size();
+            let section_name = ELF::collect_name(shstrtab[shdr.sh_name as usize..].to_vec());
+
+            println!(
+                "\n\nRelocation section '{}' at offset 0x{:x} contains {} entry:",
+                section_name, shdr.sh_offset, relocation_number,
+            );
+
+            let relatab = elf_file.sections[i].clone();
+            for i in 0..relocation_number as usize {
+                let rela_binary = relatab[i * Rela::size()..(i + 1) * Rela::size()].to_vec();
+                let rela = Rela::new_unsafe(rela_binary);
+
+                // for print symbol name
+                let symtab_header_link = shdr.sh_link as usize;
+                rows.push(rela.to_stdout(elf_file, symtab_header_link));
+            }
+            //shdr.relocation_info_to_stdout(elf_file);
+            let table = Table::new(rows, Default::default());
+            table.print_stdout()?;
+        }
+    }
 
     Ok(())
 }

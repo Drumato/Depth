@@ -70,3 +70,7 @@ args:
         short: s
         long: symbol
         help: Read all of defined symbols
+    - relocation:
+        short: r
+        long: relocatoin
+        help: Read all of defined the informations of relocate
