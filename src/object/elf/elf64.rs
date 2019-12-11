@@ -162,6 +162,14 @@ impl ELF {
         );
         Row::new(cells)
     }
+    pub fn dynamic_table_columns() -> Row {
+        let mut cells: Vec<Cell> = Vec::new();
+        Self::add_cell(&mut cells, &format!("{}", "Tag".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "Type".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "Name / Value".bold().green()));
+        Row::new(cells)
+    }
+
     fn add_cell(vec: &mut Vec<Cell>, contents: &String) {
         vec.push(Cell::new(contents, Default::default()));
     }
@@ -1225,6 +1233,10 @@ impl Rela {
         let strtab = elf_file.sections[symtab_shdr.sh_link as usize].clone();
         let symbol_name = ELF::collect_name(strtab[symbol.st_name as usize..].to_vec());
 
+        if symbol_name.len() == 0 {
+            return format!("{:x}", self.r_addend);
+        }
+
         if self.r_addend < 0 {
             format!("{} - {}", symbol_name, !self.r_addend)
         } else {
@@ -1240,4 +1252,165 @@ pub fn relas_to_vec(relas: Vec<&Rela>) -> Vec<u8> {
         }
     }
     bb
+}
+
+pub const DT_NULL: Elf64Sxword = 0;
+pub const DT_NEEDED: Elf64Sxword = 1;
+pub const DT_PLTRELSZ: Elf64Sxword = 2;
+pub const DT_PLTGOT: Elf64Sxword = 3;
+pub const DT_STRTAB: Elf64Sxword = 5;
+pub const DT_SYMTAB: Elf64Sxword = 6;
+pub const DT_RELA: Elf64Sxword = 7;
+pub const DT_RELASZ: Elf64Sxword = 8;
+pub const DT_RELAENT: Elf64Sxword = 9;
+pub const DT_STRSZ: Elf64Sxword = 10;
+pub const DT_SYMENT: Elf64Sxword = 11;
+pub const DT_INIT: Elf64Sxword = 12;
+pub const DT_FINI: Elf64Sxword = 13;
+pub const DT_PLTREL: Elf64Sxword = 20;
+pub const DT_DEBUG: Elf64Sxword = 21;
+pub const DT_JMPREL: Elf64Sxword = 23;
+pub const DT_INIT_ARRAY: Elf64Sxword = 25;
+pub const DT_FINI_ARRAY: Elf64Sxword = 26;
+pub const DT_INIT_ARRAYSZ: Elf64Sxword = 27;
+pub const DT_FINI_ARRAYSZ: Elf64Sxword = 28;
+pub const DT_GNU_HASH: Elf64Sxword = 0x6ffffef5;
+pub const DT_VERSYM: Elf64Sxword = 0x6ffffff0;
+pub const DT_RELACOUNT: Elf64Sxword = 0x6ffffff9;
+pub const DT_FLAGS_1: Elf64Sxword = 0x6ffffffb;
+pub const DT_VERNEED: Elf64Sxword = 0x6ffffffe;
+pub const DT_VERNEEDNUM: Elf64Sxword = 0x6fffffff;
+
+pub const DF_1_PIE: Elf64Sxword = 0x08000000;
+
+pub struct Dyn {
+    d_tag: Elf64Sxword,
+    d_un: Elf64Xword, // d_val || d_ptr
+}
+
+impl Dyn {
+    pub fn new_unsafe(binary: Vec<u8>) -> Dyn {
+        unsafe { std::ptr::read(binary.as_ptr() as *const Dyn) }
+    }
+    pub fn size() -> usize {
+        16
+    }
+    pub fn to_stdout(&self, elf_file: &ELF, related_symtab_sh_link: usize) -> Row {
+        let mut cells: Vec<Cell> = Vec::new();
+        ELF::add_cell(&mut cells, &format!("0x{:x}", self.d_tag));
+        ELF::add_cell(&mut cells, &self.get_type());
+        ELF::add_cell(
+            &mut cells,
+            &self.get_name_or_value(elf_file, related_symtab_sh_link),
+        );
+        Row::new(cells)
+    }
+    fn get_dynamic_type(tag: Elf64Sxword) -> String {
+        let check_type = |const_type| tag == const_type;
+        if check_type(DT_NULL) {
+            "(NULL)".to_string()
+        } else if check_type(DT_NEEDED) {
+            "(NEEDED)".to_string()
+        } else if check_type(DT_PLTGOT) {
+            "(PLTGOT)".to_string()
+        } else if check_type(DT_PLTRELSZ) {
+            "(PLTRELSZ)".to_string()
+        } else if check_type(DT_STRTAB) {
+            "(STRTAB)".to_string()
+        } else if check_type(DT_SYMTAB) {
+            "(SYMTAB)".to_string()
+        } else if check_type(DT_RELA) {
+            "(RELA)".to_string()
+        } else if check_type(DT_RELASZ) {
+            "(RELASZ)".to_string()
+        } else if check_type(DT_RELAENT) {
+            "(RELAENT)".to_string()
+        } else if check_type(DT_STRSZ) {
+            "(STRSZ)".to_string()
+        } else if check_type(DT_JMPREL) {
+            "(JMPREL)".to_string()
+        } else if check_type(DT_SYMENT) {
+            "(SYMENT)".to_string()
+        } else if check_type(DT_INIT) {
+            "(INIT)".to_string()
+        } else if check_type(DT_FINI) {
+            "(FINI)".to_string()
+        } else if check_type(DT_INIT_ARRAY) {
+            "(INIT_ARRAY)".to_string()
+        } else if check_type(DT_FINI_ARRAY) {
+            "(FINI_ARRAY)".to_string()
+        } else if check_type(DT_INIT_ARRAYSZ) {
+            "(INIT_ARRAYSZ)".to_string()
+        } else if check_type(DT_FINI_ARRAYSZ) {
+            "(FINI_ARRAYSZ)".to_string()
+        } else if check_type(DT_PLTREL) {
+            "(PLTREL)".to_string()
+        } else if check_type(DT_DEBUG) {
+            "(DEBUG)".to_string()
+        } else if check_type(DT_GNU_HASH) {
+            "(GNU_HASH)".to_string()
+        } else if check_type(DT_RELACOUNT) {
+            "(RELACOUNT)".to_string()
+        } else if check_type(DT_VERSYM) {
+            "(VERSYM)".to_string()
+        } else if check_type(DT_VERNEED) {
+            "(VERNEED)".to_string()
+        } else if check_type(DT_VERNEEDNUM) {
+            "(VERNEEDNUM)".to_string()
+        } else if check_type(DT_FLAGS_1) {
+            "(FLAGS_1)".to_string()
+        } else {
+            "Invalid".to_string()
+        }
+    }
+    fn get_type(&self) -> String {
+        Self::get_dynamic_type(self.d_tag)
+    }
+    fn get_name_or_value(&self, elf_file: &ELF, related_symtab_sh_link: usize) -> String {
+        let strtab = elf_file.sections[related_symtab_sh_link].clone();
+        match Self::get_name_kind(self.d_tag) {
+            DynNameKind::Library => format!(
+                "Shared Library: [{}]",
+                ELF::collect_name(strtab[self.d_un as usize..].to_vec())
+            ),
+            DynNameKind::DynamicType => Self::get_dynamic_type(self.d_un as i64),
+            DynNameKind::Flag1 => format!("Flag: {}", Self::get_flags_1(self.d_un)),
+            DynNameKind::Size => format!("{} (bytes)", self.d_un),
+            DynNameKind::Else => format!("0x{:x}", self.d_un),
+        }
+    }
+    fn get_name_kind(d_un: Elf64Sxword) -> DynNameKind {
+        match d_un {
+            DT_NEEDED => DynNameKind::Library,
+            DT_FLAGS_1 => DynNameKind::Flag1,
+            DT_PLTREL => DynNameKind::DynamicType,
+            DT_STRSZ => DynNameKind::Size,
+            DT_SYMENT => DynNameKind::Size,
+            DT_RELASZ => DynNameKind::Size,
+            DT_RELAENT => DynNameKind::Size,
+            DT_PLTRELSZ => DynNameKind::Size,
+            DT_INIT_ARRAYSZ => DynNameKind::Size,
+            DT_FINI_ARRAYSZ => DynNameKind::Size,
+            _ => {
+                eprintln!("else found -> {}", d_un);
+                DynNameKind::Else
+            }
+        }
+    }
+    fn get_flags_1(d_un: Elf64Xword) -> String {
+        let check_un = |const_un| d_un == const_un as u64;
+        if check_un(DF_1_PIE) {
+            "PIE".to_string()
+        } else {
+            "Invalid".to_string()
+        }
+    }
+}
+
+enum DynNameKind {
+    Library,
+    Flag1,
+    DynamicType,
+    Size,
+    Else,
 }

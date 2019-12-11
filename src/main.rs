@@ -15,7 +15,7 @@ use compile::ir::llvm;
 use compile::ir::tac::Tac;
 use f::frontmanager::frontmanager as fm;
 mod object;
-use object::elf::elf64::{Rela, Symbol, ELF};
+use object::elf::elf64::{Dyn, Rela, Symbol, ELF};
 mod assemble;
 use assemble as a;
 mod ce;
@@ -112,6 +112,11 @@ fn analyze_elf(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Err
     // -r option
     if matches.is_present("all") || matches.is_present("relocation") {
         print_relocations(&elf_file)?;
+    }
+
+    // -d option
+    if matches.is_present("all") || matches.is_present("dynamic") {
+        print_dynamics(&elf_file)?;
     }
     Ok(())
 }
@@ -514,11 +519,37 @@ fn print_relocations(elf_file: &ELF) -> Result<(), Box<dyn std::error::Error>> {
                 let symtab_header_link = shdr.sh_link as usize;
                 rows.push(rela.to_stdout(elf_file, symtab_header_link));
             }
-            //shdr.relocation_info_to_stdout(elf_file);
             let table = Table::new(rows, Default::default());
             table.print_stdout()?;
         }
     }
 
+    Ok(())
+}
+fn print_dynamics(elf_file: &ELF) -> Result<(), Box<dyn std::error::Error>> {
+    for (i, shdr) in elf_file.shdrs.iter().enumerate() {
+        let mut rows: Vec<Row> = Vec::new();
+        rows.push(ELF::dynamic_table_columns());
+
+        if shdr.sh_type as u64 == object::elf::elf64::SHT_DYNAMIC {
+            let dynamics_number = shdr.sh_size as usize / Dyn::size();
+            println!(
+                "\n\nDynamic section at offset 0x{:x} contains {} entry:",
+                shdr.sh_offset, dynamics_number,
+            );
+
+            let dyntab = elf_file.sections[i].clone();
+            for i in 0..dynamics_number as usize {
+                let dyn_binary = dyntab[i * Dyn::size()..(i + 1) * Dyn::size()].to_vec();
+                let dyn_sym = Dyn::new_unsafe(dyn_binary);
+
+                // for print symbol name
+                let symtab_header_link = shdr.sh_link as usize;
+                rows.push(dyn_sym.to_stdout(elf_file, symtab_header_link));
+            }
+            let table = Table::new(rows, Default::default());
+            table.print_stdout()?;
+        }
+    }
     Ok(())
 }
