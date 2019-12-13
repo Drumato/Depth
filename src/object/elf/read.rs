@@ -33,7 +33,6 @@ impl elf64::ELF {
             binary[elf_file.ehdr.e_phoff as usize..].to_vec(),
         );
         elf_file.phdrs = Some(phdrs);
-        // elf_file.condition();
         return elf_file;
     }
     fn build_phdrs(ehdr: &elf64::Ehdr, binary: Vec<u8>) -> Vec<elf64::Phdr> {

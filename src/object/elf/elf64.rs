@@ -171,7 +171,6 @@ impl ELF {
         Row::new(cells)
     }
 
-    fn add_cell(vec: &mut Vec<Cell>, contents: &String) {
     pub fn debug_table_columns() -> Row {
         let mut cells: Vec<Cell> = Vec::new();
         Self::add_cell(&mut cells, &format!("{}", "ReturnType".bold().green()));

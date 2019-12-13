@@ -20,6 +20,7 @@ impl Linker {
         self.build_symtab(&mut exec_file);
         self.build_strtab(&mut exec_file);
         self.build_relatext(&mut exec_file);
+        self.build_debug(&mut exec_file);
         self.build_shstrtab(&mut exec_file);
         self.condition_symbols(&mut exec_file);
         exec_file
@@ -65,12 +66,18 @@ impl Linker {
             ".rela.text",
         );
     }
+    fn build_debug(&self, exec_file: &mut ELF) {
+        let debug_table: Vec<u8> = self.conbine_vec(self.get_sections(".dbg.depth"));
+        let total_len: u64 = debug_table.len() as u64;
+        exec_file.add_section(debug_table, e::init_debughdr(total_len), ".dbg.depth");
+    }
     fn build_shstrtab(&self, exec_file: &mut ELF) {
         let shstrtab: Vec<u8> = e::strtab(vec![
             ".text",
             ".symtab",
             ".strtab",
             ".rela.text",
+            ".dbg.debug",
             ".shstrtab",
         ]);
         let shstrtab_len: u64 = shstrtab.len() as u64;

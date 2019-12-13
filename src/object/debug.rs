@@ -15,7 +15,7 @@ pub fn build_debug_information(elf_file: &ELF, functions: Vec<Func>) -> Vec<u8> 
         let mut count_pointer = count_dup_pointer(&f.return_type);
         if let Type::ARRAY(_, n) = f.return_type {
             d_arraysize = n as u8;
-            count_pointer = count_pointer | 0x80;
+            count_pointer = count_pointer | DBG_ARRAY;
         }
         let debug_symbol = DebugSymbol {
             d_type: count_pointer,
@@ -60,7 +60,7 @@ impl DebugSymbol {
         unsafe { std::ptr::read(binary.as_ptr() as *const DebugSymbol) }
     }
     pub fn size() -> usize {
-        64
+        8
     }
     pub fn to_vec(&self) -> Vec<u8> {
         let mut bb = vec![self.d_type, self.d_argnumber, self.d_name, self.d_arraysize];
