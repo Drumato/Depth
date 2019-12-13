@@ -1,6 +1,6 @@
 type Number = i64
 type PointerToNumber = Pointer<Number>
-func main(){
+func main() :: i64{
   let x : Number = 30
   let y : PointerToNumber = &x
   return *y 

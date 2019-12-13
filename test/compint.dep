@@ -1,6 +1,6 @@
 compint one = 1
 compint two = 2
 compint three = 3
-func main(){
+func main() :: i64{
   return one + two + three
 }

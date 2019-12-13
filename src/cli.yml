@@ -70,6 +70,7 @@ args:
         short: s
         long: symbol
         help: Read all of defined symbols
+<<<<<<< HEAD
     - relocation:
         short: r
         long: relocatoin
@@ -78,3 +79,8 @@ args:
         short: d
         long: dynamic
         help: Read all of defined the informations of dynamic
+=======
+    - debug:
+        long: debug
+        help: Read debug informations of Depth
+>>>>>>> [debug]

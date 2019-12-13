@@ -1,4 +1,4 @@
-func main(){
+func main() :: i64{
   let a : i64 = 10
   let x : Pointer<i64> = &a
   return *x

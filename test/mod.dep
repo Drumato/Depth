@@ -1,1 +1,1 @@
-func main(){return 5%3}
+func main() :: i64{return 5%3}

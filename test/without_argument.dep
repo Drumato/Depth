@@ -1,7 +1,7 @@
-func main(){
+func main() :: i64{
   return adb()
 }
 
-func adb(){
+func adb() :: i64{
   return 30
 }

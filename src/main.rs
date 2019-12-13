@@ -16,6 +16,7 @@ use compile::ir::tac::Tac;
 use f::frontmanager::frontmanager as fm;
 mod object;
 use object::elf::elf64::{Dyn, Rela, Symbol, ELF};
+use object::debug::DebugSymbol;
 mod assemble;
 use assemble as a;
 mod ce;
@@ -109,6 +110,7 @@ fn analyze_elf(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Err
         }
     }
 
+<<<<<<< HEAD
     // -r option
     if matches.is_present("all") || matches.is_present("relocation") {
         print_relocations(&elf_file)?;
@@ -117,6 +119,14 @@ fn analyze_elf(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Err
     // -d option
     if matches.is_present("all") || matches.is_present("dynamic") {
         print_dynamics(&elf_file)?;
+=======
+    if matches.is_present("all") || matches.is_present("debug") {
+        if elf_file.check_whether_given_section_is_exist(".dbg.depth") {
+            print_debugs(&elf_file)?;
+        } else {
+            println!("There are no .dbg.depth section");
+        }
+>>>>>>> [debug]
     }
     Ok(())
 }
@@ -124,11 +134,14 @@ fn analyze_elf(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Err
 fn linux_generate_binary_main(
     matches: &clap::ArgMatches,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    use object::elf::elf64;
+
     /* compile phase */
     let startup_routine =
         read_file(&(std::env::var("DEPTH_ROOT").unwrap() + "/lib/start_up_linux.s").as_str());
     let file_name = matches.value_of("source").unwrap();
-    let assembly: String = compile(file_name.to_string(), &matches) + &startup_routine;
+    let (mut assembly, debug_funcs) = compile(file_name.to_string(), &matches);
+    assembly += &startup_routine;
 
     /* if 'stop-c' given so output the assembly-code to file. */
     if matches.is_present("stop-c") {
@@ -139,12 +152,21 @@ fn linux_generate_binary_main(
     }
 
     /* assembly phase */
-    let elf_binary: ELF = if !file_name.contains(".o") {
+    let mut elf_binary: ELF = if !file_name.contains(".o") {
         assemble(assembly.to_string(), &matches)
     } else {
         // read the object file then construct ELF struct.
         ELF::read_elf(&file_name.to_string())
     };
+
+    /* add debug section */
+    let debug_section_binary = object::debug::build_debug_information(&elf_binary, debug_funcs);
+    let debug_length = debug_section_binary.len();
+    elf_binary.add_section(
+        debug_section_binary,
+        elf64::init_debughdr(debug_length as u64),
+        ".dbg.depth",
+    );
 
     /* if 'stop-a' given so output the object-file. */
     if matches.is_present("stop-a") {
@@ -166,9 +188,9 @@ fn linux_generate_binary_main(
 
     Ok(())
 }
-fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
+fn compile(file_name: String, matches: &clap::ArgMatches) -> (String, Vec<f::parse::node::Func>) {
     if !file_name.contains(".dep") {
-        return read_file(&file_name);
+        return (read_file(&file_name), vec![]);
     }
 
     /* tokenize */
@@ -189,6 +211,9 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
         llvm::emit_llvm(file_name, front_manager);
         std::process::exit(0);
     }
+
+    /* escape functions for debug section*/
+    let functions = front_manager.functions.clone();
 
     /* generate three-address-code from ast */
     front_manager.gen_tacs();
@@ -228,7 +253,7 @@ fn compile(file_name: String, matches: &clap::ArgMatches) -> String {
     }
 
     /* codegen */
-    b::codegen::genx64(optimizer.tacs)
+    (b::codegen::genx64(optimizer.tacs), functions)
 }
 
 fn assemble(assembler_code: String, matches: &clap::ArgMatches) -> ELF {
@@ -494,6 +519,7 @@ fn print_symbols(elf_file: &ELF, section_name: &str) -> Result<(), Box<dyn std::
     Ok(())
 }
 
+<<<<<<< HEAD
 fn print_relocations(elf_file: &ELF) -> Result<(), Box<dyn std::error::Error>> {
     let shstrtab = elf_file.sections[elf_file.ehdr.e_shstrndx as usize].clone();
 
@@ -551,5 +577,31 @@ fn print_dynamics(elf_file: &ELF) -> Result<(), Box<dyn std::error::Error>> {
             table.print_stdout()?;
         }
     }
+=======
+fn print_debugs(elf_file: &ELF) -> Result<(), Box<dyn std::error::Error>> {
+    let debug_number = elf_file.get_section_number(".dbg.depth");
+    let debug_table = elf_file.sections[debug_number].clone();
+    let debug_shdr = elf_file.shdrs[debug_number].clone();
+    let debug_count = debug_shdr.sh_size as usize / DebugSymbol::size();
+
+    println!(
+        "\n\nDebug table '.dbg.depth' contains {} entries:",
+        debug_count
+    );
+
+    let mut rows: Vec<Row> = Vec::new();
+    rows.push(ELF::debug_table_columns());
+
+    for i in 0..debug_count as usize {
+        let debug_binary =
+            debug_table[i * DebugSymbol::size()..(i + 1) * DebugSymbol::size()].to_vec();
+        let debug_symbol = DebugSymbol::new_unsafe(debug_binary);
+        rows.push(debug_symbol.to_stdout(elf_file));
+    }
+
+    let table = Table::new(rows, Default::default());
+    table.print_stdout()?;
+
+>>>>>>> [debug]
     Ok(())
 }

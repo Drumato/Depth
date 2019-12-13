@@ -129,6 +129,7 @@ fn tokenize_multisymbols(input: &String) -> Option<Token> {
         ">=" => Some(Token::GTEQ),
         "==" => Some(Token::EQ),
         "!=" => Some(Token::NTEQ),
+        "::" => Some(Token::DOUBLECOLON),
         _ => None,
     }
 }

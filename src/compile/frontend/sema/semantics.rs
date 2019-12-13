@@ -267,7 +267,14 @@ impl FrontManager {
                 }
                 Type::STRUCT(map, total_size)
             }
-
+            Node::CALL(func_name, _) => {
+                for f in self.functions.iter() {
+                    if f.name == func_name {
+                        return f.return_type.clone();
+                    }
+                }
+                Type::UNKNOWN
+            }
             _ => Type::UNKNOWN,
         }
     }

@@ -1,1 +1,1 @@
-func main(){ return 3+6 }
+func main() :: i64 { return 3+6 }

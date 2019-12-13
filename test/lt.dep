@@ -1,1 +1,1 @@
-func main(){return 1<2}
+func main() :: i64{return 1<2}

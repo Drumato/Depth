@@ -1,4 +1,4 @@
-func main(){
+func main() :: i64{
   if (1 > 0)
     return 30
   else

@@ -95,11 +95,18 @@ impl Parser {
                 break;
             }
         }
+        if !self.consume(&Token::DOUBLECOLON) {
+            Error::PARSE.found(
+                &"the function's return type of Depth must be declare explicit.".to_string(),
+            );
+        }
+        let return_typename = self.consume_typename();
         let func_stmts: Vec<Node> = self.compound_stmt();
         self.funcs.push(Func {
             name: func_name,
             args: func_args,
             stmts: func_stmts,
+            return_type: Type::from_token(return_typename),
             env: self.cur_env.clone(),
         });
     }

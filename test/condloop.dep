@@ -1,4 +1,4 @@
-func main(){
+func main() :: i64{
   let mut x : i64 = 10
   let mut y : i64 = 0
   condloop (x != 0) {

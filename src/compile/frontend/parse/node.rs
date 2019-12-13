@@ -1,4 +1,5 @@
 use super::super::frontmanager::frontmanager::Env;
+use super::super::sema::semantics::Type;
 use std::collections::BTreeMap;
 extern crate colored;
 use colored::*;
@@ -116,6 +117,7 @@ pub struct Func {
     pub stmts: Vec<Node>,
     pub args: Vec<Node>,
     pub env: Env,
+    pub return_type: Type,
 }
 
 pub fn dump_ast(funcs: &Vec<Func>) {

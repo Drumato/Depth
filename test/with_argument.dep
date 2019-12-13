@@ -1,7 +1,7 @@
-func main(){
+func main() :: i64{
   return ade(20,40)
 }
 
-func ade(x:i64,y:i64){
+func ade(x:i64,y:i64) :: i64{
   return x+y
 }
