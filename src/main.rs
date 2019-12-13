@@ -58,6 +58,9 @@ fn linux_main(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Erro
 
 fn analyze_elf(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
     let file_name = matches.value_of("source").unwrap().to_string();
+    if file_name.contains(".dep") {
+        return Ok(());
+    }
     let elf_file = ELF::read_elf(&file_name);
     // -h option
     if matches.is_present("all") || matches.is_present("header") {
