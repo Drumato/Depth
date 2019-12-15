@@ -165,8 +165,13 @@ impl FrontManager {
                 Type::UNKNOWN
             }
             Node::ADDRESS(lch) => {
-                let lch_type: Type = self.walk(*lch.clone());
-                Type::POINTER(Box::new(lch_type))
+                let ident_node = *lch.clone();
+                if let Node::IDENT(_) = &ident_node {
+                    Type::POINTER(Box::new(self.walk(ident_node)))
+                } else {
+                    Error::TYPE.found(&format!("can't address without ident"));
+                    Type::UNKNOWN
+                }
             }
             Node::DEREFERENCE(lch) => {
                 let lch_type: Type = self.walk(*lch.clone());
