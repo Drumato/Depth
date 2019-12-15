@@ -52,6 +52,12 @@ pub enum Token {
     COMMENT,
 }
 impl Token {
+    pub fn name(&self) -> Option<String> {
+        if let Self::IDENT(name) = self {
+            return Some(name.to_string());
+        }
+        None
+    }
     pub fn string(&self) -> String {
         match self {
             Token::INTEGER(int) => format!("INTEGER<{}>", int),

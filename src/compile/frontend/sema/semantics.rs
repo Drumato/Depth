@@ -174,7 +174,7 @@ impl FrontManager {
                     return *inner.clone();
                 }
                 Error::TYPE.found(&format!(
-                    "can't dereferecne {} it's not pointer ",
+                    "can't dereference {} it's not pointer ",
                     lch_type.string(),
                 ));
                 Type::UNKNOWN
@@ -182,7 +182,11 @@ impl FrontManager {
             Node::IDENT(name) => {
                 if let Some(s) = self.get_symbol(&name) {
                     if let Ok(ty) = s.ty {
-                        ty
+                        if let Type::ALIAS(alt) = ty {
+                            *alt
+                        } else {
+                            ty
+                        }
                     } else if let Err(type_t) = s.ty {
                         Type::from_token(type_t)
                     } else {
@@ -293,21 +297,4 @@ impl FrontManager {
             env = *env.prev.unwrap().clone();
         }
     }
-    /*
-    pub fn get_type(&self, name: &String) -> Option<Type> {
-        let mut env: Env = self.cur_env.clone();
-        loop {
-            if let None = env.prev {
-                if let Some(t) = env.type_table.get(name) {
-                    return Some(t.clone());
-                }
-                return None;
-            }
-            if let Some(t) = env.type_table.get(name) {
-                return Some(t.clone());
-            }
-            env = *env.prev.unwrap().clone();
-        }
-    }
-    */
 }

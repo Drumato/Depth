@@ -3,6 +3,7 @@ use super::super::frontmanager::frontmanager::{Env, Symbol};
 use super::super::sema::semantics::Type;
 use super::super::token::token::Token;
 use super::node::{Func, Node};
+
 use std::collections::BTreeMap;
 struct Parser {
     tokens: Vec<Token>,
@@ -31,6 +32,7 @@ impl Parser {
         }
     }
     fn toplevel(&mut self) {
+        let mut global = Env::new();
         loop {
             let t: &Token = self.cur_token();
             match t {
@@ -38,10 +40,10 @@ impl Parser {
                     self.parse_compint();
                 }
                 &Token::TYPE => {
-                    self.parse_alias();
+                    self.parse_alias(&mut global);
                 }
                 &Token::FUNC => {
-                    self.parse_func();
+                    self.parse_func(global.clone());
                 }
                 &Token::STRUCT => {
                     self.parse_struct();
@@ -79,8 +81,9 @@ impl Parser {
         }
         self.next_token();
     }
-    fn parse_func(&mut self) {
+    fn parse_func(&mut self, global: Env) {
         self.cur_env = Env::new();
+        self.cur_env.prev = Some(Box::new(global));
         self.next_token();
         let func_name: String = self.consume_ident();
         self.expect(&Token::LPAREN);
@@ -100,27 +103,39 @@ impl Parser {
                 &"the function's return type of Depth must be declare explicit.".to_string(),
             );
         }
-        let return_typename = self.consume_typename();
+        let return_type_t = self.consume_typename();
+        let return_type: Type = if let Some(type_name) = return_type_t.name() {
+            if let Some(global_t) = &self.cur_env.prev {
+                if let Some(alias_t) = global_t.type_table.get(&type_name) {
+                    alias_t.clone()
+                } else {
+                    Error::TYPE.found(&format!("not found such an alias -> {}", type_name));
+                    Type::UNKNOWN
+                }
+            } else {
+                Type::UNKNOWN
+            }
+        } else {
+            Type::from_token(return_type_t)
+        };
         let func_stmts: Vec<Node> = self.compound_stmt();
         self.funcs.push(Func {
             name: func_name,
             args: func_args,
             stmts: func_stmts,
-            return_type: Type::from_token(return_typename),
+            return_type: return_type,
             env: self.cur_env.clone(),
         });
     }
-    fn parse_alias(&mut self) {
+    fn parse_alias(&mut self, global: &mut Env) {
         self.expect(&Token::TYPE);
         let alias_name: String = self.consume_ident();
         self.expect(&Token::ASSIGN);
         let type_name: Token = self.consume_typename();
-        if let Some(ref mut global) = self.cur_env.prev {
-            global.type_table.insert(
-                alias_name,
-                Type::ALIAS(Box::new(Type::from_token(type_name))),
-            );
-        }
+        global.type_table.insert(
+            alias_name,
+            Type::ALIAS(Box::new(Type::from_token(type_name))),
+        );
     }
     fn parse_struct(&mut self) {
         self.expect(&Token::STRUCT);
