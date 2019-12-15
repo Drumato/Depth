@@ -457,6 +457,7 @@ fn build_shstrtab() -> Vec<u8> {
         ".strtab",
         ".rela.text",
         ".shstrtab",
+        ".dbg.depth",
     ])
 }
 
