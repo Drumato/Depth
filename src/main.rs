@@ -162,7 +162,7 @@ fn linux_generate_binary_main(
         output_file_with_binary(output_path, elf_binary);
     } else {
         /* link the object-file  */
-        let exec_file: ELF = link::linker::Linker::linking(vec![elf_binary]);
+        let exec_file: ELF = link::linker::Linker::linking(elf_binary);
 
         /* if 'run' given then the loader load the binary and execute machine code. */
         if matches.is_present("run") {
