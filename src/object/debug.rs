@@ -30,11 +30,36 @@ pub fn build_debug_information(elf_file: &ELF, functions: Vec<Func>) -> Vec<u8> 
 }
 
 fn find_debug_name(elf_file: &ELF, func_name: String) -> u8 {
-    if let Some(idx) = elf_file.names.get(&func_name) {
-        *idx as u8
-    } else {
-        0
+    let symtab_number = elf_file.get_section_number(".symtab");
+    let string_table_number = elf_file.shdrs[symtab_number].sh_link as usize;
+    let strtab = elf_file.sections[string_table_number].clone();
+    let name_count = strtab
+        .iter()
+        .filter(|num| *num == &0x00)
+        .map(|b| *b)
+        .collect::<Vec<u8>>()
+        .len()
+        - 1;
+    let mut d_name = 1;
+    for (idx, bb) in strtab
+        .to_vec()
+        .splitn(name_count, |num| *num == 0x00)
+        .enumerate()
+    {
+        if idx == 0 {
+            continue;
+        }
+        let b: Vec<u8> = bb
+            .iter()
+            .take_while(|num| *num != &0x00)
+            .map(|b| *b)
+            .collect::<Vec<u8>>();
+        if func_name == String::from_utf8(b.to_vec()).unwrap() {
+            return d_name;
+        }
+        d_name += b.len() as u8 + 1;
     }
+    0
 }
 
 fn count_dup_pointer(t: &Type) -> u8 {
@@ -80,7 +105,9 @@ impl DebugSymbol {
         type_string
     }
     fn get_name(&self, elf_file: &ELF) -> String {
-        let strtab = elf_file.sections[elf_file.ehdr.e_shstrndx as usize].clone();
+        let symtab_number = elf_file.get_section_number(".symtab");
+        let string_table_number = elf_file.shdrs[symtab_number].sh_link as usize;
+        let strtab = elf_file.sections[string_table_number].clone();
         let mut debug_name = ELF::collect_name(strtab[self.d_name as usize..].to_vec());
         let length = debug_name.len();
         if length == 0 {

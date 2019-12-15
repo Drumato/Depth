@@ -77,7 +77,7 @@ impl Linker {
             ".symtab",
             ".strtab",
             ".rela.text",
-            ".dbg.debug",
+            ".dbg.depth",
             ".shstrtab",
         ]);
         let shstrtab_len: u64 = shstrtab.len() as u64;
