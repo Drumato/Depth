@@ -16,8 +16,7 @@ This is the main source code repository for Depth.
 
 ## assemble package
 
-- **x86-64** assemblyをマシン語に変換するアセンブラ｡
-  - 後々他アーキテクチャにも対応予定  
+- **x86-64** assemblyをマシン語に変換するアセンブラ｡   
 - 再配置可能オブジェクトファイルを吐く  
 
 ## link package  
@@ -25,7 +24,26 @@ This is the main source code repository for Depth.
 - オブジェクトファイルを実行形式に変換  
 - 現在スタティックリンクのみサポート
 
+## load package
+
+- `--run` でELFの実行
+- `execve(2)`を **用いていない**
+  - メモリ上にELFバイナリをロードして,関数ポインタにキャスト,実行.
+  
+## readelf
+
+- `--readelf [-a/-h/-r/-l/-S/-s/-d/--debug]`
+  - 独自デバッグ情報を読むには `--debug`
 
 ## Author's Profile
 
-- Name: **[Drumato](https://gihub.com/drumato/)**
+
+# Profile
+
+- screenName: **Drumato**
+- Team: [IPFactory](https://ipfactory.github.io/) / OtakuAssembly
+- Language: Rust/C/Zen
+- Editor: Neovim
+- Age: 19
+- Occupation: Student
+- Interests: compiler/assembler/linker/OS/binary analysis(esp ELF)/ **all low-level programming**
