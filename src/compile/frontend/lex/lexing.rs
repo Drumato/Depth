@@ -11,7 +11,7 @@ pub fn lexing(mut input: String) -> Vec<Token> {
     let keywords: HashMap<&str, (Token, usize)> = build_keywords();
 
     /* append this_token to tokens while given tokens are valid. */
-    while let Some((t, idx)) = tokenize(&input, &keywords) {
+    while let Some((t, idx)) = tokenize(&mut input, &keywords) {
         /* next point. */
         input.drain(..idx);
 
@@ -30,12 +30,23 @@ pub fn lexing(mut input: String) -> Vec<Token> {
     tokens
 }
 
-fn tokenize(input: &String, keywords: &HashMap<&str, (Token, usize)>) -> Option<(Token, TokenLen)> {
+fn tokenize(
+    input: &mut String,
+    keywords: &HashMap<&str, (Token, usize)>,
+) -> Option<(Token, TokenLen)> {
     /* return None if can not tokenize */
     if input.len() == 0 {
         return None;
     }
     match input.as_bytes()[0] as char {
+        c if c == '@' => {
+            input.drain(..5);
+            let until_char = count_len(input, |c| !c.is_alphanumeric());
+            input.drain(..until_char);
+            let length: TokenLen = count_len(input, |c| c != &'#') - 1;
+            let contents = input.chars().take(length).collect::<String>();
+            Some((Token::INFORMATION(contents), length))
+        }
         /* keyword and identifier */
         c if c.is_alphabetic() => tokenize_keywords(input, keywords),
 
@@ -93,6 +104,7 @@ fn tokenize_symbols(input: &String) -> Option<(Token, TokenLen)> {
         ',' => Some((Token::COMMA, 1)),
         '=' => Some((Token::ASSIGN, 1)),
         '.' => Some((Token::DOT, 1)),
+        '#' => Some((Token::HASH, 1)),
         ' ' => Some((Token::BLANK, count_len(input, |c| c == &' '))),
         '\n' => Some((Token::LF, 1)),
         '\t' => Some((Token::BLANK, 1)),

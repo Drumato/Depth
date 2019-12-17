@@ -4,6 +4,8 @@ use super::super::compile::frontend::sema::semantics::Type;
 use super::elf::elf64::ELF;
 use cli_table::{Cell, Row};
 
+pub const LIMIT_DOCUMENTS: usize = 320;
+
 pub fn build_debug_information(elf_file: &ELF, functions: Vec<Func>) -> Vec<u8> {
     let mut d_arraysize: u8 = 0;
     let mut debugs: Vec<u8> = Vec::new();
@@ -27,6 +29,31 @@ pub fn build_debug_information(elf_file: &ELF, functions: Vec<Func>) -> Vec<u8> 
         debugs.append(&mut debug_symbol.to_vec());
     }
     debugs
+}
+
+pub fn build_documents(functions: Vec<Func>) -> Vec<u8> {
+    let mut binary: Vec<u8> = Vec::new();
+    for f in functions {
+        let mut documents: Vec<u8>;
+        if let Some(contents) = f.document {
+            documents = contents.as_bytes().to_vec();
+            if LIMIT_DOCUMENTS <= contents.len() {
+                eprintln!(
+                    "documentation's length stripped because its more than limits(320 bytes)."
+                );
+                documents = "void".to_string().as_bytes().to_vec();
+            } else {
+            }
+        } else {
+            documents = "void".to_string().as_bytes().to_vec();
+        }
+        // padding
+        for _ in 0..(LIMIT_DOCUMENTS - documents.len()) {
+            documents.push(0x00);
+        }
+        binary.append(&mut documents);
+    }
+    binary
 }
 
 fn find_debug_name(elf_file: &ELF, func_name: String) -> u8 {
@@ -121,7 +148,7 @@ impl DebugSymbol {
         }
         type_string
     }
-    fn get_name(&self, elf_file: &ELF) -> String {
+    pub fn get_name(&self, elf_file: &ELF) -> String {
         let symtab_number = elf_file.get_section_number(".symtab");
         let string_table_number = elf_file.shdrs[symtab_number].sh_link as usize;
         let strtab = elf_file.sections[string_table_number].clone();

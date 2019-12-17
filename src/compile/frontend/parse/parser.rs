@@ -34,7 +34,7 @@ impl Parser {
     fn toplevel(&mut self) {
         let mut global = Env::new();
         loop {
-            let t: &Token = self.cur_token();
+            let t: &Token = &self.cur_token().clone();
             match t {
                 &Token::COMPINT => {
                     self.parse_compint();
@@ -44,6 +44,12 @@ impl Parser {
                 }
                 &Token::FUNC => {
                     self.parse_func(global.clone());
+                }
+                Token::INFORMATION(contents) => {
+                    self.next_token();
+                    self.parse_func(global.clone());
+                    let insert_number = self.funcs.len();
+                    self.funcs[insert_number - 1].document = Some(contents.to_string());
                 }
                 &Token::STRUCT => {
                     self.parse_struct();
@@ -124,6 +130,7 @@ impl Parser {
             args: func_args,
             stmts: func_stmts,
             return_type: return_type,
+            document: None,
             env: self.cur_env.clone(),
         });
     }

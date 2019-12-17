@@ -6,7 +6,7 @@ use clap::App;
 extern crate colored;
 use colored::*;
 extern crate cli_table;
-use cli_table::{Row, Table};
+use cli_table::{Cell, Row, Table};
 
 mod compile;
 use compile::backend as b;
@@ -15,7 +15,8 @@ use compile::ir::llvm;
 use compile::ir::tac::Tac;
 use f::frontmanager::frontmanager as fm;
 mod object;
-use object::debug::DebugSymbol;
+use debug::DebugSymbol;
+use object::debug;
 use object::elf::elf64::{Dyn, Rela, Symbol, ELF};
 mod assemble;
 use assemble as a;
@@ -72,7 +73,7 @@ fn analyze_elf(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Err
         let shnum = elf_file.ehdr.e_shnum;
         let shoff = elf_file.ehdr.e_shoff;
         println!(
-            "There are {} section headers, starting at 0x{:x}",
+            "\n\nThere are {} section headers, starting at 0x{:x}",
             shnum, shoff
         );
         print_shdrs_stdout(&elf_file)?;
@@ -125,7 +126,8 @@ fn analyze_elf(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Err
 
     // --debug option
     if matches.is_present("all") || matches.is_present("debug") {
-        print_debugs(&elf_file)?;
+        let debug_names: Vec<String> = print_debugs(&elf_file)?;
+        print_documents(&elf_file, debug_names)?;
     }
     Ok(())
 }
@@ -328,7 +330,8 @@ fn assemble(
     elf_file.add_section(relas_tab, elf64::init_relahdr(relas_size), ".rela.text");
 
     /* .dbg.depth */
-    let debug_section_binary = object::debug::build_debug_information(&elf_file, debug_funcs);
+    let debug_section_binary =
+        object::debug::build_debug_information(&elf_file, debug_funcs.clone());
     let debug_length = debug_section_binary.len();
     elf_file.add_section(
         debug_section_binary,
@@ -336,6 +339,14 @@ fn assemble(
         ".dbg.depth",
     );
 
+    /* .documents */
+    let documents_binary = object::debug::build_documents(debug_funcs);
+    let documents_length = documents_binary.len();
+    elf_file.add_section(
+        documents_binary,
+        elf64::init_documenthdr(documents_length as u64),
+        ".documents",
+    );
     /* .shstrtab */
     let shstrtab_length = shstrtab.len() as u64;
     let shstrtab_hdr = elf64::init_strtabhdr(shstrtab_length);
@@ -456,8 +467,9 @@ fn build_shstrtab() -> Vec<u8> {
         ".symtab",
         ".strtab",
         ".rela.text",
-        ".shstrtab",
         ".dbg.depth",
+        ".documents",
+        ".shstrtab",
     ])
 }
 
@@ -580,8 +592,8 @@ fn print_dynamics(elf_file: &ELF) -> Result<(), Box<dyn std::error::Error>> {
     }
     Ok(())
 }
-fn print_debugs(elf_file: &ELF) -> Result<(), Box<dyn std::error::Error>> {
-    let debug_number = 5;
+fn print_debugs(elf_file: &ELF) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+    let debug_number = elf_file.get_section_number(".dbg.depth");
     let debug_table = elf_file.sections[debug_number].clone();
     let debug_shdr = elf_file.shdrs[debug_number].clone();
     let debug_count = debug_shdr.sh_size as usize / DebugSymbol::size();
@@ -594,15 +606,40 @@ fn print_debugs(elf_file: &ELF) -> Result<(), Box<dyn std::error::Error>> {
     let mut rows: Vec<Row> = Vec::new();
     rows.push(ELF::debug_table_columns());
 
+    let mut debug_names: Vec<String> = Vec::new();
     for i in 0..debug_count as usize {
         let debug_binary =
             debug_table[i * DebugSymbol::size()..(i + 1) * DebugSymbol::size()].to_vec();
         let debug_symbol = DebugSymbol::new_unsafe(debug_binary);
+        debug_names.push(debug_symbol.get_name(elf_file));
         rows.push(debug_symbol.to_stdout(elf_file));
     }
 
     let table = Table::new(rows, Default::default());
     table.print_stdout()?;
 
+    Ok(debug_names)
+}
+
+fn print_documents(
+    elf_file: &ELF,
+    debug_names: Vec<String>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let document_number = elf_file.get_section_number(".documents");
+    let document_binary = elf_file.sections[document_number].clone();
+
+    let mut rows: Vec<Row> = Vec::new();
+    rows.push(ELF::documents_columns());
+    for (i, name) in debug_names.iter().enumerate() {
+        let mut cells: Vec<Cell> = Vec::new();
+        let documents =
+            document_binary[i * debug::LIMIT_DOCUMENTS..(i + 1) * debug::LIMIT_DOCUMENTS].to_vec();
+        ELF::add_cell(&mut cells, name);
+        ELF::add_cell(&mut cells, &String::from_utf8(documents).unwrap());
+        rows.push(Row::new(cells));
+    }
+
+    let table = Table::new(rows, Default::default());
+    table.print_stdout()?;
     Ok(())
 }

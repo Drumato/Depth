@@ -133,6 +133,7 @@ pub struct Func {
     pub args: Vec<Node>,
     pub env: Env,
     pub return_type: Type,
+    pub document: Option<String>,
 }
 
 pub fn dump_ast(funcs: &Vec<Func>) {

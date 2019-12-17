@@ -42,6 +42,7 @@ pub enum Token {
     COMPINT,
     POINTER(Box<Token>),
     ARRAY(Box<Token>, Box<Token>),
+    INFORMATION(String),
 
     /* etc */
     INTEGER(i128),
@@ -50,6 +51,7 @@ pub enum Token {
     BLANK,
     LF,
     COMMENT,
+    HASH,
 }
 impl Token {
     pub fn name(&self) -> Option<String> {
@@ -103,12 +105,13 @@ impl Token {
             Token::ARRAY(elem_type, ary_size) => {
                 format!("ARRAY<{},{}>", elem_type.string(), ary_size.string())
             }
+            Token::INFORMATION(_) => "@info".to_string(),
             _ => "".to_string(),
         }
     }
     pub fn should_ignore(&self) -> bool {
         match self {
-            Token::BLANK | Token::LF | Token::COMMENT => true,
+            Token::BLANK | Token::LF | Token::COMMENT | Token::HASH => true,
             _ => false,
         }
     }

@@ -1,7 +1,8 @@
 extern crate colored;
 use super::super::super::ce::types::Error;
-use super::super::debug::DebugSymbol;
+use super::super::debug;
 use colored::*;
+use debug::DebugSymbol;
 extern crate cli_table;
 use cli_table::{Cell, Row};
 
@@ -177,6 +178,12 @@ impl ELF {
         Self::add_cell(&mut cells, &format!("{}", "ArgNumbers".bold().green()));
         Self::add_cell(&mut cells, &format!("{}", "Name".bold().green()));
         Self::add_cell(&mut cells, &format!("{}", "ArgType".bold().green()));
+        Row::new(cells)
+    }
+    pub fn documents_columns() -> Row {
+        let mut cells: Vec<Cell> = Vec::new();
+        Self::add_cell(&mut cells, &format!("{}", "Name".bold().green()));
+        Self::add_cell(&mut cells, &format!("{}", "Documents".bold().green()));
         Row::new(cells)
     }
     pub fn add_cell(vec: &mut Vec<Cell>, contents: &String) {
@@ -716,6 +723,20 @@ pub fn init_debughdr(size: u64) -> Shdr {
         sh_info: 0,
         sh_addralign: 8,
         sh_entsize: DebugSymbol::size() as u64,
+    }
+}
+pub fn init_documenthdr(size: u64) -> Shdr {
+    Shdr {
+        sh_name: 0,
+        sh_type: SHT_NOTE as u32,
+        sh_flags: 0,
+        sh_addr: 0,
+        sh_offset: 0,
+        sh_size: size,
+        sh_link: 0,
+        sh_info: 0,
+        sh_addralign: 8,
+        sh_entsize: debug::LIMIT_DOCUMENTS as u64,
     }
 }
 pub fn init_nullhdr() -> Shdr {
