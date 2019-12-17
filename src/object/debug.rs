@@ -41,11 +41,11 @@ pub fn build_documents(functions: Vec<Func>) -> Vec<u8> {
                 eprintln!(
                     "documentation's length stripped because its more than limits(320 bytes)."
                 );
-                documents = "void".to_string().as_bytes().to_vec();
+                documents = "no documents".to_string().as_bytes().to_vec();
             } else {
             }
         } else {
-            documents = "void".to_string().as_bytes().to_vec();
+            documents = "no documents".to_string().as_bytes().to_vec();
         }
         // padding
         for _ in 0..(LIMIT_DOCUMENTS - documents.len()) {
