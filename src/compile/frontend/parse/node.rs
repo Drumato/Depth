@@ -59,6 +59,21 @@ pub enum Node {
     INVALID,
 }
 impl Node {
+    pub fn name(&self) -> Option<String> {
+        if let Self::IDENT(name) = self {
+            return Some(name.to_string());
+        } else if let Self::DEFARG(name) = self {
+            return Some(name.to_string());
+        }
+
+        // unary-operation
+        match self {
+            Self::DEREFERENCE(ch) => ch.name(),
+            Self::ADDRESS(ch) => ch.name(),
+            Self::MINUS(ch) => ch.name(),
+            _ => None,
+        }
+    }
     pub fn string(&self) -> String {
         match self {
             Self::ADD(lch, rch) => format!("ADD<{},{}>", lch.string(), rch.string()),

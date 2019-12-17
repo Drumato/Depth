@@ -10,7 +10,7 @@ pub fn build_debug_information(elf_file: &ELF, functions: Vec<Func>) -> Vec<u8> 
 
     for f in functions {
         let argument_number = f.args.len() as u8;
-        let d_name = find_debug_name(elf_file, f.name);
+        let d_name = find_debug_name(elf_file, f.name.clone());
 
         let mut count_pointer = count_dup_pointer(&f.return_type);
         if let Type::ARRAY(_, n) = f.return_type {
@@ -22,7 +22,7 @@ pub fn build_debug_information(elf_file: &ELF, functions: Vec<Func>) -> Vec<u8> 
             d_argnumber: argument_number,
             d_name: d_name,
             d_arraysize: d_arraysize,
-            d_argtype: 0,
+            d_argtype: build_arg_types(f),
         };
         debugs.append(&mut debug_symbol.to_vec());
     }
@@ -71,6 +71,19 @@ fn count_dup_pointer(t: &Type) -> u8 {
     }
 }
 
+fn build_arg_types(func: Func) -> u32 {
+    let mut arg_types: u32 = 0;
+    for (i, arg) in func.args.iter().enumerate() {
+        let argument_name = arg.name().unwrap();
+        if let Some(arg_symbol) = func.env.sym_table.get(&argument_name) {
+            if let Ok(arg_type) = &arg_symbol.ty {
+                arg_types |= (count_dup_pointer(&arg_type) as u32) << (i * 8);
+            }
+        }
+    }
+    arg_types
+}
+
 const DBG_ARRAY: u8 = 0b10000000;
 #[repr(C)]
 pub struct DebugSymbol {
@@ -95,12 +108,16 @@ impl DebugSymbol {
         bb
     }
     fn get_type(&self) -> String {
-        let mut type_string = "i64".to_string();
-        for _ in 0..(self.d_type & 0x7f) {
-            type_string = format!("Pointer<{}>", type_string);
-        }
+        let mut type_string = Self::type_to_string(self.d_type);
         if self.d_type & DBG_ARRAY != 0 {
             type_string = format!("Array<{}, {}>", type_string, self.d_arraysize);
+        }
+        type_string
+    }
+    fn type_to_string(b: u8) -> String {
+        let mut type_string = "i64".to_string();
+        for _ in 0..(b & 0x7f) {
+            type_string = format!("Pointer<{}>", type_string);
         }
         type_string
     }
@@ -115,14 +132,31 @@ impl DebugSymbol {
         }
         debug_name
     }
-    //fn get_arg_types(&self) -> String {}
+    fn get_arg_types(&self) -> String {
+        if self.d_argnumber == 0 {
+            return "void".to_string();
+        }
+        let mut type_string = String::from("(");
+        for (i, b) in self.d_argtype.to_le_bytes().to_vec().iter().enumerate() {
+            if i as u8 == self.d_argnumber {
+                break;
+            }
+
+            // last argument
+            if i as u8 == self.d_argnumber - 1 {
+                type_string += &(format!("{})", Self::type_to_string(*b)).as_str());
+            } else {
+                type_string += &(format!("{}, ", Self::type_to_string(*b)).as_str());
+            }
+        }
+        type_string
+    }
     pub fn to_stdout(&self, elf_file: &ELF) -> Row {
         let mut cells: Vec<Cell> = Vec::new();
         ELF::add_cell(&mut cells, &self.get_type());
         ELF::add_cell(&mut cells, &format!("0x{:x}", self.d_argnumber));
         ELF::add_cell(&mut cells, &self.get_name(elf_file));
-        ELF::add_cell(&mut cells, &"TODO".to_string());
-        //ELF::add_cell(&mut cells, &self.get_arg_types());
+        ELF::add_cell(&mut cells, &self.get_arg_types());
         Row::new(cells)
     }
 }
