@@ -228,12 +228,46 @@ impl ELF {
         }
         relro
     }
+    pub fn check_pie(&self) -> PIE {
+        let mut pie = PIE::DISABLE;
+        let mut debug_exist = false;
+        if self.ehdr.e_type != ET_DYN {
+            return pie;
+        }
+
+        for (i, shdr) in self.shdrs.iter().enumerate() {
+            if shdr.sh_type as u64 == SHT_DYNAMIC {
+                let dynamics_number = shdr.sh_size as usize / Dyn::size();
+                let dyntab = self.sections[i].clone();
+                for i in 0..dynamics_number as usize {
+                    let dyn_binary = dyntab[i * Dyn::size()..(i + 1) * Dyn::size()].to_vec();
+                    let dyn_sym = Dyn::new_unsafe(dyn_binary);
+                    if dyn_sym.d_tag == DT_DEBUG {
+                        debug_exist = true;
+                    }
+                }
+            }
+        }
+        if debug_exist {
+            pie = PIE::ENABLE;
+        } else {
+            pie = PIE::DSO;
+        }
+        pie
+    }
 }
 
 #[derive(PartialEq)]
 pub enum RELRO {
     ENABLE,
     PARTIAL,
+    DISABLE,
+}
+
+#[derive(PartialEq)]
+pub enum PIE {
+    ENABLE,
+    DSO,
     DISABLE,
 }
 

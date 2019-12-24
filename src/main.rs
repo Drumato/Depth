@@ -17,7 +17,7 @@ use f::frontmanager::frontmanager as fm;
 mod object;
 use debug::DebugSymbol;
 use object::debug;
-use object::elf::elf64::{Dyn, Rela, Symbol, ELF, RELRO};
+use object::elf::elf64::{Dyn, Rela, Symbol, ELF, PIE, RELRO};
 mod assemble;
 use assemble as a;
 mod ce;
@@ -197,6 +197,14 @@ fn check_security(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::
         RELRO::ENABLE => println!("\t{}", "Full RELRO".bold().green()),
         RELRO::PARTIAL => println!("\t{}", "Partial RELRO".bold().red()),
         RELRO::DISABLE => println!("\t{}", "No RELRO".bold().red()),
+    }
+
+    // PIE
+    println!("{}", "PIE:".bold().blue());
+    match elf_file.check_pie() {
+        PIE::ENABLE => println!("\t{}", "Enabled".bold().green()),
+        PIE::DSO => println!("\t{}", "DSO".bold().green()),
+        PIE::DISABLE => println!("\t{}", "Disabled".bold().red()),
     }
     Ok(())
 }
