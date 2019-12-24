@@ -50,6 +50,8 @@ fn linux_main(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Erro
     };
     return if matches.is_present("readelf") {
         analyze_elf(matches)
+    } else if matches.is_present("checksec") {
+        check_security(matches)
     } else if matches.is_present("dump-symbol") {
         panic!("not implemented --dump-symbol option");
     } else {
@@ -129,6 +131,66 @@ fn analyze_elf(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Err
         let debug_names: Vec<String> = print_debugs(&elf_file)?;
         print_documents(&elf_file, debug_names)?;
     }
+    Ok(())
+}
+
+fn check_security(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
+    let file_name = matches.value_of("source").unwrap().to_string();
+    if file_name.contains(".dep") {
+        return Ok(());
+    }
+    let elf_file = ELF::read_elf(&file_name);
+    println!("\n\n++++++++++++++++ checksec +++++++++++++++");
+
+    // check PF_X in GNU_STACK
+    println!("{}", "Execstack:".bold().blue());
+    if elf_file.check_execstack() {
+        println!(
+            "\t{}",
+            "This binary may be able to exploit by execution code on stack"
+                .bold()
+                .red()
+        );
+    } else {
+        println!(
+            "\t{}",
+            "This binary's NX-bit is on so we prevent execution code on stack."
+                .bold()
+                .green()
+        );
+    }
+
+    // check stack__chk in symbol table.
+    println!("{}", "Canary:".bold().blue());
+    let symbol_size = Symbol::size() as usize;
+
+    let symtab_number = elf_file.get_section_number(".symtab");
+    let symtab = elf_file.sections[symtab_number].clone();
+    let symtab_shdr = elf_file.shdrs[symtab_number].clone();
+    let symbol_number = symtab_shdr.sh_size as usize / symbol_size;
+
+    let mut canary_flag = false;
+    for i in 0..symbol_number as usize {
+        let symbol_binary = symtab[i * symbol_size..(i + 1) * symbol_size].to_vec();
+        let symbol = Symbol::new_unsafe(symbol_binary);
+        let symbol_name = symbol.get_name(&elf_file, symtab_shdr.sh_link as u32);
+        for chk in vec![
+            "__stack_chk_fail".to_string(),
+            "__stack_smach_handler".to_string(),
+        ]
+        .iter()
+        {
+            if symbol_name.contains(chk) {
+                canary_flag = true;
+            }
+        }
+    }
+    if canary_flag {
+        println!("\t{}", "Found".bold().green());
+    } else {
+        println!("\t{}", "Not Found".bold().red());
+    }
+
     Ok(())
 }
 

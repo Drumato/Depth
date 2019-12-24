@@ -32,8 +32,8 @@ impl ELF {
             bb.push(b);
         }
         if let Some(phdrs) = &self.phdrs {
-            for shdr in phdrs.iter() {
-                for b in shdr.to_vec() {
+            for phdr in phdrs.iter() {
+                for b in phdr.to_vec() {
                     bb.push(b);
                 }
             }
@@ -188,6 +188,16 @@ impl ELF {
     }
     pub fn add_cell(vec: &mut Vec<Cell>, contents: &String) {
         vec.push(Cell::new(contents, Default::default()));
+    }
+    pub fn check_execstack(&self) -> bool {
+        if let Some(phdrs) = &self.phdrs {
+            for phdr in phdrs.iter() {
+                if phdr.p_type == PT_GNU_STACK {
+                    return (phdr.p_flags & PF_X) != 0;
+                }
+            }
+        }
+        false
     }
 }
 
@@ -1036,7 +1046,7 @@ impl Symbol {
             format!("{}", self.st_shndx)
         };
     }
-    fn get_name(&self, elf_file: &ELF, link: u32) -> String {
+    pub fn get_name(&self, elf_file: &ELF, link: u32) -> String {
         let strtab: Vec<u8> = if (self.st_info & 0xf) == STT_SECTION {
             elf_file.sections[elf_file.ehdr.e_shstrndx as usize].clone()
         } else {

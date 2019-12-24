@@ -81,3 +81,6 @@ args:
     - debug:
         long: debug
         help: Read debug informations of Depth
+    - checksec:
+        long: checksec
+        help: check a binary's security features
