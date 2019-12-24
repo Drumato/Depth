@@ -206,6 +206,22 @@ fn check_security(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::
         PIE::DSO => println!("\t{}", "DSO".bold().green()),
         PIE::DISABLE => println!("\t{}", "Disabled".bold().red()),
     }
+
+    // DT_RPATH
+    println!("{}", "DT_RPATH:".bold().blue());
+    if elf_file.check_rpath() {
+        println!("\t{}", "Enabled".bold().red());
+    } else {
+        println!("\t{}", "Disabled".bold().green());
+    }
+
+    // DT_RUNPATH
+    println!("{}", "DT_RUNPATH:".bold().blue());
+    if elf_file.check_runpath() {
+        println!("\t{}", "Enabled".bold().red());
+    } else {
+        println!("\t{}", "Disabled".bold().green());
+    }
     Ok(())
 }
 

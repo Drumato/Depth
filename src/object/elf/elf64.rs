@@ -234,7 +234,6 @@ impl ELF {
         if self.ehdr.e_type != ET_DYN {
             return pie;
         }
-
         for (i, shdr) in self.shdrs.iter().enumerate() {
             if shdr.sh_type as u64 == SHT_DYNAMIC {
                 let dynamics_number = shdr.sh_size as usize / Dyn::size();
@@ -254,6 +253,38 @@ impl ELF {
             pie = PIE::DSO;
         }
         pie
+    }
+    pub fn check_rpath(&self) -> bool {
+        for (i, shdr) in self.shdrs.iter().enumerate() {
+            if shdr.sh_type as u64 == SHT_DYNAMIC {
+                let dynamics_number = shdr.sh_size as usize / Dyn::size();
+                let dyntab = self.sections[i].clone();
+                for i in 0..dynamics_number as usize {
+                    let dyn_binary = dyntab[i * Dyn::size()..(i + 1) * Dyn::size()].to_vec();
+                    let dyn_sym = Dyn::new_unsafe(dyn_binary);
+                    if dyn_sym.d_tag == DT_RPATH {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+    pub fn check_runpath(&self) -> bool {
+        for (i, shdr) in self.shdrs.iter().enumerate() {
+            if shdr.sh_type as u64 == SHT_DYNAMIC {
+                let dynamics_number = shdr.sh_size as usize / Dyn::size();
+                let dyntab = self.sections[i].clone();
+                for i in 0..dynamics_number as usize {
+                    let dyn_binary = dyntab[i * Dyn::size()..(i + 1) * Dyn::size()].to_vec();
+                    let dyn_sym = Dyn::new_unsafe(dyn_binary);
+                    if dyn_sym.d_tag == DT_RUNPATH {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
     }
 }
 
@@ -1391,6 +1422,7 @@ pub const DT_STRSZ: Elf64Sxword = 10;
 pub const DT_SYMENT: Elf64Sxword = 11;
 pub const DT_INIT: Elf64Sxword = 12;
 pub const DT_FINI: Elf64Sxword = 13;
+pub const DT_RPATH: Elf64Sxword = 15;
 pub const DT_PLTREL: Elf64Sxword = 20;
 pub const DT_DEBUG: Elf64Sxword = 21;
 pub const DT_JMPREL: Elf64Sxword = 23;
@@ -1398,6 +1430,7 @@ pub const DT_INIT_ARRAY: Elf64Sxword = 25;
 pub const DT_FINI_ARRAY: Elf64Sxword = 26;
 pub const DT_INIT_ARRAYSZ: Elf64Sxword = 27;
 pub const DT_FINI_ARRAYSZ: Elf64Sxword = 28;
+pub const DT_RUNPATH: Elf64Sxword = 29;
 pub const DT_FLAGS: Elf64Sxword = 30;
 pub const DT_GNU_HASH: Elf64Sxword = 0x6ffffef5;
 pub const DT_VERSYM: Elf64Sxword = 0x6ffffff0;
