@@ -17,7 +17,7 @@ use f::frontmanager::frontmanager as fm;
 mod object;
 use debug::DebugSymbol;
 use object::debug;
-use object::elf::elf64::{Dyn, Rela, Symbol, ELF};
+use object::elf::elf64::{Dyn, Rela, Symbol, ELF, RELRO};
 mod assemble;
 use assemble as a;
 mod ce;
@@ -191,6 +191,13 @@ fn check_security(matches: &clap::ArgMatches) -> Result<(), Box<dyn std::error::
         println!("\t{}", "Not Found".bold().red());
     }
 
+    // Relocation Read-Only
+    println!("{}", "RELRO:".bold().blue());
+    match elf_file.check_relro() {
+        RELRO::ENABLE => println!("\t{}", "Full RELRO".bold().green()),
+        RELRO::PARTIAL => println!("\t{}", "Partial RELRO".bold().red()),
+        RELRO::DISABLE => println!("\t{}", "No RELRO".bold().red()),
+    }
     Ok(())
 }
 

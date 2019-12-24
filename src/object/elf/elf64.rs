@@ -199,6 +199,42 @@ impl ELF {
         }
         false
     }
+    pub fn check_relro(&self) -> RELRO {
+        let mut relro = RELRO::DISABLE;
+        if let Some(phdrs) = &self.phdrs {
+            for phdr in phdrs.iter() {
+                if phdr.p_type == PT_GNU_RELRO {
+                    relro = RELRO::PARTIAL;
+                    break;
+                }
+            }
+        }
+
+        for (i, shdr) in self.shdrs.iter().enumerate() {
+            if shdr.sh_type as u64 == SHT_DYNAMIC {
+                let dynamics_number = shdr.sh_size as usize / Dyn::size();
+                let dyntab = self.sections[i].clone();
+                for i in 0..dynamics_number as usize {
+                    let dyn_binary = dyntab[i * Dyn::size()..(i + 1) * Dyn::size()].to_vec();
+                    let dyn_sym = Dyn::new_unsafe(dyn_binary);
+                    if dyn_sym.d_tag == DT_FLAGS
+                        && dyn_sym.d_un == DF_BIND_NOW as u64
+                        && relro == RELRO::PARTIAL
+                    {
+                        relro = RELRO::ENABLE;
+                    }
+                }
+            }
+        }
+        relro
+    }
+}
+
+#[derive(PartialEq)]
+pub enum RELRO {
+    ENABLE,
+    PARTIAL,
+    DISABLE,
 }
 
 /* EI_CLASS */
@@ -1328,6 +1364,7 @@ pub const DT_INIT_ARRAY: Elf64Sxword = 25;
 pub const DT_FINI_ARRAY: Elf64Sxword = 26;
 pub const DT_INIT_ARRAYSZ: Elf64Sxword = 27;
 pub const DT_FINI_ARRAYSZ: Elf64Sxword = 28;
+pub const DT_FLAGS: Elf64Sxword = 30;
 pub const DT_GNU_HASH: Elf64Sxword = 0x6ffffef5;
 pub const DT_VERSYM: Elf64Sxword = 0x6ffffff0;
 pub const DT_RELACOUNT: Elf64Sxword = 0x6ffffff9;
@@ -1336,6 +1373,7 @@ pub const DT_VERNEED: Elf64Sxword = 0x6ffffffe;
 pub const DT_VERNEEDNUM: Elf64Sxword = 0x6fffffff;
 
 pub const DF_1_PIE: Elf64Sxword = 0x08000000;
+pub const DF_BIND_NOW: Elf64Sxword = 0x00000008;
 
 pub struct Dyn {
     d_tag: Elf64Sxword,
