@@ -1,5 +1,6 @@
-use super::super::ir::tac::{Operand, Tac};
 use super::Optimizer;
+use crate::compile::ir::tac::{Operand, Tac};
+
 use std::collections::BTreeMap;
 
 static AVAILABLE_X64: usize = 9;

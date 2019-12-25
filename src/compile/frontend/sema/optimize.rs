@@ -1,5 +1,6 @@
-use super::super::frontmanager::frontmanager::FrontManager;
-use super::super::parse::node::{Func, Node};
+use crate::compile::frontend;
+use frontend::frontmanager::frontmanager::FrontManager;
+use frontend::parse::node::{Func, Node};
 impl FrontManager {
     pub fn constant_folding(&mut self) {
         let func_num: usize = self.functions.len();

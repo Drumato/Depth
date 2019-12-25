@@ -1,4 +1,5 @@
-use super::instruction::Instruction;
+use crate::compile::ir::instruction::Instruction;
+
 #[derive(Clone)]
 pub struct BasicBlock {
     entry: String,

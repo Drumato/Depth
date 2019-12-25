@@ -1,7 +1,7 @@
 extern crate libc;
 use libc::c_void;
 
-use super::super::object::elf::elf64::ELF;
+use crate::object::elf::elf64::ELF;
 pub struct ELFLoader {}
 
 const PAGE_SIZE: libc::size_t = 4096;

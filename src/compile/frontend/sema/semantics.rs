@@ -1,8 +1,11 @@
-use super::super::super::super::ce::types::Error;
-use super::super::frontmanager::frontmanager::{Env, FrontManager, Symbol};
-use super::super::parse::node::{Func, Node};
-use super::super::token::token::Token;
+use crate::ce::types::Error;
+use crate::compile::frontend;
+use frontend::frontmanager::frontmanager::{Env, FrontManager, Symbol};
+use frontend::parse::node::{Func, Node};
+use frontend::token::token::Token;
+
 use std::collections::BTreeMap;
+
 type ArySize = usize;
 type TotalSize = usize;
 type PointerTo = Box<Type>;

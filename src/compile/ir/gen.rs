@@ -1,8 +1,10 @@
-use super::super::super::ce::types::Error;
-use super::super::frontend::frontmanager::frontmanager::FrontManager;
-use super::super::frontend::parse::node::Node;
-use super::super::frontend::sema::semantics::Type;
-use super::tac::{Operand, Tac};
+use crate::ce::types::Error;
+use crate::compile::frontend;
+use crate::compile::ir::tac::{Operand, Tac};
+use frontend::frontmanager::frontmanager::FrontManager;
+use frontend::parse::node::Node;
+use frontend::sema::semantics::Type;
+
 use std::collections::BTreeMap;
 
 impl FrontManager {

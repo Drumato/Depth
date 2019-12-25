@@ -1,8 +1,10 @@
-use super::super::super::super::ce::types::Error;
-use super::super::super::ir::tac::Tac;
-use super::super::parse::node::Func;
-use super::super::sema::semantics::Type;
-use super::super::token::token::Token;
+use crate::ce::types::Error;
+use crate::compile::frontend;
+use crate::compile::ir::tac::Tac;
+use frontend::parse::node::Func;
+use frontend::sema::semantics::Type;
+use frontend::token::token::Token;
+
 use std::collections::BTreeMap;
 pub struct FrontManager {
     pub functions: Vec<Func>,

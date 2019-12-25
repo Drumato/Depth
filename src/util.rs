@@ -1,4 +1,4 @@
-use super::object::elf::elf64::ELF;
+use crate::object::elf::elf64::ELF;
 use std::io::{BufWriter, Write};
 use std::os::unix::fs::OpenOptionsExt;
 

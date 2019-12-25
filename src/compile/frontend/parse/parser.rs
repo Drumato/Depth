@@ -1,8 +1,9 @@
-use super::super::super::super::ce::types::Error;
-use super::super::frontmanager::frontmanager::{Env, Symbol};
-use super::super::sema::semantics::Type;
-use super::super::token::token::Token;
-use super::node::{Func, Node};
+use crate::ce::types::Error;
+use crate::compile::frontend;
+use frontend::frontmanager::frontmanager::{Env, Symbol};
+use frontend::parse::node::{Func, Node};
+use frontend::sema::semantics::Type;
+use frontend::token::token::Token;
 
 use std::collections::BTreeMap;
 struct Parser {

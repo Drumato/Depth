@@ -1,8 +1,12 @@
-use super::super::frontmanager::frontmanager::Env;
-use super::super::sema::semantics::Type;
+use crate::compile::frontend;
+use frontend::frontmanager::frontmanager::Env;
+use frontend::sema::semantics::Type;
+
 use std::collections::BTreeMap;
+
 extern crate colored;
 use colored::*;
+
 type Name = String;
 type Child = Box<Node>;
 type Expr = Box<Node>;

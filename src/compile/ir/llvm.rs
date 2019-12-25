@@ -1,8 +1,10 @@
-use super::super::frontend::frontmanager::frontmanager::FrontManager;
-use super::super::frontend::parse::node::Func;
-use super::context::Context;
-use super::function::Function as LLVMFunc;
-use super::module::Module;
+use crate::compile::frontend;
+use crate::compile::ir;
+use frontend::frontmanager::frontmanager::FrontManager;
+use frontend::parse::node::Func;
+use ir::context::Context;
+use ir::function::Function as LLVMFunc;
+use ir::module::Module;
 
 pub struct IRBuilder {
     pub module: Module,

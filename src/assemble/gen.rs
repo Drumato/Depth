@@ -1,7 +1,9 @@
-use super::super::object::elf::elf64::Rela;
-use super::parse::{Info, Inst, Operand};
+use crate::assemble::parse::{Info, Inst, Operand};
+use crate::object::elf::elf64::Rela;
+
 use std::collections::BTreeMap;
 use std::ops::Deref;
+
 type LabelName = String;
 type CodeIndex = usize;
 type Offset = usize;

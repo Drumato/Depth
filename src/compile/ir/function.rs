@@ -1,20 +1,24 @@
-use super::super::super::ce::types::Error;
-use super::super::frontend::frontmanager::frontmanager::Symbol;
-use super::super::frontend::parse::node::{Func, Node};
-use super::super::frontend::sema::semantics::Type;
-use super::basicblock::BasicBlock;
-use super::constant::Constant;
-use super::instruction::CalcMode;
-use super::instruction::CompareMode;
-use super::instruction::Instruction as Inst;
-use super::intrinsic::Intrinsic;
-use super::llvm_type::LLVMType;
-use super::llvm_value::{LLVMSymbol, LLVMValue};
-type InstructionLabel = usize;
-type BasicBlockLabel = usize;
+use crate::ce::types::Error;
+use crate::compile::frontend;
+use crate::compile::ir;
+use frontend::frontmanager::frontmanager::Symbol;
+use frontend::parse::node::{Func, Node};
+use frontend::sema::semantics::Type;
+use ir::basicblock::BasicBlock;
+use ir::constant::Constant;
+use ir::instruction::CalcMode;
+use ir::instruction::CompareMode;
+use ir::instruction::Instruction as Inst;
+use ir::intrinsic::Intrinsic;
+use ir::llvm_type::LLVMType;
+use ir::llvm_value::{LLVMSymbol, LLVMValue};
 
 use std::collections::{BTreeMap, HashSet};
 use std::fmt::Write;
+
+type InstructionLabel = usize;
+type BasicBlockLabel = usize;
+
 pub struct Function {
     pub blocks: Vec<BasicBlock>,
     // ty: LLVMType

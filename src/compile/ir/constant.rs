@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
-use super::llvm_type::LLVMType;
-use super::llvm_value::LLVMValue;
+use crate::compile::ir::llvm_type::LLVMType;
+use crate::compile::ir::llvm_value::LLVMValue;
 #[derive(Clone)]
 pub enum Constant {
     Array(String, LLVMType, Vec<(LLVMType, LLVMValue)>),

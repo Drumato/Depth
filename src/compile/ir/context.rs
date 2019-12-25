@@ -1,4 +1,5 @@
 use std::fmt;
+
 pub struct Context {
     source_filename: String,
     target_triple: TargetTriple,

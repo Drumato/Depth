@@ -1,7 +1,10 @@
-use super::constant::Constant;
-use super::function::Function;
-use super::intrinsic::Intrinsic;
+use crate::compile::ir;
+use ir::constant::Constant;
+use ir::function::Function;
+use ir::intrinsic::Intrinsic;
+
 use std::collections::HashSet;
+
 pub struct Module {
     id: String,
     funcs: Vec<Function>,

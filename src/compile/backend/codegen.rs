@@ -1,6 +1,8 @@
-use super::super::super::ce::types::Info;
-use super::super::ir::lir::x64;
-use super::super::ir::tac::{Operand, Tac};
+use crate::ce::types::Info;
+use crate::compile::ir;
+use ir::lir::x64;
+use ir::tac::{Operand, Tac};
+
 static X64_REGS: [&str; 9] = [
     "r10", "r11", "r12", "r13", "r14", "r15", "rax", "rdx", "rcx",
 ];

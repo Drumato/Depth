@@ -1,6 +1,8 @@
-use super::super::ir::tac::{Operand, Tac};
 use super::Optimizer;
+use crate::compile::ir::tac::{Operand, Tac};
+
 use std::collections::{BTreeMap, BTreeSet};
+
 impl Optimizer {
     pub fn build_cfg(&mut self) {
         let label_map: BTreeMap<String, usize> = self.build_labelmap();

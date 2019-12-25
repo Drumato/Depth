@@ -1,4 +1,4 @@
-use super::llvm_type::LLVMType;
+use crate::compile::ir::llvm_type::LLVMType;
 use std::fmt;
 #[derive(Clone)]
 pub enum LLVMValue {

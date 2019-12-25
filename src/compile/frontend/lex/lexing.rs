@@ -1,5 +1,5 @@
-use super::super::super::super::ce::types::Error;
-use super::super::token::token::Token;
+use crate::ce::types::Error;
+use crate::compile::frontend::token::token::Token;
 use std::collections::HashMap;
 
 type TokenLen = usize;

@@ -1,6 +1,6 @@
-use super::super::super::ce::types::Error;
-use super::llvm_type::LLVMType;
-use super::llvm_value::LLVMValue;
+use crate::ce::types::Error;
+use crate::compile::ir::llvm_type::LLVMType;
+use crate::compile::ir::llvm_value::LLVMValue;
 
 use std::fmt;
 use std::fmt::Write;

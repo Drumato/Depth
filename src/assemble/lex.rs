@@ -1,5 +1,7 @@
-use super::super::ce::types::Error;
+use crate::ce::types::Error;
+
 use std::collections::HashMap;
+
 #[derive(Eq, PartialEq, Clone)]
 pub enum Token {
     INTEGER(i128),

@@ -1,7 +1,9 @@
-use super::ir::tac::{Operand, Tac};
+use crate::compile::ir::tac::{Operand, Tac};
+
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
 use std::io::Write;
+
 pub mod available;
 pub mod codegen;
 pub mod data_flow;

@@ -1,7 +1,9 @@
-use super::super::ce::types::Error;
-use super::super::object::elf::elf64::Rela;
-use super::lex::Token;
+use crate::assemble::lex::Token;
+use crate::ce::types::Error;
+use crate::object::elf::elf64::Rela;
+
 use std::collections::BTreeMap;
+
 static mut CUR: usize = 0;
 static mut NEXT: usize = 1;
 #[derive(Debug, Clone)]

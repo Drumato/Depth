@@ -1,8 +1,10 @@
 extern crate cli_table;
-use super::super::compile::frontend::parse::node::Func;
-use super::super::compile::frontend::sema::semantics::Type;
-use super::elf::elf64::ELF;
 use cli_table::{Cell, Row};
+
+use crate::compile::frontend;
+use crate::object::elf::elf64::ELF;
+use frontend::parse::node::Func;
+use frontend::sema::semantics::Type;
 
 pub const LIMIT_DOCUMENTS: usize = 320;
 

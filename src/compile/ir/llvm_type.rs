@@ -1,5 +1,7 @@
-use super::super::super::ce::types::Error;
+use crate::ce::types::Error;
+
 use std::fmt;
+
 type PointerTo = Box<LLVMType>;
 type ElemType = Box<LLVMType>;
 #[derive(Clone, PartialEq)]

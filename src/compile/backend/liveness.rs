@@ -1,5 +1,6 @@
-use super::super::ir::tac::Operand;
 use super::Optimizer;
+use crate::compile::ir::tac::Operand;
+
 use std::collections::BTreeSet;
 
 impl Optimizer {
