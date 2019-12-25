@@ -6,3 +6,4 @@ pub mod compile;
 pub mod link;
 pub mod load;
 pub mod object;
+pub mod util;
