@@ -189,27 +189,24 @@ impl ELF {
     pub fn add_cell(vec: &mut Vec<Cell>, contents: &String) {
         vec.push(Cell::new(contents, Default::default()));
     }
-    pub fn check_execstack(&self) -> bool {
+    fn specified_ptype_exist(&self, p_type: Elf64Word) -> Option<&Phdr> {
         if let Some(phdrs) = &self.phdrs {
             for phdr in phdrs.iter() {
-                if phdr.p_type == PT_GNU_STACK {
-                    return (phdr.p_flags & PF_X) != 0;
+                if phdr.p_type == p_type {
+                    return Some(phdr);
                 }
             }
         }
-        false
+        None
     }
-    pub fn check_relro(&self) -> RELRO {
-        let mut relro = RELRO::DISABLE;
-        if let Some(phdrs) = &self.phdrs {
-            for phdr in phdrs.iter() {
-                if phdr.p_type == PT_GNU_RELRO {
-                    relro = RELRO::PARTIAL;
-                    break;
-                }
-            }
+    pub fn check_execstack(&self) -> bool {
+        if let Some(phdr) = self.specified_ptype_exist(PT_GNU_STACK) {
+            (phdr.p_flags & PF_X) != 0
+        } else {
+            false
         }
-
+    }
+    pub fn specified_dtag_exist(&self, d_tag: Elf64Sxword) -> Option<Dyn> {
         for (i, shdr) in self.shdrs.iter().enumerate() {
             if shdr.sh_type as u64 == SHT_DYNAMIC {
                 let dynamics_number = shdr.sh_size as usize / Dyn::size();
@@ -217,37 +214,34 @@ impl ELF {
                 for i in 0..dynamics_number as usize {
                     let dyn_binary = dyntab[i * Dyn::size()..(i + 1) * Dyn::size()].to_vec();
                     let dyn_sym = Dyn::new_unsafe(dyn_binary);
-                    if dyn_sym.d_tag == DT_FLAGS
-                        && dyn_sym.d_un == DF_BIND_NOW as u64
-                        && relro == RELRO::PARTIAL
-                    {
-                        relro = RELRO::ENABLE;
+                    if dyn_sym.d_tag == d_tag {
+                        return Some(dyn_sym);
                     }
                 }
+            }
+        }
+
+        None
+    }
+    pub fn check_relro(&self) -> RELRO {
+        let mut relro = RELRO::DISABLE;
+        if let Some(_phdr) = self.specified_ptype_exist(PT_GNU_RELRO) {
+            relro = RELRO::PARTIAL;
+        }
+
+        if let Some(dyn_sym) = self.specified_dtag_exist(DT_FLAGS) {
+            if dyn_sym.d_un == DF_BIND_NOW as u64 && relro == RELRO::PARTIAL {
+                relro = RELRO::ENABLE;
             }
         }
         relro
     }
     pub fn check_pie(&self) -> PIE {
         let mut pie = PIE::DISABLE;
-        let mut debug_exist = false;
         if self.ehdr.e_type != ET_DYN {
             return pie;
         }
-        for (i, shdr) in self.shdrs.iter().enumerate() {
-            if shdr.sh_type as u64 == SHT_DYNAMIC {
-                let dynamics_number = shdr.sh_size as usize / Dyn::size();
-                let dyntab = self.sections[i].clone();
-                for i in 0..dynamics_number as usize {
-                    let dyn_binary = dyntab[i * Dyn::size()..(i + 1) * Dyn::size()].to_vec();
-                    let dyn_sym = Dyn::new_unsafe(dyn_binary);
-                    if dyn_sym.d_tag == DT_DEBUG {
-                        debug_exist = true;
-                    }
-                }
-            }
-        }
-        if debug_exist {
+        if let Some(_dyn_sym) = self.specified_dtag_exist(DT_DEBUG) {
             pie = PIE::ENABLE;
         } else {
             pie = PIE::DSO;
@@ -255,36 +249,18 @@ impl ELF {
         pie
     }
     pub fn check_rpath(&self) -> bool {
-        for (i, shdr) in self.shdrs.iter().enumerate() {
-            if shdr.sh_type as u64 == SHT_DYNAMIC {
-                let dynamics_number = shdr.sh_size as usize / Dyn::size();
-                let dyntab = self.sections[i].clone();
-                for i in 0..dynamics_number as usize {
-                    let dyn_binary = dyntab[i * Dyn::size()..(i + 1) * Dyn::size()].to_vec();
-                    let dyn_sym = Dyn::new_unsafe(dyn_binary);
-                    if dyn_sym.d_tag == DT_RPATH {
-                        return true;
-                    }
-                }
-            }
-        }
-        false
+        return if let Some(_dyn_sym) = self.specified_dtag_exist(DT_RPATH) {
+            true
+        } else {
+            false
+        };
     }
     pub fn check_runpath(&self) -> bool {
-        for (i, shdr) in self.shdrs.iter().enumerate() {
-            if shdr.sh_type as u64 == SHT_DYNAMIC {
-                let dynamics_number = shdr.sh_size as usize / Dyn::size();
-                let dyntab = self.sections[i].clone();
-                for i in 0..dynamics_number as usize {
-                    let dyn_binary = dyntab[i * Dyn::size()..(i + 1) * Dyn::size()].to_vec();
-                    let dyn_sym = Dyn::new_unsafe(dyn_binary);
-                    if dyn_sym.d_tag == DT_RUNPATH {
-                        return true;
-                    }
-                }
-            }
-        }
-        false
+        return if let Some(_dyn_sym) = self.specified_dtag_exist(DT_RUNPATH) {
+            true
+        } else {
+            false
+        };
     }
 }
 
